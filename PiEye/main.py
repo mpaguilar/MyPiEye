@@ -38,7 +38,7 @@ defaults.update(global_defaults)
 
 @click.group()
 @click.option('--loglevel', default='CRITICAL',
-              type=click.Choice(LOG_LEVELS),
+              type=click.Choice(CLI.LOG_LEVELS),
               help='python log levels')
 @click.option('--logfile', default=defaults['logfile'], help="output log file")
 @click.option('--color/--no-color', default=defaults['color'], help='Pretty color output')
@@ -47,3 +47,7 @@ defaults.update(global_defaults)
 @click.pass_context
 def motion(ctx, loglevel, logfile, color, config):
     pass
+
+
+if __name__ == '__main__':
+    motion()

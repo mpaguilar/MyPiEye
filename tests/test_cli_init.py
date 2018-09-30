@@ -2,6 +2,10 @@ import unittest
 from unittest.mock import patch
 import CLI
 
+from click.testing import CliRunner
+
+import main
+
 
 class CliTests(unittest.TestCase):
     def test_load_config(self):
@@ -11,3 +15,16 @@ class CliTests(unittest.TestCase):
         ret = CLI.load_config(None, None, '../PiEye/pieye.ini')
         self.assertIsNotNone(ret)
         self.assertIsInstance(ret, dict)
+
+    def test_bad_opts(self):
+        runner = CliRunner()
+
+        ret = runner.invoke(
+            main.motion,
+            ['--loglevel', 'bogus'],
+            catch_exceptions=False
+        )
+
+        self.assertEqual(2, ret.exit_code)
+
+

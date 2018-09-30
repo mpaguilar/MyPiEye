@@ -102,7 +102,7 @@ def load_config(ctx, param, config_filename):
     if config_filename is not None:
         # does the config file exist?
         log.info('Reading config from {}'.format(config_filename))
-        if exists(config_filename):            
+        if exists(config_filename):
             ret = {}
             cfgparse = configparser.ConfigParser()
 
