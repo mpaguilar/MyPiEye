@@ -5,7 +5,7 @@ import configparser
 
 init()
 
-logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 class ColorLogFormatter(logging.Formatter):
@@ -101,19 +101,21 @@ def load_config(ctx, param, config_filename):
     # did we get a filename?
     if config_filename is not None:
         # does the config file exist?
-        if exists(val):
-            log.info('Reading config from {}'.format(val))
+        log.info('Reading config from {}'.format(config_filename))
+        if exists(config_filename):            
             ret = {}
-            p = configparser.ConfigParser()
+            cfgparse = configparser.ConfigParser()
 
             # load it
-            p.read(val)
+            cfgparse.read(config_filename)
 
             # load it all
-            for sec in p.sections():
+            for sec in cfgparse.sections():
                 ret[sec] = {}
 
-                for key in p[sec]:
-                    ret[sec][key] = p[sec][key]
+                for key in cfgparse[sec]:
+                    ret[sec][key] = cfgparse[sec][key]
+        else:
+            raise FileNotFoundError('{} was not found'.format(config_filename))
 
     return ret

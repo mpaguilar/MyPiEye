@@ -3,6 +3,8 @@ import click
 
 import platform
 
+import CLI
+
 log = logging.getLogger(__name__)
 
 windows_defaults = {
@@ -24,7 +26,7 @@ global_defaults = {
     'logfile': None,
     'loglevel': 'DEBUG',
     'color': True,
-    'config': 'ezmotion.ini'
+    'config': 'pyeye.ini'
 }
 
 defaults = windows_defaults
@@ -33,13 +35,15 @@ if platform.system() == 'Linux':
 
 defaults.update(global_defaults)
 
+
 @click.group()
 @click.option('--loglevel', default='CRITICAL',
               type=click.Choice(LOG_LEVELS),
               help='python log levels')
 @click.option('--logfile', default=defaults['logfile'], help="output log file")
 @click.option('--color/--no-color', default=defaults['color'], help='Pretty color output')
-@click.option('--config', default=defaults['config'], help='key/val (.ini) config file', callback=load_config)
+@click.option('--config',
+              default=defaults['config'], help='key/val (.ini) config file', callback=CLI.load_config)
 @click.pass_context
 def motion(ctx, loglevel, logfile, color, config):
     pass
