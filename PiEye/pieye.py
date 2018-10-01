@@ -36,7 +36,6 @@ if platform.system() == 'Linux':
 defaults.update(global_defaults)
 
 
-
 @click.command()
 @click.option('--loglevel', default='CRITICAL',
               type=click.Choice(CLI.LOG_LEVELS),
@@ -54,18 +53,28 @@ defaults.update(global_defaults)
 @click.option('--show_timings/--no_show_timings', default=defaults['show_timings'],
               help='Used for debugging/optimizing')
 def motion(loglevel,
-          logfile,
-          color,
-          config,
-          workdir,
-          savedir,
-          gdrive,
-          url,
-          camera,
-          resolution,
-          show_timings):
+           logfile,
+           color,
+           config,
+           workdir,
+           savedir,
+           gdrive,
+           url,
+           camera,
+           resolution,
+           show_timings):
     """Start capturing and watching"""
     pass
+
+    CLI.set_loglevel(loglevel)
+    CLI.enable_log(filename=logfile, enable_color=color)
+
+    log.debug('Logging started')
+
+    fconfig = {'start': defaults}
+
+    if config is not None and config.get('start', None) is not None:
+        fconfig['start'].update(config['start'])
 
 
 if __name__ == '__main__':

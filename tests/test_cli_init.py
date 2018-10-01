@@ -4,7 +4,7 @@ import CLI
 
 from click.testing import CliRunner
 
-import main
+import pieye
 
 
 class CliTests(unittest.TestCase):
@@ -20,7 +20,7 @@ class CliTests(unittest.TestCase):
         runner = CliRunner()
 
         ret = runner.invoke(
-            main.motion,
+            pieye.motion,
             ['--loglevel', 'bogus'],
             catch_exceptions=False
         )
