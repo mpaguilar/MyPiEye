@@ -2,6 +2,7 @@ import logging
 import click
 
 import platform
+from startup import Startup
 
 import CLI
 
@@ -50,32 +51,31 @@ defaults.update(global_defaults)
 @click.option('--camera', default=defaults['camera'], help='Camera to watch')
 @click.option('--resolution', default=defaults['resolution'], type=click.Choice(['small', '720p', '1080p']),
               help='Camera resolution')
-@click.option('--show_timings/--no_show_timings', default=defaults['show_timings'],
-              help='Used for debugging/optimizing')
-def motion(loglevel,
-           logfile,
-           color,
-           config,
-           workdir,
-           savedir,
-           gdrive,
-           url,
-           camera,
-           resolution,
-           show_timings):
+def motion(**config):
     """Start capturing and watching"""
-    pass
+
+    loglevel = config['loglevel']
+    color = config['color']
+    logfile = config['logfile']
 
     CLI.set_loglevel(loglevel)
     CLI.enable_log(filename=logfile, enable_color=color)
+    log.info('Starting...')
 
-    log.debug('Logging started')
-
-    fconfig = {'start': defaults}
-
-    if config is not None and config.get('start', None) is not None:
-        fconfig['start'].update(config['start'])
+    Startup(config)
 
 
 if __name__ == '__main__':
     motion()
+
+"""
+ - check for directories
+ - check camera
+ - get first image
+ - loop
+   - get next image
+   - compare with previous
+     - diff image uploaded
+       - google
+       - local storage
+"""

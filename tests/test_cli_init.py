@@ -1,5 +1,6 @@
 import unittest
-from unittest.mock import patch
+
+from unittest.mock import Mock, patch
 import CLI
 
 from click.testing import CliRunner
@@ -16,6 +17,28 @@ class CliTests(unittest.TestCase):
         self.assertIsNotNone(ret)
         self.assertIsInstance(ret, dict)
 
+    def test_good_opts(self):
+        runner = CliRunner()
+
+        ret = runner.invoke(
+            pieye.motion,
+            [
+                '--loglevel', 'DEBUG',
+                '--logfile', '../deleteme.txt',
+                '--color',
+                # must exist until I figure out how to get patch to work
+                '--config', '../PiEye/pieye.ini',
+                '--workdir', 'fakeworkdir',
+                '--savedir', 'fakesavedir',
+                '--gdrive', 'somefolder',
+                '--camera', 'none',
+                '--resolution', '1080p'
+            ],
+            catch_exceptions=False
+        )
+
+        self.assertEqual(0, ret.exit_code)
+
     def test_bad_opts(self):
         runner = CliRunner()
 
@@ -26,5 +49,3 @@ class CliTests(unittest.TestCase):
         )
 
         self.assertEqual(2, ret.exit_code)
-
-
