@@ -1,10 +1,11 @@
 import logging
 import click
+import sys
 
 import platform
-from startup import Startup
 
 import CLI
+from startup import Startup
 
 log = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ linux_defaults = {
 }
 
 global_defaults = {
-    'gdrive': 'ezmotion_test',
+    'gdrive': None,
     'url': None,
     'camera': '0',
     'resolution': '720p',
@@ -46,7 +47,7 @@ defaults.update(global_defaults)
 @click.option('--config',
               default=defaults['config'], help='key/val (.ini) config file', callback=CLI.load_config)
 @click.option('--workdir', default=defaults['workdir'], help='Temporary directory for processing images')
-@click.option('--savedir', default=defaults['savedir'], help='Where to store files')
+@click.option('--savedir', default=defaults['savedir'], help='Where to store local files')
 @click.option('--gdrive', default=defaults['gdrive'], help='Google drive folder')
 @click.option('--camera', default=defaults['camera'], help='Camera to watch')
 @click.option('--resolution', default=defaults['resolution'], type=click.Choice(['small', '720p', '1080p']),
@@ -54,15 +55,12 @@ defaults.update(global_defaults)
 def motion(**config):
     """Start capturing and watching"""
 
-    loglevel = config['loglevel']
-    color = config['color']
-    logfile = config['logfile']
+    startup = Startup(config)
+    if not startup.check():
+        log.critical('Start checks failed')
+        sys.exit(1)
 
-    CLI.set_loglevel(loglevel)
-    CLI.enable_log(filename=logfile, enable_color=color)
-    log.info('Starting...')
-
-    Startup(config)
+    startup.start()
 
 
 if __name__ == '__main__':
