@@ -5,7 +5,7 @@ import sys
 import platform
 
 import CLI
-from startup import Startup
+from MainApp import MainApp
 
 log = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ defaults.update(global_defaults)
 def mypieye(**config):
     """Start capturing and watching"""
 
-    startup = Startup(config)
+    startup = MainApp(config)
     if not startup.check():
         log.critical('Start checks failed')
         sys.exit(1)

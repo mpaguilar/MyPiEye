@@ -5,7 +5,7 @@ import CLI
 log = logging.getLogger(__name__)
 
 
-class Startup(object):
+class MainApp(object):
 
     def __init__(self, config):
         """
