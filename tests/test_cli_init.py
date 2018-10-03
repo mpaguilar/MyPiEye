@@ -8,6 +8,6 @@ class CliTests(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             CLI.load_config(None, None, 'bogus.ini')
 
-        ret = CLI.load_config(None, None, '../PiEye/pieye.ini')
+        ret = CLI.load_config(None, None, '../MyPiEye/mypieye.ini')
         self.assertIsNotNone(ret)
         self.assertIsInstance(ret, dict)

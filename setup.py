@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 setup(
-    name="PiEye",
+    name="MyPiEye",
     version="0.1",
     packages=find_packages(),
-    scripts=['pieye.py'],
+    scripts=['mypieye.py'],
     package_data={
-        '': ['pieye.ini']
+        '': ['mypieye.ini']
     }
 )

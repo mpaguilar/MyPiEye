@@ -28,7 +28,7 @@ global_defaults = {
     'logfile': None,
     'loglevel': 'DEBUG',
     'color': True,
-    'config': 'pieye.ini'
+    'config': 'mymypieye.ini'
 }
 
 defaults = windows_defaults
@@ -52,7 +52,7 @@ defaults.update(global_defaults)
 @click.option('--camera', default=defaults['camera'], help='Camera to watch')
 @click.option('--resolution', default=defaults['resolution'], type=click.Choice(['small', '720p', '1080p']),
               help='Camera resolution')
-def motion(**config):
+def mypieye(**config):
     """Start capturing and watching"""
 
     startup = Startup(config)
@@ -61,10 +61,11 @@ def motion(**config):
         sys.exit(1)
 
     startup.start()
+    sys.exit(0)
 
 
 if __name__ == '__main__':
-    motion()
+    mypieye()
 
 """
  - check for directories
