@@ -67,14 +67,3 @@ def mypieye(**config):
 if __name__ == '__main__':
     mypieye()
 
-"""
- - check for directories
- - check camera
- - get first image
- - loop
-   - get next image
-   - compare with previous
-     - diff image uploaded
-       - google
-       - local storage
-"""
