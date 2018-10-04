@@ -2,6 +2,8 @@ from os.path import dirname, basename, exists
 import logging
 import CLI
 
+from usbcamera import UsbCamera
+
 log = logging.getLogger(__name__)
 
 
@@ -15,6 +17,10 @@ class MainApp(object):
         """
 
         self.config = config
+        self.camera = UsbCamera(
+            resolution=config['resolution'],
+            camera=config['camera']
+        )
 
     def start(self):
 
