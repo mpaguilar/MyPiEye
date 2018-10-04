@@ -24,19 +24,14 @@ class MainApp(object):
 
     def start(self):
 
-        # let's just assume these are okay
-        loglevel = self.config['loglevel']
-        color = self.config['color']
-        logfile = self.config['logfile']
 
-        CLI.set_loglevel(loglevel)
-        CLI.enable_log(filename=logfile, enable_color=color)
-        log.info('Starting...')
+
+        self.camera.init_camera()
 
     def check(self):
         """
         Run through the various settings, and make sure it's good to start
-        :return: True of okay, False if not
+        :return: True if okay, False if not
         """
 
         ret = True

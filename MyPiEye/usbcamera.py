@@ -14,12 +14,17 @@ class UsbCamera(object):
         self.resolution = resolution
 
     def init_camera(self):
+        """
+        Attempts to open the camera. Retries three times, every five seconds.
+        Throws an exception on failure.
+        :return: None
+        """
         camopen = self._init_camera()
         retry = 0
 
         while not camopen and retry < 3:
             log.warning('Failed to open camera. Retrying in 5 seconds')
-            self.imgread.close_camera()
+            self.close_camera()
             retry = retry + 1
             sleep(5)
             camopen = self._init_camera()
@@ -27,9 +32,6 @@ class UsbCamera(object):
         if retry >= 3:
             raise Exception('Failed to open camera')
 
-        if self.imgread is None:
-            log.error('No image reader specified')
-            return
 
     def _init_camera(self):
 

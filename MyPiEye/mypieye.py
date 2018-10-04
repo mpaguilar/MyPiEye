@@ -10,7 +10,7 @@ from MainApp import MainApp
 log = logging.getLogger(__name__)
 
 windows_defaults = {
-    'workdir': 'tmp',
+    'workdir': 'c:/temp',
     'savedir': 'c:/temp'
 }
 
@@ -28,7 +28,7 @@ global_defaults = {
     'logfile': None,
     'loglevel': 'DEBUG',
     'color': True,
-    'config': 'mymypieye.ini'
+    'config': 'mypieye.ini'
 }
 
 defaults = windows_defaults
@@ -52,18 +52,26 @@ defaults.update(global_defaults)
 @click.option('--camera', default=defaults['camera'], help='Camera to watch')
 @click.option('--resolution', default=defaults['resolution'], type=click.Choice(['small', '720p', '1080p']),
               help='Camera resolution')
-def mypieye(**config):
+def mypieye(**gconfig):
     """Start capturing and watching"""
 
-    startup = MainApp(config)
-    if not startup.check():
+    # let's just assume these are okay
+    loglevel = gconfig['loglevel']
+    color = gconfig['color']
+    logfile = gconfig['logfile']
+
+    CLI.set_loglevel(loglevel)
+    CLI.enable_log(filename=logfile, enable_color=color)
+    log.info('Starting...')
+
+    mainapp = MainApp(gconfig)
+    if not mainapp.check():
         log.critical('Start checks failed')
         sys.exit(1)
 
-    startup.start()
+    mainapp.start()
     sys.exit(0)
 
 
 if __name__ == '__main__':
     mypieye()
-
