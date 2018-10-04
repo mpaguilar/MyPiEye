@@ -46,12 +46,6 @@ defaults.update(global_defaults)
 @click.option('--color/--no-color', default=defaults['color'], help='Pretty color output')
 @click.option('--config',
               default=defaults['config'], help='key/val (.ini) config file', callback=CLI.load_config)
-@click.option('--workdir', default=defaults['workdir'], help='Temporary directory for processing images')
-@click.option('--savedir', default=defaults['savedir'], help='Where to store local files')
-@click.option('--gdrive', default=defaults['gdrive'], help='Google drive folder')
-@click.option('--camera', default=defaults['camera'], help='Camera to watch')
-@click.option('--resolution', default=defaults['resolution'], type=click.Choice(['small', '720p', '1080p']),
-              help='Camera resolution')
 def mypieye(**gconfig):
     """Start capturing and watching"""
 
