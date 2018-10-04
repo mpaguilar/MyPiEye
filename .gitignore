@@ -2,5 +2,5 @@
 venv
 __pycache__
 dist
-PiEye.egg-info
+MyPiEye.egg-info
 build
