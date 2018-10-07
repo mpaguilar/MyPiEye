@@ -58,6 +58,37 @@ class MainApp(object):
             log.warning('Shutting down')
             self.camera.close_camera()
 
+    def watch_for_motions(self):
+        """
+        Main loop for watching for changes
+
+        :return: Yields tuple of changes
+        """
+
+        retries = 0
+
+        while True and retries < 3:
+            current_img = self.camera.get_image()
+            if current_img is None:
+                log.error('Failed to get image')
+                sleep(1)
+                retries += 1
+                continue
+
+            retries = 0
+
+            motion, dtstamp, nobox_name, box_name, movements = self.motiondetect.motions(
+                current_img)
+
+            if motion:
+                # yield (dtstamp, nobox_name, box_name, movements)
+                log.debug('image captured')
+
+            sleep(.1)
+
+        if retries >= 2:
+            log.error('Failed to get image after {} attempts'.format(retries + 1))
+
     def check(self):
         """
         Run through the various settings, and make sure it's good to start
@@ -103,34 +134,3 @@ class MainApp(object):
             ret = False
 
         return ret
-
-    def watch_for_motions(self):
-        """
-        Main loop for watching for changes
-
-        :return: Yields tuple of changes
-        """
-
-        retries = 0
-
-        while True and retries < 3:
-            current_img = self.camera.get_image()
-            if current_img is None:
-                log.error('Failed to get image')
-                sleep(1)
-                retries += 1
-                continue
-
-            retries = 0
-
-            motion, dtstamp, nobox_name, box_name, movements = self.motiondetect.motions(
-                current_img)
-
-            if motion:
-                # yield (dtstamp, nobox_name, box_name, movements)
-                log.debug('image captured')
-
-            sleep(.1)
-
-        if retries >= 2:
-            log.error('Failed to get image after {} attempts'.format(retries + 1))
