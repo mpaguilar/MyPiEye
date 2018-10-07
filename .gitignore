@@ -4,3 +4,4 @@ __pycache__
 dist
 MyPiEye.egg-info
 build
+*.log
