@@ -23,10 +23,7 @@ class MainApp(object):
             camera=config['camera']
         )
 
-        # motion = MotionDetect()
-
     def start(self):
-
         self.camera.init_camera()
 
     def check(self):
