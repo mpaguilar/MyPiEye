@@ -21,9 +21,10 @@ class MainApp(object):
         self.config = config
 
         # instanciates, but doesn't initialize
+        camera_id = literal_eval(config['camera'])
         self.camera = UsbCamera(
             resolution=config['resolution'],
-            camera=config['camera']
+            camera=camera_id
         )
 
         camera_settings = config.get('iniconfig', {})
@@ -41,7 +42,8 @@ class MainApp(object):
 
         self.motiondetect = MotionDetect(
             workdir=config['workdir'],
-            minsize=minsizes.get('minsize', 0),
+            # ini entries are always read as strings
+            minsize=literal_eval(minsizes.get('minsize', '0')),
             ignore_boxes=ignore_boxes
         )
 
