@@ -5,7 +5,7 @@ import sys
 import platform
 
 import CLI
-from MainApp import MainApp
+from main_app import MainApp
 
 log = logging.getLogger(__name__)
 
