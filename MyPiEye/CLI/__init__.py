@@ -1,6 +1,6 @@
 import logging
 from colorama import init, Fore, Back, Style
-from os.path import exists
+from os.path import exists, isdir, abspath
 import configparser
 
 init()
@@ -58,6 +58,7 @@ def enable_log(fmt='[%(asctime)s] %(levelname)s %(module)s %(message)s',
     """
     lgr = logging.getLogger()
     lgr.handlers.clear()
+    logfilename = abspath(filename)
 
     if enable_color:
         loghandler = logging.StreamHandler()
@@ -65,8 +66,8 @@ def enable_log(fmt='[%(asctime)s] %(levelname)s %(module)s %(message)s',
         loghandler.setFormatter(logfmt)
         lgr.addHandler(loghandler)
 
-    if filename is not None:
-        fhandler = logging.FileHandler(filename)
+    if filename is not None and filename != '':
+        fhandler = logging.FileHandler(logfilename)
         logfmt = logging.Formatter(fmt)
         fhandler.setFormatter(logfmt)
         lgr.addHandler(fhandler)
@@ -87,8 +88,10 @@ def set_loglevel(level_str):
 
 def load_config(ctx, param, config_filename):
     """
-    Called by Click arg parser when an ini is passed in. It doesn't use any Click variables, and
-    can be used for any ini file. Returns the config as a dict.
+    Called by Click arg parser when an ini is passed in.
+    Merges the [global] ini configuration with the cli flags,
+    and adds sections from the ini file.
+    Returns the config as a dict.
     :param ctx: Click context, may be None
     :param param: Click passes the parameter name, may be None
     :param config_filename: The ini file to process
@@ -117,5 +120,13 @@ def load_config(ctx, param, config_filename):
                     ret[sec][key] = cfgparse[sec][key]
         else:
             raise FileNotFoundError('{} was not found'.format(config_filename))
+
+    global_settings = ret.get('global', None)
+    if global_settings is None:
+        log.warning('No [global] section found in .ini')
+        ret['global'] = {}
+
+    ctx.params.update(ret['global'])
+    del ret['global']
 
     return ret

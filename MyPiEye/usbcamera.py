@@ -11,7 +11,13 @@ class UsbCamera(object):
         self.camera_id = camera
         self.camera = None
         self.is_open = False
-        self.resolution = resolution
+
+        self.resolution = (640, 480, 26)
+
+        if resolution == '1080p':
+            self.resolution = (1920, 1080, 26)
+        elif resolution == '720p':
+            self.resolution = (1280, 720, 26)
 
     def init_camera(self):
         """
@@ -45,6 +51,7 @@ class UsbCamera(object):
         if self.camera_id is not None:
             log.warning('Using camera {}'.format(self.camera_id))
             self.camera = cv2.VideoCapture(self.camera_id)
+
             x, y, fps = self.resolution
             self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, x)
             self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, y)

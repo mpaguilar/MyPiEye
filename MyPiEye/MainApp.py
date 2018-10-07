@@ -1,6 +1,7 @@
 from os.path import dirname, basename, exists
 import logging
 import CLI
+from motion_detect import MotionDetect
 
 from usbcamera import UsbCamera
 
@@ -22,9 +23,9 @@ class MainApp(object):
             camera=config['camera']
         )
 
+        # motion = MotionDetect()
+
     def start(self):
-
-
 
         self.camera.init_camera()
 
@@ -73,3 +74,41 @@ class MainApp(object):
             ret = False
 
         return ret
+
+    def watch_for_motions(self):
+        """
+        Main loop for watching for changes
+
+        :return: Yields tuple of changes
+        """
+
+        try:
+
+            md = MotionDetect(workdir=self.workdir, show_timings=self.show_timings)
+
+            while True:
+
+                cfg = config(self.ini_file)
+                md.set_ignore(int(cfg['minsize']), cfg['ignore'], cfg['min_height'], cfg['min_width'])
+
+                if not os.path.exists(self.workdir):
+                    os.makedirs(self.workdir)
+
+                current_img = self.imgread.get_image()
+                if current_img is None:
+                    log.error('Failed to get image')
+                    sleep(1)
+                    continue
+
+                motion, dtstamp, nobox_name, box_name, movements = md.motions(
+                    current_img)
+
+                if motion:
+                    yield (dtstamp, nobox_name, box_name, movements)
+                    # sleep(.3)
+
+                sleep(.1)
+        finally:
+            log.warning('Shutting down queue')
+            self.file_queue.put(None)
+            self.imgread.close_camera()

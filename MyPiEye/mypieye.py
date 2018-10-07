@@ -9,59 +9,63 @@ from MainApp import MainApp
 
 log = logging.getLogger(__name__)
 
-windows_defaults = {
+windows_settings = {
     'workdir': 'c:/temp',
     'savedir': 'c:/temp'
 }
 
-linux_defaults = {
+linux_settings = {
     'workdir': '/tmp/snaps',
     'savedir': None
 }
 
-global_defaults = {
+global_settings = {
     'gdrive': None,
-    'url': None,
     'camera': '0',
     'resolution': '720p',
     'show_timings': False,
     'logfile': None,
     'loglevel': 'DEBUG',
-    'color': True,
+    'color': False,
     'config': 'mypieye.ini'
 }
 
-defaults = windows_defaults
+settings = windows_settings
 if platform.system() == 'Linux':
-    defaults = linux_defaults
+    defaults = linux_settings
 
-defaults.update(global_defaults)
+settings.update(global_settings)
 
 
 @click.command()
 @click.option('--loglevel', default='CRITICAL',
               type=click.Choice(CLI.LOG_LEVELS),
               help='python log levels')
-@click.option('--logfile', default=defaults['logfile'], help="output log file")
-@click.option('--color/--no-color', default=defaults['color'], help='Pretty color output')
-@click.option('--config',
-              default=defaults['config'], help='key/val (.ini) config file', callback=CLI.load_config)
-def mypieye(**gconfig):
+@click.option('--logfile', default=settings['logfile'], help="output log file")
+@click.option('--color/--no-color', default=settings['color'], help='Pretty color output')
+@click.option('--iniconfig',
+              default=settings['config'], help='key/val (.ini) config file', callback=CLI.load_config)
+def mypieye(**cli_flags):
     """Start capturing and watching"""
 
+    settings.update(cli_flags)
+
     # let's just assume these are okay
-    loglevel = gconfig['loglevel']
-    color = gconfig['color']
-    logfile = gconfig['logfile']
+    loglevel = settings['loglevel']
+    color = settings['color']
+    logfile = settings['logfile']
 
     CLI.set_loglevel(loglevel)
-    CLI.enable_log(filename=logfile, enable_color=color)
+    if not CLI.enable_log(filename=logfile, enable_color=color):
+        log.error('Error opening logger')
+        sys.exit(1)
+
     log.info('Starting...')
 
-    mainapp = MainApp(gconfig)
+    mainapp = MainApp(settings)
     if not mainapp.check():
         log.critical('Start checks failed')
-        sys.exit(1)
+        sys.exit(2)
 
     mainapp.start()
     sys.exit(0)
