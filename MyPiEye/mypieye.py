@@ -46,7 +46,11 @@ settings.update(global_settings)
 @click.option('--iniconfig',
               default=settings['config'], help='key/val (.ini) config file', callback=CLI.load_config)
 def mypieye(**cli_flags):
-    """Start capturing and watching"""
+    """
+    Start capturing and watching.
+    Exit codes greater than zero are a command parsing error
+    Exit codes less than zero are from the app.
+    """
 
     settings.update(cli_flags)
 
@@ -57,17 +61,20 @@ def mypieye(**cli_flags):
 
     CLI.set_loglevel(loglevel)
     if not CLI.enable_log(filename=logfile, enable_color=color):
-        log.error('Error opening logger')
-        sys.exit(1)
+        log.critical('Error opening logger')
+        sys.exit(-2)
 
     log.info('Starting...')
 
     mainapp = MainApp(settings)
     if not mainapp.check():
         log.critical('Start checks failed')
-        sys.exit(2)
+        sys.exit(-3)
 
-    mainapp.start()
+    if not mainapp.start():
+        log.critical('Failed to start main app')
+        sys.exit(-4)
+
     sys.exit(0)
 
 

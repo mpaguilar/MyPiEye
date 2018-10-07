@@ -33,7 +33,7 @@ class ColorLogFormatter(logging.Formatter):
 
         if 50 == record.levelno:
             fore = Back.RED + Fore.BLACK
-            sup = " *** " + sup + " *** "
+            # sup = " *** " + sup + " *** "
 
         return fore + sup + Fore.RESET + Style.RESET_ALL
 

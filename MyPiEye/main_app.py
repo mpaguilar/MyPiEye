@@ -1,7 +1,8 @@
-from os.path import dirname, basename, exists
+from os.path import exists
 import logging
-import CLI
 from motion_detect import MotionDetect
+from ast import literal_eval
+from time import sleep
 
 from usbcamera import UsbCamera
 
@@ -18,13 +19,42 @@ class MainApp(object):
         """
 
         self.config = config
+
+        # instanciates, but doesn't initialize
         self.camera = UsbCamera(
             resolution=config['resolution'],
             camera=config['camera']
         )
 
+        camera_settings = config.get('iniconfig', {})
+
+        # convert the ini string key/val entries into a list of tuples
+        ignore_dict = camera_settings.get('ignore', {})
+        ignore_boxes = []
+
+        for _, v in ignore_dict.items():
+            val = literal_eval(v)
+            ignore_boxes.append(val)
+
+        # get the minimum sizes
+        minsizes = camera_settings.get('minsizes', {})
+
+        self.motiondetect = MotionDetect(
+            workdir=config['workdir'],
+            minsize=minsizes.get('minsize', 0),
+            ignore_boxes=ignore_boxes
+        )
+
     def start(self):
-        self.camera.init_camera()
+        try:
+            if not self.camera.init_camera():
+                log.error('Failed to open camera')
+                return False
+
+            self.watch_for_motions()
+        finally:
+            log.warning('Shutting down')
+            self.camera.close_camera()
 
     def check(self):
         """
@@ -79,33 +109,26 @@ class MainApp(object):
         :return: Yields tuple of changes
         """
 
-        try:
+        retries = 0
 
-            md = MotionDetect(workdir=self.workdir, show_timings=self.show_timings)
+        while True and retries < 3:
+            current_img = self.camera.get_image()
+            if current_img is None:
+                log.error('Failed to get image')
+                sleep(1)
+                retries += 1
+                continue
 
-            while True:
+            retries = 0
 
-                cfg = config(self.ini_file)
-                md.set_ignore(int(cfg['minsize']), cfg['ignore'], cfg['min_height'], cfg['min_width'])
+            motion, dtstamp, nobox_name, box_name, movements = self.motiondetect.motions(
+                current_img)
 
-                if not os.path.exists(self.workdir):
-                    os.makedirs(self.workdir)
+            if motion:
+                # yield (dtstamp, nobox_name, box_name, movements)
+                log.debug('image captured')
 
-                current_img = self.imgread.get_image()
-                if current_img is None:
-                    log.error('Failed to get image')
-                    sleep(1)
-                    continue
+            sleep(.1)
 
-                motion, dtstamp, nobox_name, box_name, movements = md.motions(
-                    current_img)
-
-                if motion:
-                    yield (dtstamp, nobox_name, box_name, movements)
-                    # sleep(.3)
-
-                sleep(.1)
-        finally:
-            log.warning('Shutting down queue')
-            self.file_queue.put(None)
-            self.imgread.close_camera()
+        if retries >= 2:
+            log.error('Failed to get image after {} attempts'.format(retries + 1))

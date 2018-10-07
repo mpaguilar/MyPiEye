@@ -36,7 +36,9 @@ class UsbCamera(object):
             camopen = self._init_camera()
 
         if retry >= 3:
-            raise Exception('Failed to open camera')
+            return False
+
+        return True
 
 
     def _init_camera(self):
@@ -48,8 +50,10 @@ class UsbCamera(object):
         False if attempting to open the camera fails
         """
 
+        log.info('Using OpenCV version {}.{}'.format(cv2.getVersionMajor(), cv2.getVersionMinor()))
+
         if self.camera_id is not None:
-            log.warning('Using camera {}'.format(self.camera_id))
+            log.info('Using camera {}'.format(self.camera_id))
             self.camera = cv2.VideoCapture(self.camera_id)
 
             x, y, fps = self.resolution

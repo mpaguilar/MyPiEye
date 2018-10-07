@@ -15,14 +15,13 @@ class MotionDetect:
 
     """
 
-    def __init__(self, workdir='tmp', minsize=0, ignore_boxes=[], show_timings=False):
+    def __init__(self, workdir, minsize, ignore_boxes):
         """
         Constructor
 
         :param workdir: where files will be copied for other modules
         :param minsize: the smallest box size
         :param ignore_boxes: a list of boxes to ignore
-        :param show_timings: for debugging
         """
 
         self.workdir = workdir
@@ -34,8 +33,6 @@ class MotionDetect:
         self.prev_filename = None
         self.current_filename = None
         self.del_filename = None
-
-        self.show_timings = show_timings
 
         self.prev_image = None
 
@@ -83,47 +80,39 @@ class MotionDetect:
         :return: Tuple with result, and changes if any
         """
         movements = []
-        start_time = datetime.now()
 
-        try:
+        gray1 = self.make_gray(img1)
+        gray2 = self.make_gray(img2)
 
-            # copied = img2.copy()
+        frame_diff = cv2.absdiff(gray1, gray2)
+        thresh = cv2.threshold(frame_diff, 25, 255, cv2.THRESH_BINARY)
+        thresh = thresh[1]
 
-            gray1 = self.make_gray(img1)
-            gray2 = self.make_gray(img2)
+        thresh = cv2.dilate(thresh, None, iterations=2)
+        contours = cv2.findContours(
+            thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
 
-            frame_diff = cv2.absdiff(gray1, gray2)
-            thresh = cv2.threshold(frame_diff, 25, 255, cv2.THRESH_BINARY)
-            thresh = thresh[1]
+        if 0 == len(contours):
+            return (False, [])
 
-            thresh = cv2.dilate(thresh, None, iterations=2)
-            contours = cv2.findContours(
-                thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
+        for c in contours:
+            size = cv2.contourArea(c)
+            rect = cv2.boundingRect(c)
 
-            if 0 == len(contours):
-                return (False, [])
+            if self.ignore(rect, size):
+                continue
 
-            for c in contours:
-                size = cv2.contourArea(c)
-                rect = cv2.boundingRect(c)
+            movements.append({
+                'rect': rect,
+                'size': size
+            })
 
-                if self.ignore(rect, size):
-                    continue
+        if 0 == len(movements):
+            return False, []
 
-                movements.append({
-                    'rect': rect,
-                    'size': size
-                })
+        return True, movements
 
-            if 0 == len(movements):
-                return (False, [])
 
-            return (True, movements)
-        finally:
-            end_time = datetime.now()
-            comparison_time = end_time - start_time
-            if self.show_timings:
-                log.debug("Time comparison: {}".format(comparison_time))
 
     def compare_files(self, file1, file2):
         """
@@ -240,7 +229,7 @@ class MotionDetect:
         :return: True if ignored.
         """
 
-        if size < self.minsize:
+        if self.minsize != 0 and size < self.minsize:
             return True
 
         x, y, w, h = movement
