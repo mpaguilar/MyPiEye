@@ -3,9 +3,9 @@ import logging
 from motion_detect import MotionDetect
 from ast import literal_eval
 from time import sleep
-import datetime
+from os import remove
 
-from storage import local_save
+from storage import save_files
 
 from concurrent.futures import ProcessPoolExecutor
 
@@ -70,25 +70,41 @@ class MainApp(object):
             log.warning('Waiting on external process shutdown')
             self.executor.shutdown()
 
-    def save_files(self, box_name, nobox_name, capture_dt):
+    def delete_tmp(self, fut):
         """
-        Sends file details to the executor
+        Deletes tmp files. Should be attached to the future.
+
+        :param fut: A future with `box_name` and `nobox_name` properties attached
+        :return: None
+        """
+
+        error = fut.exception()
+        if error:
+            log.error('Error copying files')
+
+        log.debug('Removing {}'.format(fut.box_name))
+        remove(fut.box_name)
+        log.debug('Removing {}'.format(fut.nobox_name))
+        remove(fut.nobox_name)
+
+    def store_files(self, box_name, nobox_name, capture_dt):
+        """
+        Sends file details to the executor.
+
         :param box_name: the path to the temporary annotated file
         :param nobox_name: the path to the temporary clean file
         :param capture_dt: a datetime when motion was detected
         :return: None
         """
 
-        if self.config.get('savedir', False):
-            subdir = capture_dt.strftime('%y%m%d')
+        subdir = capture_dt.strftime('%y%m%d')
 
-            fut = self.executor.submit(
-                local_save, self.config['savedir'], box_name, nobox_name, subdir)
+        res = self.executor.submit(
+            save_files, self.config['savedir'], subdir=subdir, box_name=box_name, nobox_name=nobox_name)
 
-            box_path, nobox_path = fut.result()
-
-            log.debug('Saved box to {}'.format(box_path))
-            log.debug('Saved nobox to {}'.format(nobox_path))
+        res.box_name = box_name
+        res.nobox_name = nobox_name
+        res.add_done_callback(self.delete_tmp)
 
     def watch_for_motions(self):
         """
@@ -115,7 +131,7 @@ class MainApp(object):
             if motion:
                 # yield (dtstamp, nobox_name, box_name, movements)
                 log.debug('image captured')
-                self.save_files(box_name=box_name, nobox_name=nobox_name, capture_dt=capture_dt)
+                self.store_files(box_name=box_name, nobox_name=nobox_name, capture_dt=capture_dt)
 
             sleep(.1)
 

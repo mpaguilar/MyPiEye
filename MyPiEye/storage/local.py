@@ -16,7 +16,7 @@ def local_save(savedir, box_name, nobox_name, subdirectory):
     :param nobox_name: the filename of a clean image
     :param subdirectory: the subdirectory to store them in
 
-    :return: tuple of resolved filenames. Raises if the base directory doesn't exist
+    :return: tuple of resolved filenames. Raises if the base directory doesn't exist.
     """
 
     if not exists(savedir):
