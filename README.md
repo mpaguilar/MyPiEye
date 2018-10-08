@@ -4,6 +4,10 @@ Compares image files, uses opencv to determine if any motion happened, and if so
 
 ## NOTE: this isn't ready. I'm converting it from a much messier project.
 
+If you want to use it, it works. It will capture images and store them to the local drive. Getting it set up on a PC is still more work than it should be, and I'm hoping there is a wheel for opencv on RPi.
+
+Work in progress.
+
 ## RPi building instructions:
 
 Taken from ```https://www.pyimagesearch.com/2016/04/18/install-guide-raspberry-pi-3-raspbian-jessie-opencv-3/```
