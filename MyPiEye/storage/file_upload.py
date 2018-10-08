@@ -95,7 +95,7 @@ class FileUpload(Process):
                  '{}/nobox/{}'.format(savedir, basename(nobox_name)))
 
     def google_upload(self, box_name, folder):
-        # gdrive.put_image('D:/OneDrive/motion/box/180307.153658.849261.box.jpg', 'xyz')
+
         save_folder = self.gdrive_folder + '/{}'.format(folder)
         log.debug("Uploading {} to google/{}".format(box_name, save_folder))
 
@@ -107,7 +107,7 @@ class FileUpload(Process):
             log.error('500 error uploading')
         except Exception as e:
             log.critical('Unexpected! {}'.format(e))
-            raise(e)
+            raise e
 
     def upload_file(self, box_name, nobox_name, folder):
 

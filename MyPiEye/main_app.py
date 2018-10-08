@@ -4,6 +4,8 @@ from motion_detect import MotionDetect
 from ast import literal_eval
 from time import sleep
 
+from concurrent.futures import ProcessPoolExecutor
+
 from usbcamera import UsbCamera
 
 log = logging.getLogger(__name__)
@@ -47,6 +49,8 @@ class MainApp(object):
             ignore_boxes=ignore_boxes
         )
 
+        self.executor = ProcessPoolExecutor(max_workers=2)
+
     def start(self):
         try:
             if not self.camera.init_camera():
@@ -57,6 +61,8 @@ class MainApp(object):
         finally:
             log.warning('Shutting down')
             self.camera.close_camera()
+            log.warning('Waiting on external process shutdown')
+            self.executor.shutdown()
 
     def watch_for_motions(self):
         """
