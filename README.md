@@ -4,7 +4,8 @@ Compares image files, uses opencv to determine if any motion happened, and if so
 
 ## NOTE: this isn't ready. I'm converting it from a much messier project.
 
-If you want to use it, it works. It will capture images and store them to the local drive. Getting it set up on a PC is still more work than it should be, and I'm hoping there is a wheel for opencv on RPi.
+If you want to use it, it works. It will capture images, check for differences, and store them to the local drive. 
+Getting it set up on a PC is still more work than it should be, and I'm hoping there is a wheel for opencv on RPi.
 
 Work in progress.
 
@@ -22,7 +23,7 @@ sudo apt-get install libatlas-base-dev gfortran
 sudo apt-get install python2.7-dev python3-dev
 ```
 
-Get the source code, because there isn't a pip package:
+Get the source code, because there isn't a pip package for OpenCV on RPi:
 
 ```
 mkdir opencv_work
