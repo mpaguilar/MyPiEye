@@ -2,6 +2,7 @@ import unittest
 from unittest import mock
 
 from main_app import MainApp, UsbCamera
+from motion_detect import MotionDetect
 
 
 config = {'workdir': 'd:/tmp', 'savedir': 'd:/tmp', 'gdrive': 'mypieye_test', 'camera': '0',
@@ -19,6 +20,9 @@ class MainAppTests(unittest.TestCase):
         app = MainApp(config)
 
         self.assertIsNotNone(app)
+        self.assertIsInstance(app.camera, UsbCamera)
+        self.assertDictEqual(app.config, config)
+        self.assertIsInstance(app.motiondetect, MotionDetect)
 
     def test_start(self):
         app = MainApp(config)

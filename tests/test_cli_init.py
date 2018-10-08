@@ -14,7 +14,7 @@ class CliTests(unittest.TestCase):
         fake_ctx = mock.Mock()
         fake_ctx.params = {'loglevel': 'CRITICAL', 'logfile': None, 'color': False}
 
-        ret = CLI.load_config(fake_ctx, None, '../MyPiEye/mypieye.ini')
+        ret = CLI.load_config(fake_ctx, None, 'data/fake.ini')
 
         goodret = {'minsizes': {'minsize': '1500', 'min_width': '100', 'min_height': '50'},
                    'ignore': {'trees': '(0, 0, 1980, 500)', 'lbush': '(648, 537, 448, 221)',
