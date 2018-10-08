@@ -157,17 +157,17 @@ class MotionDetect:
 
         :param current_img: CV image
         :return: a tuple containing the result, and if True,
-            the timestamp the image was processed, a filename for the current image,
+            a datetime when the image was processed, a filename for the current image,
             a filename for the annotated image, and a list of motions detected as boxes.
 
         """
 
         ret = (False, '', '', '', '')
 
-        n = datetime.utcnow()
-        ymd = n.strftime('%y%m%d')
-        hms = n.strftime('%H%M%S.%f')
-        dtstamp = n.strftime('%y/%m/%d %H:%M:%S.%f')
+        dtnow = datetime.utcnow()
+        ymd = dtnow.strftime('%y%m%d')
+        hms = dtnow.strftime('%H%M%S.%f')
+        dtstamp = dtnow.strftime('%y/%m/%d %H:%M:%S.%f')
 
         if 0 == len(current_img):
             log.error('Invalid image: {}'.format(current_img))
@@ -196,7 +196,7 @@ class MotionDetect:
                 cv2.imwrite(box_fname, with_box)
                 cv2.imwrite(orig_fname, current_img)
 
-                ret = (True, dtstamp, orig_fname, box_fname, movements)
+                ret = (True, dtnow, orig_fname, box_fname, movements)
 
             # self.del_filename = self.prev_filename
 

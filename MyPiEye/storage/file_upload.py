@@ -1,11 +1,7 @@
 from shutil import copyfile
-from os.path import dirname, basename, exists
+from os.path import basename, exists
 from os import remove, makedirs
 from googleapiclient.errors import HttpError
-
-from multiprocessing import Process
-
-from time import sleep
 
 import logging
 
@@ -17,14 +13,11 @@ APPLICATION_NAME = 'MyPiEye Motion Detection'
 log = logging.getLogger(__name__)
 
 
-class FileUpload(Process):
+class FileUpload(object):
     """
-    Called for multiprocessing.
+    Manages file uploads. Must be importable for multiprocessing.
     """
-    def __init__(self, file_queue, savedir=None, gdrive_folder=None):
-
-        Process.__init__(self)
-        self.file_queue = file_queue
+    def __init__(self, savedir=None, gdrive_folder=None):
 
         self.gdrive = None
         self.savedir = None
@@ -39,36 +32,16 @@ class FileUpload(Process):
             log.info('Save to directory: {}'.format(savedir))
             self.savedir = savedir
 
-    # per-instance initialization needs to occur here
-    def run(self):
-        if self.gdrive_folder:
-            self.init_google()
-
-        while True:
-            next_file = self.file_queue.get()
-            log.debug('Received file to upload')
-
-            if next_file is None:
-                self.file_queue.task_done()
-                log.warning("Stopping upload queue")
-                break
-            box_name, nobox_name, folder = next_file
-
-            self.upload_file(box_name, nobox_name, folder)
-
-            self.file_queue.task_done()
-            sleep(.2)
-
     def init_google(self):
         self.gdrive = GDrive(SCOPES, APPLICATION_NAME,
-                             'creds/motion_detect_app.json', 'creds/motion_detect_user.json')
+                             'creds/mypieye_app.json', 'creds/mypieye_user.json')
 
     def copy_file(self, box_name, nobox_name, folder):
         """
 
-        :param box_name:
-        :param nobox_name:
-        :param folder:
+        :param box_name: the filename of the image with boxes
+        :param nobox_name: the filename of a clean image
+        :param folder: the subfolder to store them in
         :return:
         """
 
@@ -107,7 +80,7 @@ class FileUpload(Process):
             log.error('500 error uploading')
         except Exception as e:
             log.critical('Unexpected! {}'.format(e))
-            raise e
+            # raise e
 
     def upload_file(self, box_name, nobox_name, folder):
 

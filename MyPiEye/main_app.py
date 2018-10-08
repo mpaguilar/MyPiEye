@@ -3,6 +3,9 @@ import logging
 from motion_detect import MotionDetect
 from ast import literal_eval
 from time import sleep
+import datetime
+
+from storage import local_save
 
 from concurrent.futures import ProcessPoolExecutor
 
@@ -49,6 +52,9 @@ class MainApp(object):
             ignore_boxes=ignore_boxes
         )
 
+        # self.check should have ensured it exists
+        self.savedir = config['savedir']
+        # self.fileupload = FileUpload(savedir=savedir)
         self.executor = ProcessPoolExecutor(max_workers=2)
 
     def start(self):
@@ -63,6 +69,26 @@ class MainApp(object):
             self.camera.close_camera()
             log.warning('Waiting on external process shutdown')
             self.executor.shutdown()
+
+    def save_files(self, box_name, nobox_name, capture_dt):
+        """
+        Sends file details to the executor
+        :param box_name: the path to the temporary annotated file
+        :param nobox_name: the path to the temporary clean file
+        :param capture_dt: a datetime when motion was detected
+        :return: None
+        """
+
+        if self.config.get('savedir', False):
+            subdir = capture_dt.strftime('%y%m%d')
+
+            fut = self.executor.submit(
+                local_save, self.config['savedir'], box_name, nobox_name, subdir)
+
+            box_path, nobox_path = fut.result()
+
+            log.debug('Saved box to {}'.format(box_path))
+            log.debug('Saved nobox to {}'.format(nobox_path))
 
     def watch_for_motions(self):
         """
@@ -83,12 +109,13 @@ class MainApp(object):
 
             retries = 0
 
-            motion, dtstamp, nobox_name, box_name, movements = self.motiondetect.motions(
+            motion, capture_dt, nobox_name, box_name, movements = self.motiondetect.motions(
                 current_img)
 
             if motion:
                 # yield (dtstamp, nobox_name, box_name, movements)
                 log.debug('image captured')
+                self.save_files(box_name=box_name, nobox_name=nobox_name, capture_dt=capture_dt)
 
             sleep(.1)
 
@@ -122,10 +149,12 @@ class MainApp(object):
         # if so, this will have to change
 
         # TODO: a quick probe for connectivity
-        gdrive = self.config.get('gdrive', None)
-        if gdrive is None:
-            log.error('GDrive is required')
-            ret = False
+        # currently unused
+        # gdrive = self.config.get('gdrive', None)
+        # if gdrive is None:
+        #     log.error('GDrive is required')
+        #     ret = False
+        log.warning('*** GDrive is disabled')
 
         camera = self.config.get('camera', None)
         if camera is None:
