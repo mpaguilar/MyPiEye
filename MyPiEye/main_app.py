@@ -54,10 +54,14 @@ class MainApp(object):
 
         # self.check should have ensured it exists
         self.savedir = config['savedir']
-        # self.fileupload = FileUpload(savedir=savedir)
         self.executor = ProcessPoolExecutor(max_workers=2)
 
     def start(self):
+        """
+        Initializes the camera, and starts the main loop. Cleans up when it stops.
+
+        :return: False on fail, True if the loop ends.
+        """
         try:
             if not self.camera.init_camera():
                 log.error('Failed to open camera')
@@ -69,6 +73,8 @@ class MainApp(object):
             self.camera.close_camera()
             log.warning('Waiting on external process shutdown')
             self.executor.shutdown()
+
+        return True
 
     def delete_tmp(self, fut):
         """
@@ -82,10 +88,18 @@ class MainApp(object):
         if error:
             log.error('Error copying files')
 
-        log.debug('Removing {}'.format(fut.box_name))
-        remove(fut.box_name)
-        log.debug('Removing {}'.format(fut.nobox_name))
-        remove(fut.nobox_name)
+        try:
+            log.debug('Removing {}'.format(fut.box_name))
+            remove(fut.box_name)
+        except FileNotFoundError as fnfe:
+            log.error('Could not delete file: {}'.format(fnfe.filename))
+
+        try:
+            log.debug('Removing {}'.format(fut.nobox_name))
+            remove(fut.nobox_name)
+        except FileNotFoundError as fnfe:
+            log.error('Could not delete file: {}'.format(fnfe.filename))
+
 
     def store_files(self, box_name, nobox_name, capture_dt):
         """

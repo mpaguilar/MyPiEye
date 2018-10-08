@@ -92,7 +92,7 @@ def load_config(ctx, param, config_filename):
     Merges the [global] ini configuration with the cli flags,
     and adds sections from the ini file.
     Returns the config as a dict.
-    :param ctx: Click context, may be None
+    :param ctx: Click context, the params attribute is used
     :param param: Click passes the parameter name, may be None
     :param config_filename: The ini file to process
     :return: The config as dict
