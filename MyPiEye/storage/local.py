@@ -1,6 +1,6 @@
 from shutil import copyfile
 from os.path import basename, exists
-from os import remove, makedirs
+from os import makedirs
 import logging
 
 log = logging.getLogger(__name__)
