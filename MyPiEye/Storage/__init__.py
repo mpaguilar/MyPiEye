@@ -5,7 +5,7 @@ from .local import local_save
 
 def save_files(savedir, subdir, box_name, nobox_name):
     """
-    Saves files to storage
+    Saves files to Storage
     :param savedir: the base directory
     :param box_name: the path to the temporary annotated file
     :param nobox_name: the path to the temporary clean file

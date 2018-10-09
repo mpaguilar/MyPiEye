@@ -1,15 +1,15 @@
 from os.path import exists
 import logging
-from motion_detect import MotionDetect
+from .motion_detect import MotionDetect
 from ast import literal_eval
 from time import sleep
 from os import remove
 
-from storage import save_files
+from MyPiEye.Storage import save_files
 
 from concurrent.futures import ProcessPoolExecutor
 
-from usbcamera import UsbCamera
+from .usbcamera import UsbCamera
 
 log = logging.getLogger(__name__)
 
@@ -99,7 +99,6 @@ class MainApp(object):
             remove(fut.nobox_name)
         except FileNotFoundError as fnfe:
             log.error('Could not delete file: {}'.format(fnfe.filename))
-
 
     def store_files(self, box_name, nobox_name, capture_dt):
         """

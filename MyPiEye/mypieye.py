@@ -4,8 +4,8 @@ import sys
 
 import platform
 
-import CLI
-from main_app import MainApp
+import MyPiEye.CLI as CLI
+from MyPiEye.main_app import MainApp
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ settings.update(global_settings)
 
 
 @click.command()
-@click.option('--loglevel', default='CRITICAL',
+@click.option('--loglevel', default='INFO',
               type=click.Choice(CLI.LOG_LEVELS),
               help='python log levels')
 @click.option('--logfile', default=settings['logfile'], help="output log file")
