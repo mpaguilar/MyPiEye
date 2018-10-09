@@ -1,7 +1,7 @@
 import logging
 import click
 import sys
-
+import signal
 import platform
 
 import MyPiEye.CLI as CLI
@@ -35,6 +35,11 @@ if platform.system() == 'Linux':
     defaults = linux_settings
 
 settings.update(global_settings)
+
+
+def clean_exit(sig, _):
+    log.critical('Program aborted with signal {}'.format(sig))
+    sys.exit(0)
 
 
 @click.command()
@@ -79,4 +84,5 @@ def mypieye(**cli_flags):
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, clean_exit)
     mypieye()
