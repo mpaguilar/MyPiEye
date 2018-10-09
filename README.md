@@ -31,7 +31,9 @@ There are three sections, `[global]`, `[minsizes]`, `[ignore]`.
 * `global` handles things like which camera to use, working and save directories.
 * `minsizes` sets the smallest "box" that will be captured. This helps prevent false positives 
 when a leaf scurries across your lawn.
-* `ignore` specfies boxes to ignore. The pattern is top-start, left-start, width, length. Multiple keys can be used, but they must be unique.
+* `ignore` specfies boxes to ignore. The pattern is top-start, left-start, width, length. 
+Multiple keys can be used, but they must be unique. This can be tricky, because the values depend on the
+capture resolution.
 
 ## RPi building instructions:
 
