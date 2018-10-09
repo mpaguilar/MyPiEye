@@ -57,6 +57,9 @@ def mypieye(**cli_flags):
     Exit codes less than zero are from the app.
     """
 
+    # handle Ctrl+C, so it doesn't give a stack dump.
+    signal.signal(signal.SIGINT, clean_exit)
+
     settings.update(cli_flags)
 
     # let's just assume these are okay
@@ -84,5 +87,4 @@ def mypieye(**cli_flags):
 
 
 if __name__ == '__main__':
-    signal.signal(signal.SIGINT, clean_exit)
     mypieye()
