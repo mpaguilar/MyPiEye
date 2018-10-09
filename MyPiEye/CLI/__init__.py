@@ -56,6 +56,13 @@ def enable_log(fmt='[%(asctime)s] %(levelname)s %(module)s %(message)s',
     :param filename: log file location
     :return: True
     """
+
+    if not enable_color and \
+            filename is None and \
+            filename != '':
+        logging.basicConfig(format=fmt)
+        return True
+
     lgr = logging.getLogger()
     lgr.handlers.clear()
     logfilename = abspath(filename)
