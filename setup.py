@@ -3,7 +3,7 @@ setup(
     name="MyPiEye",
     version="0.1",
     author="Michael Aguilar",
-    packages=find_packages(),
+    packages=find_namespace_packages('MyPiEye.*'),
 
     package_data={
         '': ['mypieye.ini']
@@ -12,11 +12,7 @@ setup(
         'console_scripts': [
             'mypieye = MyPiEye.mypieye:mypieye'
         ]
-    }
-)
-
-
-'''
+    },
     install_requires=[
         'apiclient==1.0.3',
         'cachetools==2.1.0',
@@ -40,4 +36,4 @@ setup(
         'uritemplate==3.0.0',
         'urllib3==1.23'
     ]
-'''
+)
