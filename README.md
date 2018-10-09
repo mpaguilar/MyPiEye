@@ -9,6 +9,30 @@ Getting it set up on a PC is still more work than it should be, and I'm hoping t
 
 Work in progress.
 
+## Setup and configuration
+
+Requires python 3.5 or greater.
+
+Installation on a PC is pretty simple. Run `setup.py install`, wait while it downloads everything, and
+you should be good to go by running `mypieye`. A virtual environment is recommended, of course.
+
+Installation on an RPi is a bit more involved. At the time of this writing, there isn't a wheel for OpenCV on ARM,
+so you have to build it. Detailed instructions can be found below.
+
+Configuration is mostly handled within an .ini file. 
+By default it will look for `mypieye.ini` in the current directory. It can also be specified at the command line with
+the `--iniconfig` switch.
+
+
+### Configuration file settings
+
+There are three sections, `[global]`, `[minsizes]`, `[ignore]`.
+
+* `global` handles things like which camera to use, working and save directories.
+* `minsizes` sets the smallest "box" that will be captured. This helps prevent false positives 
+when a leaf scurries across your lawn.
+* `ignore` specfies boxes to ignore. The pattern is top-start, left-start, width, length. Multiple keys can be used, but they must be unique.
+
 ## RPi building instructions:
 
 Taken from ```https://www.pyimagesearch.com/2016/04/18/install-guide-raspberry-pi-3-raspbian-jessie-opencv-3/```
@@ -34,7 +58,7 @@ wget -O opencv_contrib.zip https://github.com/Itseez/opencv_contrib/archive/3.1.
 unzip opencv_contrib.zip
 ```
 
-Install python dependencies:
+Install python dependencies (still needed? I dunno. Will check.):
 ```
 sudo pip3 install numpy
 sudo pip3 install matplotlib
@@ -62,7 +86,7 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
 ```
 Check the output for errors.
 
-Then run ```make```. This will take awhile. A long while - take a nap, or something.
+Then run ```make```. This will take awhile. A long while - take a nap, walk your dogs, or something.
 When that's done, install it.
 ```
 sudo make install
