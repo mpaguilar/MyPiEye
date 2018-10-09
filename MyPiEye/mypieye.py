@@ -26,7 +26,7 @@ global_settings = {
     'show_timings': False,
     'logfile': None,
     'loglevel': 'DEBUG',
-    'color': False,
+    'color': True,
     'config': 'mypieye.ini'
 }
 
