@@ -26,7 +26,7 @@ global_settings = {
     'show_timings': False,
     'logfile': None,
     'loglevel': 'DEBUG',
-    'color': True,
+    'color': False,
     'config': 'mypieye.ini'
 }
 
@@ -48,7 +48,7 @@ settings.update(global_settings)
 def mypieye(**cli_flags):
     """
     Start capturing and watching.
-    Exit codes greater than zero are a command parsing error
+    Exit codes greater than zero are a command parsing error.
     Exit codes less than zero are from the app.
     """
 

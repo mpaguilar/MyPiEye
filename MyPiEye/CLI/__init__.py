@@ -57,6 +57,8 @@ def enable_log(fmt='[%(asctime)s] %(levelname)s %(module)s %(message)s',
     :return: True
     """
 
+    # if there's no special requirements for logging
+    # we still want the formatting.
     if not enable_color and \
             filename is None and \
             filename != '':
