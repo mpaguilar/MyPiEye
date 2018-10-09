@@ -5,4 +5,3 @@ dist
 MyPiEye.egg-info
 build
 *.log
-setupenv
