@@ -4,15 +4,12 @@ setup(
     version="0.1",
     author="Michael Aguilar",
     packages=find_namespace_packages('MyPiEye.*'),
+    scripts=['MyPiEye/mypieye.py'],
 
     package_data={
         '': ['mypieye.ini']
     },
-    entry_points={
-        'console_scripts': [
-            'mypieye = MyPiEye.mypieye:mypieye'
-        ]
-    },
+
     install_requires=[
         'apiclient==1.0.3',
         'cachetools==2.1.0',

@@ -8,6 +8,16 @@ log = logging.getLogger(__name__)
 
 GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
 
+class GDriveStorage(object):
+
+    def __init__(self, gauth, gdrive_folder):
+        self.gauth = gauth
+        self.gdrive_folder = gdrive_folder
+
+
+    def upload_file(self, subdir, filename):
+
+
 
 class GDriveAuth(object):
     """
@@ -216,9 +226,9 @@ class GDriveAuth(object):
         return False
 
     @classmethod
-    def get_access_token(cls, client_id, client_secret, filename):
+    def init_gauth(cls, client_id, client_secret, filename):
         """
-        Helper for getting a token. This will prompt the user at the command line with validation code
+        Helper for getting an initialized object. This will prompt the user at the command line with validation code
         if one has not been set.
         :param client_id:
         :param client_secret:
@@ -251,4 +261,4 @@ class GDriveAuth(object):
 
             if validate_ret is True:
                 log.info('Application validated')
-                return gauth.access_token
+                return gauth

@@ -1,4 +1,3 @@
-from .file_upload import FileUpload
 from .google_drive import GDriveAuth
 from .local import local_save
 
