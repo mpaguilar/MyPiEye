@@ -56,7 +56,7 @@ class GDriveAuth(object):
             return True
 
         log.warning('access_token is invalid, attempting refresh')
-        return self.refresh_token()
+        return self.refresh_auth_token()
 
     def load_auth(self):
 
@@ -107,7 +107,7 @@ class GDriveAuth(object):
 
         return True
 
-    def refresh_token(self):
+    def refresh_auth_token(self):
         """
         Attempts to refresh existing token. If successful, updates the file.
         :return: True on success.
@@ -221,7 +221,7 @@ class GDriveAuth(object):
         :return:
         """
 
-        gauth = GDriveAuth(client_id, client_secret, filename)
+        gauth = cls(client_id, client_secret, filename)
 
         if gauth.init_auth():
             return gauth.access_token

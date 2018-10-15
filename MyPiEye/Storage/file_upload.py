@@ -1,7 +1,6 @@
 from shutil import copyfile
 from os.path import basename, exists
 from os import remove, makedirs
-from googleapiclient.errors import HttpError
 
 import logging
 
@@ -69,18 +68,7 @@ class FileUpload(object):
 
     def google_upload(self, box_name, folder):
 
-        save_folder = self.gdrive_folder + '/{}'.format(folder)
-        log.debug("Uploading {} to google/{}".format(box_name, save_folder))
-
-        try:
-            self.gdrive.put_image(box_name, save_folder)
-        except TimeoutError:
-            log.error('Upload timed out')
-        except HttpError:
-            log.error('500 error uploading')
-        except Exception as e:
-            log.critical('Unexpected! {}'.format(e))
-            # raise e
+        pass
 
     def upload_file(self, box_name, nobox_name, folder):
 
