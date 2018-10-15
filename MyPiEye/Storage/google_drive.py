@@ -18,12 +18,17 @@ class GDriveAuth(object):
      - access_token
      - expires_in
 
+    The easiest way to use it is to call the class method `py:func:get_access_token`. Note that this will prompt
+    the user at the command line if the app hasn't been authorized yet.
+
     Expected usage:
      - create object
      - call `py.func:init_auth`. If the app hasn't been validated, it will return False. Otherwise, use object `access_token`.
      - call `py:func:init_token`. This starts the authorization flow. Returns fields to be displayed to the user.
      - call `py:func:validate_token` in a loop, until `True` is returned.
      - Every so often, call `py:func:refresh_token`. Calling `init_auth` will work, too.
+
+    Access can be revoked at https://myaccount.google.com/permissions?pli=1
 
     """
 
