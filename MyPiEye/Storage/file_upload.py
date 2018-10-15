@@ -4,7 +4,7 @@ from os import remove, makedirs
 
 import logging
 
-from .google_drive import GDrive
+from .google_drive import GDriveAuth
 
 SCOPES = 'https://www.googleapis.com/auth/drive'
 APPLICATION_NAME = 'MyPiEye Motion Detection'

@@ -1,5 +1,5 @@
 from .file_upload import FileUpload
-from .google_drive import GDrive
+from .google_drive import GDriveAuth
 from .local import local_save
 
 
