@@ -1,6 +1,6 @@
 from os.path import exists
 import logging
-from .motion_detect import MotionDetect
+from motion_detect import MotionDetect
 from ast import literal_eval
 from time import sleep
 from os import remove
@@ -9,7 +9,7 @@ from MyPiEye.Storage import save_files
 
 from concurrent.futures import ProcessPoolExecutor
 
-from .usbcamera import UsbCamera
+from usbcamera import UsbCamera
 
 log = logging.getLogger(__name__)
 

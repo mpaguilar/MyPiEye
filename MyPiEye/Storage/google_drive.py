@@ -8,15 +8,64 @@ log = logging.getLogger(__name__)
 
 GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
 
+
 class GDriveStorage(object):
 
     def __init__(self, gauth, gdrive_folder):
         self.gauth = gauth
         self.gdrive_folder = gdrive_folder
+        self.headers = {
+            'Authorization': 'Bearer {}'.format(self.gauth.access_token)
+        }
+        self.gdrive_folder_id = None
+
+    def find_folder(self):
+        url = 'https://www.googleapis.com/drive/v3/files'
+        qry = "mimeType = 'application/vnd.google-apps.folder' " \
+              "and 'root' in parents and trashed = false and name = '{}'".format(self.gdrive_folder)
+
+        folder_res = requests.get(url, headers=self.headers, params={'q': qry})
+        folder_res.raise_for_status()
+        retval = folder_res.json()
+
+        assert len(retval['files']) == 1, 'Too many folders named {}'.format(self.gdrive_folder)
+
+        return retval
+
+    def create_folder(self):
+        data = {
+            'mimeType': 'application/vnd.google-apps.folder',
+            'name': self.gdrive_folder
+        }
+
+        url = 'https://www.googleapis.com/drive/v3/files'
+
+        hdrs = dict(self.headers)
+        hdrs['Content-Type'] = 'application/json'
+
+        create_res = requests.post(url, headers=hdrs, data=json.dumps(data))
+        create_res.raise_for_status()
+
+        retval = create_res.json()
+        self.gdrive_folder_id = retval['id']
+
+        return retval
+
+    def delete_folder(self):
+
+        if self.gdrive_folder_id is None:
+            log.error('Folder id is not set')
+            return None
+
+        url = 'https://www.googleapis.com/drive/v3/files/{}'.format(self.gdrive_folder_id)
+        delete_res = requests.delete(url, headers=self.headers)
+        delete_res.raise_for_status()
+
+        return True
 
 
     def upload_file(self, subdir, filename):
-
+        pass
 
 
 class GDriveAuth(object):
@@ -239,7 +288,7 @@ class GDriveAuth(object):
         gauth = cls(client_id, client_secret, filename)
 
         if gauth.init_auth():
-            return gauth.access_token
+            return gauth
 
         log.warning('Auth failed, attempting initial validation')
         url, ucode, dcode = gauth.init_token()
