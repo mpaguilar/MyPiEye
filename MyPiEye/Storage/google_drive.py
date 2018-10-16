@@ -19,21 +19,25 @@ class GDriveStorage(object):
         }
         self.gdrive_folder_id = None
 
-    def find_folder(self, all=False):
+    def find_folder(self, parent_id='root', name=None):
+
+        if name is None:
+            name = self.gdrive_folder
+
         url = 'https://www.googleapis.com/drive/v3/files'
         qry = "mimeType = 'application/vnd.google-apps.folder' " \
-              "and 'root' in parents and trashed = false and name = '{}'".format(self.gdrive_folder)
+              "and '{}' in parents and trashed = false and name = '{}'".format(parent_id, name)
 
         folder_res = requests.get(url, headers=self.headers, params={'q': qry})
         folder_res.raise_for_status()
         retval = folder_res.json()
 
-        if not all:
-            assert len(retval['files']) == 1, 'Too many folders named {}'.format(self.gdrive_folder)
+        assert len(retval['files']) <= 1, 'Too many folders named {}'.format(self.gdrive_folder)
 
         return retval
 
-    def create_folder(self):
+    def create_main_folder(self):
+
         data = {
             'mimeType': 'application/vnd.google-apps.folder',
             'name': self.gdrive_folder
@@ -52,11 +56,37 @@ class GDriveStorage(object):
 
         return retval
 
+    def create_subfolder(self, folder_name):
+        """
+        Creates a subfolder off of the main folder.
+        :param folder_name:
+        :return:
+        """
+
+        assert self.gdrive_folder_id is not None
+
+        data = {
+            'mimeType': 'application/vnd.google-apps.folder',
+            'name': folder_name,
+            'parents': [self.gdrive_folder_id]
+        }
+
+        url = 'https://www.googleapis.com/drive/v3/files'
+
+        hdrs = dict(self.headers)
+        hdrs['Content-Type'] = 'application/json'
+
+        create_res = requests.post(url, headers=hdrs, data=json.dumps(data))
+        create_res.raise_for_status()
+
+        retval = create_res.json()
+
+        return retval
+
     def delete_folder(self, folder_id=None):
 
-        if self.gdrive_folder_id is None and folder_id is None:
-            log.error('Folder id is not set')
-            return False
+        assert self.gdrive_folder_id is not None \
+               or folder_id is not None, 'Folder id is required'
 
         fid = folder_id
         if fid is None:
@@ -68,9 +98,42 @@ class GDriveStorage(object):
 
         return True
 
-
     def upload_file(self, subdir, filename):
-        pass
+        assert self.gdrive_folder_id is not None
+
+        log.debug('Uploading {}'.format(filename))
+
+        parent_id = None
+        parent = self.find_folder(parent_id=self.gdrive_folder_id, name=subdir)
+
+        if len(parent['files']) == 0:
+            ret = self.create_subfolder(subdir)
+            assert ret is not None
+            assert ret['id'] is not None and ret['id'] != ''
+            parent_id = ret['id']
+        else:
+            parent_id = parent[0]['id']
+
+        url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
+
+        hdrs = dict(self.headers)
+
+        metadata = {
+            'name': filename,
+            'title': filename,
+            'parents': [parent_id]
+        }
+
+        files = {
+            'data': ('metadata', json.dumps(metadata), 'application/json; charset=UTF-8'),
+            'file': (filename, open(filename, 'rb'), 'image/jpeg')
+        }
+
+        upload_res = requests.post(url, files=files, headers=hdrs)
+
+        retval = upload_res.json()
+
+        return retval
 
 
 class GDriveAuth(object):

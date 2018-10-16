@@ -40,14 +40,20 @@ class GDriveTests(unittest.TestCase):
         self.assertIsNotNone(gauth.refresh_token)
         self.assertIsNotNone(gauth.token_expires)
 
-    def test_folder(self):
+    @unittest.skipUnless(environ.get('INTEGRATION', False), 'Integration test')
+    def test_folder_creation(self):
+        """
+        Attempts to create main folder, subfolder, and then delete them.
+        :return:
+        """
+
         # create it
         gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
         gstorage = GDriveStorage(gauth, 'mypieye_test')
 
-        ret = gstorage.create_folder()
+        ret = gstorage.create_main_folder()
         self.assertIsNotNone(ret)
-        file_id = ret['id']
+        folder_id = ret['id']
 
         # find it
         ret = gstorage.find_folder()
@@ -55,9 +61,50 @@ class GDriveTests(unittest.TestCase):
         self.assertEqual(1, len(ret['files']))
 
         # did we find the folder we created?
-        self.assertEqual(file_id, ret['files'][0]['id'])
+        self.assertEqual(folder_id, ret['files'][0]['id'])
 
-        # delete it
+        # create a subfolder
+        ret = gstorage.create_subfolder('subfolder_test')
+        self.assertIsNotNone(ret)
+
+        subid = ret['id']
+
+        # find the subfolder
+        ret = gstorage.find_folder(parent_id=folder_id, name='subfolder_test')
+        self.assertIsNotNone(ret)
+        self.assertEqual(1, len(ret['files']))
+
+        # delete the subfolder
+        ret = gstorage.delete_folder(folder_id=subid)
+        self.assertTrue(ret)
+
+        # delete main folder
         ret = gstorage.delete_folder()
         self.assertTrue(ret)
+
+    def test_upload(self):
+        gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
+        gstorage = GDriveStorage(gauth, 'mypieye_test')
+
+        # find the main folder
+        ret = gstorage.find_folder('mypieye_test')
+        self.assertEqual(1, len(ret['files']))
+
+        # create the main folder
+        ret = gstorage.create_main_folder()
+        self.assertIsNotNone(ret)
+        folder_id = ret['id']
+
+        # upload the file
+        gstorage.upload_file('testsub', 'data/test_image.jpg')
+
+        # delete main folder
+        # ret = gstorage.delete_folder(folder_id)
+        # self.assertTrue(ret)
+
+
+
+
+
+
 
