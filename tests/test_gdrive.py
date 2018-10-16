@@ -18,10 +18,6 @@ class GDriveTests(unittest.TestCase):
     Expects a folder named `mypieye_test` off of the root.
     """
 
-    @classmethod
-    def tearDownClass(cls):
-        print('meh')
-
     @unittest.skipUnless(environ.get('INTEGRATION', False), 'Integration test')
     def test_auth(self):
         """

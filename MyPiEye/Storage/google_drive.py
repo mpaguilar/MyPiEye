@@ -19,7 +19,7 @@ class GDriveStorage(object):
         }
         self.gdrive_folder_id = None
 
-    def find_folder(self):
+    def find_folder(self, all=False):
         url = 'https://www.googleapis.com/drive/v3/files'
         qry = "mimeType = 'application/vnd.google-apps.folder' " \
               "and 'root' in parents and trashed = false and name = '{}'".format(self.gdrive_folder)
@@ -28,7 +28,8 @@ class GDriveStorage(object):
         folder_res.raise_for_status()
         retval = folder_res.json()
 
-        assert len(retval['files']) == 1, 'Too many folders named {}'.format(self.gdrive_folder)
+        if not all:
+            assert len(retval['files']) == 1, 'Too many folders named {}'.format(self.gdrive_folder)
 
         return retval
 
@@ -51,13 +52,17 @@ class GDriveStorage(object):
 
         return retval
 
-    def delete_folder(self):
+    def delete_folder(self, folder_id=None):
 
-        if self.gdrive_folder_id is None:
+        if self.gdrive_folder_id is None and folder_id is None:
             log.error('Folder id is not set')
-            return None
+            return False
 
-        url = 'https://www.googleapis.com/drive/v3/files/{}'.format(self.gdrive_folder_id)
+        fid = folder_id
+        if fid is None:
+            fid = self.gdrive_folder_id
+
+        url = 'https://www.googleapis.com/drive/v3/files/{}'.format(fid)
         delete_res = requests.delete(url, headers=self.headers)
         delete_res.raise_for_status()
 
