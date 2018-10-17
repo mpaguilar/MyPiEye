@@ -12,10 +12,44 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class GDriveTests(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
+        ret = GDriveStorage.create_main_folder(gauth, 'mypieye_test')
+
+        cls._folder_id = ret
+
+    @classmethod
+    def tearDownClass(cls):
+        gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
+        gstorage = GDriveStorage(gauth, 'mypieye_test')
+
+        ret = gstorage.delete_folder(cls._folder_id)
+
+        assert ret
+
+    def test_validated_auth(self):
+        # test validated app
+        gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
+        self.assertIsNotNone(gauth)
+        self.assertIsNotNone(gauth.access_token)
+        self.assertIsNotNone(gauth.refresh_token)
+        self.assertIsNotNone(gauth.token_expires)
+
+    def test_upload(self):
+        gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
+        gstorage = GDriveStorage(gauth, 'mypieye_test')
+
+        # upload the file
+        ret = gstorage.upload_file('testsub', 'data/test_image.jpg')
+        self.assertIsNotNone(ret)
+
+
+class GDriveFolderTests(unittest.TestCase):
     """
     Before running, be sure you want changes made to your gdrive.
     Will attempt to create a folder named 'mypieye_test' off of the root. It should not exist.
-    Expects a folder named `mypieye_test` off of the root.
     """
 
     @unittest.skipUnless(environ.get('INTEGRATION', False), 'Integration test')
@@ -32,30 +66,23 @@ class GDriveTests(unittest.TestCase):
         self.assertIsNotNone(gauth.refresh_token)
         self.assertIsNotNone(gauth.token_expires)
 
-    def test_validated_auth(self):
-        # test validated app
-        gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
-        self.assertIsNotNone(gauth)
-        self.assertIsNotNone(gauth.access_token)
-        self.assertIsNotNone(gauth.refresh_token)
-        self.assertIsNotNone(gauth.token_expires)
-
-    @unittest.skipUnless(environ.get('INTEGRATION', False), 'Integration test')
+    # @unittest.skipUnless(environ.get('INTEGRATION', False), 'Integration test')
     def test_folder_creation(self):
         """
         Attempts to create main folder, subfolder, and then delete them.
         :return:
         """
 
-        # create it
         gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
+
+        # create main folder
+        ret = GDriveStorage.create_main_folder(gauth, 'mypieye_test')
+        self.assertIsNotNone(ret)
+        folder_id = ret
+
         gstorage = GDriveStorage(gauth, 'mypieye_test')
 
-        ret = gstorage.create_main_folder()
-        self.assertIsNotNone(ret)
-        folder_id = ret['id']
-
-        # find it
+        # find main folder
         ret = gstorage.find_folder()
         self.assertIsNotNone(ret)
         self.assertEqual(1, len(ret['files']))
@@ -81,30 +108,3 @@ class GDriveTests(unittest.TestCase):
         # delete main folder
         ret = gstorage.delete_folder()
         self.assertTrue(ret)
-
-    def test_upload(self):
-        gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
-        gstorage = GDriveStorage(gauth, 'mypieye_test')
-
-        # find the main folder
-        ret = gstorage.find_folder('mypieye_test')
-        self.assertEqual(1, len(ret['files']))
-
-        # create the main folder
-        ret = gstorage.create_main_folder()
-        self.assertIsNotNone(ret)
-        folder_id = ret['id']
-
-        # upload the file
-        gstorage.upload_file('testsub', 'data/test_image.jpg')
-
-        # delete main folder
-        # ret = gstorage.delete_folder(folder_id)
-        # self.assertTrue(ret)
-
-
-
-
-
-
-

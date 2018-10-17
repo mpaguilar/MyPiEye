@@ -17,7 +17,11 @@ class GDriveStorage(object):
         self.headers = {
             'Authorization': 'Bearer {}'.format(self.gauth.access_token)
         }
-        self.gdrive_folder_id = None
+
+        basefolder = self.find_folder()['files']
+        assert len(basefolder) == 1, 'Found {} folders named {}'.format(len(basefolder), gdrive_folder)
+
+        self.gdrive_folder_id = basefolder[0]['id']
 
     def find_folder(self, parent_id='root', name=None):
 
@@ -36,25 +40,27 @@ class GDriveStorage(object):
 
         return retval
 
-    def create_main_folder(self):
+    @staticmethod
+    def create_main_folder(gauth, folder_name):
+
+        headers = {
+            'Authorization': 'Bearer {}'.format(gauth.access_token),
+            'Content-Type': 'application/json'
+        }
 
         data = {
             'mimeType': 'application/vnd.google-apps.folder',
-            'name': self.gdrive_folder
+            'name': folder_name
         }
 
         url = 'https://www.googleapis.com/drive/v3/files'
 
-        hdrs = dict(self.headers)
-        hdrs['Content-Type'] = 'application/json'
-
-        create_res = requests.post(url, headers=hdrs, data=json.dumps(data))
+        create_res = requests.post(url, headers=headers, data=json.dumps(data))
         create_res.raise_for_status()
 
         retval = create_res.json()
-        self.gdrive_folder_id = retval['id']
 
-        return retval
+        return retval['id']
 
     def create_subfolder(self, folder_name):
         """
@@ -99,7 +105,7 @@ class GDriveStorage(object):
         return True
 
     def upload_file(self, subdir, filename):
-        assert self.gdrive_folder_id is not None
+        assert self.gdrive_folder_id is not None, 'GDrive folder is not found'
 
         log.debug('Uploading {}'.format(filename))
 
@@ -113,6 +119,8 @@ class GDriveStorage(object):
             parent_id = ret['id']
         else:
             parent_id = parent[0]['id']
+
+        assert parent_id is not None, 'Parent id is None'
 
         url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
 
@@ -130,6 +138,7 @@ class GDriveStorage(object):
         }
 
         upload_res = requests.post(url, files=files, headers=hdrs)
+        upload_res.raise_for_status()
 
         retval = upload_res.json()
 
