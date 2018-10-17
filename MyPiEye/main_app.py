@@ -5,7 +5,7 @@ from time import sleep
 from os import remove
 from concurrent.futures import ProcessPoolExecutor
 
-from MyPiEye.Storage import save_files, ImageStorage
+from MyPiEye.Storage import ImageStorage
 from motion_detect import MotionDetect
 from usbcamera import UsbCamera
 
