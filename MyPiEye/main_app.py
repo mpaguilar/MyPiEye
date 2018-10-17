@@ -1,14 +1,12 @@
 from os.path import exists
 import logging
-from motion_detect import MotionDetect
 from ast import literal_eval
 from time import sleep
 from os import remove
-
-from MyPiEye.Storage import save_files
-
 from concurrent.futures import ProcessPoolExecutor
 
+from MyPiEye.Storage import save_files, ImageStorage
+from motion_detect import MotionDetect
 from usbcamera import UsbCamera
 
 log = logging.getLogger(__name__)
@@ -55,6 +53,8 @@ class MainApp(object):
         # self.check should have ensured it exists
         self.savedir = config['savedir']
         self.executor = ProcessPoolExecutor(max_workers=2)
+
+        self.storage = ImageStorage(fs_path=self.config['savedir'])
 
     def start(self):
         """
@@ -112,12 +112,14 @@ class MainApp(object):
 
         subdir = capture_dt.strftime('%y%m%d')
 
-        res = self.executor.submit(
-            save_files, self.config['savedir'], subdir=subdir, box_name=box_name, nobox_name=nobox_name)
+        self.storage.save_files(subdir, box_name, nobox_name)
 
-        res.box_name = box_name
-        res.nobox_name = nobox_name
-        res.add_done_callback(self.delete_tmp)
+        # res = self.executor.submit(
+        #     save_files, self.config['savedir'], subdir=subdir, box_name=box_name, nobox_name=nobox_name)
+
+        # res.box_name = box_name
+        # res.nobox_name = nobox_name
+        # res.add_done_callback(self.delete_tmp)
 
     def watch_for_motions(self):
         """
