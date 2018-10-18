@@ -5,3 +5,4 @@ dist
 MyPiEye.egg-info
 build
 *.log
+*_auth.json
