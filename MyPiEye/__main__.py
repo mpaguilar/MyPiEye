@@ -86,5 +86,4 @@ def mypieye(**cli_flags):
     sys.exit(0)
 
 
-if __name__ == '__main__':
-    mypieye()
+mypieye()

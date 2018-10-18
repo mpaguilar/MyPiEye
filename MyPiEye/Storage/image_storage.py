@@ -36,7 +36,10 @@ class ImageStorage(object):
 
         if self.gdrive_folder is not None:
             log.info('Saving to Google Drive {}'.format(self.gdrive_folder))
-            pass
+            gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
+            gstorage = GDriveStorage(gauth, 'mypieye_test')
+            gdrive_fut = loop.run_in_executor(None, gstorage.upload_file, subdir, box_name)
+            futures.append(gdrive_fut)
 
         gathered = asyncio.gather(*futures)
 
