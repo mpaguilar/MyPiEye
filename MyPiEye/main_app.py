@@ -54,7 +54,7 @@ class MainApp(object):
         self.savedir = config['savedir']
         self.executor = ProcessPoolExecutor(max_workers=2)
 
-        self.storage = ImageStorage(fs_path=self.config['savedir'])
+        self.storage = ImageStorage(fs_path=self.config['savedir'], gdrive_folder=self.config['gdrive'])
 
     def start(self):
         """
