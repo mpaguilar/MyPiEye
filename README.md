@@ -2,10 +2,27 @@
 
 Compares image files, uses opencv to determine if any motion happened, and if so, saves those files.
 
-## NOTE: this isn't ready. I'm converting it from a much messier project.
+## NOTE: There's still some polishing to do.
 
-If you want to use it, it works. It will capture images, check for differences, and store them to the local drive. 
-Getting it set up on a PC is still more work than it should be, and I'm hoping there is a wheel for opencv on RPi.
+
+What works:
+ - Image capturing
+ - Image comparison
+ - Image save to local drive
+ - Image save to Google Drive
+ - Basic configuration
+ 
+What doesn't work:
+ - setup.py is broken
+ - Configuration needs improvement
+ - The documentation
+ - Misc cleanup problems
+ - Untested on an RPi. Works great on PC.
+
+Plus, a little module renaming and project structure updates.
+ 
+If you don't mind a little bit of tweaking and prodding here and there, it works. The core functionality is
+running just fine.
 
 Work in progress.
 
