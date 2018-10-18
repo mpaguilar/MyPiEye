@@ -1,6 +1,7 @@
 from concurrent.futures import ProcessPoolExecutor
 import asyncio
 import logging
+from os.path import join, abspath
 
 from .google_drive import GDriveAuth, GDriveStorage
 from .local import local_save
@@ -13,12 +14,16 @@ log = logging.getLogger(__name__)
 
 class ImageStorage(object):
 
-    def __init__(self, fs_path=None, gdrive_folder=None):
+    def __init__(self, fs_path=None, gdrive_folder=None, creds_folder='.'):
         """
 
         :param fs_path: the local filesystem path
         :param gdrive_folder: the folder name on Google Drive
         """
+
+        pth = abspath(creds_folder)
+        self.creds_folder = pth
+
         self.fs_path = fs_path
         self.gdrive_folder = gdrive_folder
         self.executor = ProcessPoolExecutor(max_workers=2)
@@ -35,9 +40,12 @@ class ImageStorage(object):
             futures.append(local_fut)
 
         if self.gdrive_folder is not None:
+
+            creds_file = abspath(join(self.creds_folder, 'google_auth.json'))
+
             log.info('Saving to Google Drive {}'.format(self.gdrive_folder))
-            gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
-            gstorage = GDriveStorage(gauth, 'mypieye_test')
+            gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, creds_file)
+            gstorage = GDriveStorage(gauth, self.gdrive_folder)
             gdrive_fut = loop.run_in_executor(None, gstorage.upload_file, subdir, box_name)
             futures.append(gdrive_fut)
 

@@ -118,7 +118,7 @@ class GDriveStorage(object):
             assert ret['id'] is not None and ret['id'] != ''
             parent_id = ret['id']
         else:
-            parent_id = parent[0]['id']
+            parent_id = parent['files'][0]['id']
 
         assert parent_id is not None, 'Parent id is None'
 

@@ -6,6 +6,7 @@ import platform
 
 import MyPiEye.CLI as CLI
 from MyPiEye.main_app import MainApp
+from MyPiEye.configure_app import ConfigureApp
 
 log = logging.getLogger(__name__)
 
@@ -27,7 +28,8 @@ global_settings = {
     'logfile': None,
     'loglevel': 'DEBUG',
     'color': False,
-    'config': 'mypieye.ini'
+    'config': 'mypieye.ini',
+    'credential_folder': '.'
 }
 
 settings = windows_settings
@@ -42,7 +44,28 @@ def clean_exit(sig, _):
     sys.exit(0)
 
 
-@click.command()
+@click.group()
+def mypieye():
+    pass
+
+
+@mypieye.command()
+@click.option('--iniconfig',
+              default=settings['config'], help='key/val (.ini) config file', callback=CLI.load_config)
+def configure(**cli_flags):
+    settings.update(cli_flags)
+
+    loglevel = logging.INFO
+    color = settings['color']
+
+    config = ConfigureApp(settings)
+
+    if not config.check():
+        log.critical('Start checks failed')
+        sys.exit(-1)
+
+
+@mypieye.command()
 @click.option('--loglevel', default='INFO',
               type=click.Choice(CLI.LOG_LEVELS),
               help='python log levels')
@@ -50,7 +73,7 @@ def clean_exit(sig, _):
 @click.option('--color/--no-color', default=settings['color'], help='Pretty color output')
 @click.option('--iniconfig',
               default=settings['config'], help='key/val (.ini) config file', callback=CLI.load_config)
-def mypieye(**cli_flags):
+def run(**cli_flags):
     """
     Start capturing and watching.
     Exit codes greater than zero are a command parsing error.
@@ -75,13 +98,10 @@ def mypieye(**cli_flags):
     log.info('Starting...')
 
     mainapp = MainApp(settings)
-    if not mainapp.check():
-        log.critical('Start checks failed')
-        sys.exit(-3)
 
     if not mainapp.start():
         log.critical('Failed to start main app')
-        sys.exit(-4)
+        sys.exit(-3)
 
     sys.exit(0)
 
