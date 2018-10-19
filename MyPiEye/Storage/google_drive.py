@@ -18,26 +18,35 @@ class GDriveStorage(object):
             'Authorization': 'Bearer {}'.format(self.gauth.access_token)
         }
 
-        basefolder = self.find_folder()['files']
-        assert len(basefolder) == 1, 'Found {} folders named {}'.format(len(basefolder), gdrive_folder)
+        basefolder = self.main_folder()
+        self.gdrive_folder_id = basefolder['id']
 
-        self.gdrive_folder_id = basefolder[0]['id']
-
-    def find_folder(self, parent_id='root', name=None):
+    def main_folder(self, parent_id='root', name=None):
 
         if name is None:
             name = self.gdrive_folder
 
+        retval = GDriveStorage.find_folders(self.gauth, parent_id, name)
+
+        assert len(retval['files']) >= 1, 'Main folder has {} entries'.format(self.gdrive_folder)
+
+        return retval['files'][0]
+
+    @staticmethod
+    def find_folders(gauth, parent_id, folder_name):
+
+        headers = {
+            'Authorization': 'Bearer {}'.format(gauth.access_token),
+            'Content-Type': 'application/json'
+        }
+
         url = 'https://www.googleapis.com/drive/v3/files'
         qry = "mimeType = 'application/vnd.google-apps.folder' " \
-              "and '{}' in parents and trashed = false and name = '{}'".format(parent_id, name)
+              "and '{}' in parents and trashed = false and name = '{}'".format(parent_id, folder_name)
 
-        folder_res = requests.get(url, headers=self.headers, params={'q': qry})
+        folder_res = requests.get(url, headers=headers, params={'q': qry})
         folder_res.raise_for_status()
         retval = folder_res.json()
-
-        assert len(retval['files']) <= 1, 'Too many folders named {}'.format(self.gdrive_folder)
-
         return retval
 
     @staticmethod
@@ -110,7 +119,7 @@ class GDriveStorage(object):
         log.debug('Uploading {}'.format(filename))
 
         parent_id = None
-        parent = self.find_folder(parent_id=self.gdrive_folder_id, name=subdir)
+        parent = GDriveStorage.find_folders(self.gauth, parent_id=self.gdrive_folder_id, folder_name=subdir)
 
         if len(parent['files']) == 0:
             ret = self.create_subfolder(subdir)

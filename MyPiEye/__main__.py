@@ -55,10 +55,18 @@ def mypieye():
 def configure(**cli_flags):
     settings.update(cli_flags)
 
-    loglevel = logging.INFO
+
     color = settings['color']
 
+    CLI.set_loglevel('INFO')
+    if not CLI.enable_log(enable_color=color):
+        log.critical('Error opening logger')
+        sys.exit(-2)
+
     config = ConfigureApp(settings)
+    if not config.initialize():
+        log.critical('Failed to configure app')
+        sys.exit(-1)
 
     if not config.check():
         log.critical('Start checks failed')

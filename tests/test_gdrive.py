@@ -83,12 +83,11 @@ class GDriveFolderTests(unittest.TestCase):
         gstorage = GDriveStorage(gauth, 'mypieye_test')
 
         # find main folder
-        ret = gstorage.find_folder()
+        ret = gstorage.main_folder()
         self.assertIsNotNone(ret)
-        self.assertEqual(1, len(ret['files']))
 
         # did we find the folder we created?
-        self.assertEqual(folder_id, ret['files'][0]['id'])
+        self.assertEqual(folder_id, ret['id'])
 
         # create a subfolder
         ret = gstorage.create_subfolder('subfolder_test')
@@ -97,7 +96,7 @@ class GDriveFolderTests(unittest.TestCase):
         subid = ret['id']
 
         # find the subfolder
-        ret = gstorage.find_folder(parent_id=folder_id, name='subfolder_test')
+        ret = GDriveStorage.find_folders(gauth, parent_id=folder_id, folder_name='subfolder_test')
         self.assertIsNotNone(ret)
         self.assertEqual(1, len(ret['files']))
 

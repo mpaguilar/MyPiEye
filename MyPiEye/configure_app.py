@@ -1,5 +1,6 @@
 import logging
 from os.path import exists, join, abspath
+from os import makedirs
 
 from MyPiEye.Storage.google_drive import GDriveAuth, GDriveStorage
 
@@ -14,18 +15,125 @@ class ConfigureApp(object):
     def __init__(self, config):
         self.config = config
 
-        if self.config['gdrive'] is not None:
-            assert self.config['credential_folder'] is not None, 'GDrive requires credential_folder'
+    def initialize(self):
+        """
+        Runs through config settings, creating resources if necessary
+        :return: True on success, False on error
+        """
+        success = True
 
-            creds_file = abspath(join(self.config['credential_folder'], 'google_auth.json'))
+        success = (success and self.prepare_camera())
+        success = (success and self.prepare_working_directories())
+        success = (success and self.prepare_local_storage())
+        success = (success and self.config_gdrive())
 
-            log.info('Attempting authentication to GDrive')
-            gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, creds_file)
+        return success
 
-            log.info('Searching for main folder {} on GDrive'.format(self.config['gdrive']))
+    def prepare_camera(self):
+        """
+        Checks to see if settings exist. Does not use camera.
+        :return: True on success
+        """
 
+        camera = self.config.get('camera', None)
+        if camera is None:
+            log.error('Camera is required')
+            return False
+
+        # click forces a choice, but check it anyway
+        res = self.config.get('resolution', None)
+        if res is None:
+            log.error('resolution must be set')
+            return False
+
+        if res != 'small' and res != '720p' and res != '1080p':
+            log.error('Invalid resolution: {}'.format(res))
+            return False
+
+        return True
+
+    def prepare_local_storage(self):
+        """
+        Creates directory `savedir` for local filesystem save.
+        :return:  True on success.
+        """
+
+        # check savedir, may be None
+        if self.config.get('savedir', None) is None:
+            log.info('savedir not set. Skipping.')
+            return True
+
+        savedir = abspath(self.config['savedir'])
+        if not exists(savedir):
+            log.warning('Save directory does not exist: {}. Creating'.format(savedir))
+            makedirs(savedir)
+
+        return True
+
+    def prepare_working_directories(self):
+        """
+        Creates `workdir`, for staging file uploads. Must be set.
+        :return: True on success.
+        """
+        # create workdir
+        if self.config.get('workdir', None) is None:
+            log.error('workdir must be set')
+            return False
+
+        workdir = self.config['workdir']
+        workdir = abspath(workdir)
+
+        if not exists(workdir):
+            log.warning('Working directory does not exist: {}. Creating.'.format(workdir))
+            makedirs(workdir)
+
+        return True
+
+    def config_gdrive(self):
+        """
+         Checks `gdrive` setting, and if set to anything, will attempt to create `credential_folder`.
+
+         Creates `gdrive` folder at root of user's Google Drive. If `google_auth.json` is not found in
+         the `credential_folder`, then the user will prompted with a URL and a challenge to code to authorize
+         the application with Google.
+
+         This app must create the folder in order to find and use it. The scope is limited to prevent access to
+         other files and folders on the user's drive. By default, it won't be able to find anything.
+
+        :return: True on success.
+        """
+
+        ok = True
+
+        gfolder = self.config.get('gdrive', None)
+        if gfolder is None:
+            log.info('gdrive not set. Skipping.')
+            return True
+
+        if self.config.get('credential_folder') is None:
+            log.error('credential_folder must be set.')
+            ok = False
+
+        creds_folder = abspath(self.config['credential_folder'])
+        creds_file = abspath(join(creds_folder, 'google_auth.json'))
+
+        log.info('Attempting authentication to GDrive')
+        gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, creds_file)
+
+        log.info('Searching for main folder {} on GDrive'.format(gfolder))
+
+        gstorage = GDriveStorage(gauth, gfolder)
+
+        ret = gstorage.main_folder()
+        if len(ret['files']) < 1:
             log.info('Creating main folder on GDrive')
-            ret = GDriveStorage.create_main_folder(gauth, self.config['gdrive'])
+            GDriveStorage.create_main_folder(gauth, gfolder)
+
+        if len(ret['files'] > 1):
+            log.error('More than one folder named {} found on GDrive'.format(gfolder))
+            return False
+
+        return ok
 
     def check(self):
         """

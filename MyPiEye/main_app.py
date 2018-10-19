@@ -5,8 +5,8 @@ from os import remove
 from concurrent.futures import ProcessPoolExecutor
 
 from MyPiEye.Storage import ImageStorage
-from .motion_detect import MotionDetect
-from .usbcamera import UsbCamera
+from MyPiEye.motion_detect import MotionDetect
+from MyPiEye.usbcamera import UsbCamera
 
 log = logging.getLogger(__name__)
 
