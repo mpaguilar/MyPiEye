@@ -5,6 +5,7 @@ from time import sleep
 from os.path import exists, basename
 
 log = logging.getLogger(__name__)
+logging.getLogger('urllib3').setLevel(logging.WARN)
 
 GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
 

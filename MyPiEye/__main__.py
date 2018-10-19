@@ -8,7 +8,7 @@ import MyPiEye.CLI as CLI
 from MyPiEye.main_app import MainApp
 from MyPiEye.configure_app import ConfigureApp
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('mypieye')
 
 windows_settings = {
     'workdir': 'c:/temp',
