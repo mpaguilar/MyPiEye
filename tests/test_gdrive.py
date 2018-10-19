@@ -13,19 +13,19 @@ logging.basicConfig(level=logging.DEBUG)
 
 class GDriveTests(unittest.TestCase):
 
+    _folder_id = None
+
     @classmethod
     def setUpClass(cls):
         gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
-        ret = GDriveStorage.create_main_folder(gauth, 'mypieye_test')
+        ret = GDriveStorage.create_folder(gauth, 'mypieye_test_upload', parent_id='root')
 
         cls._folder_id = ret
 
     @classmethod
     def tearDownClass(cls):
         gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
-        gstorage = GDriveStorage(gauth, 'mypieye_test')
-
-        ret = gstorage.delete_folder(cls._folder_id)
+        ret = GDriveStorage.delete_folder(gauth, cls._folder_id)
 
         assert ret
 
@@ -39,7 +39,7 @@ class GDriveTests(unittest.TestCase):
 
     def test_upload(self):
         gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
-        gstorage = GDriveStorage(gauth, 'mypieye_test')
+        gstorage = GDriveStorage(gauth, 'mypieye_test_upload')
 
         # upload the file
         ret = gstorage.upload_file('testsub', 'data/test_image.jpg')
@@ -76,7 +76,7 @@ class GDriveFolderTests(unittest.TestCase):
         gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
 
         # create main folder
-        ret = GDriveStorage.create_main_folder(gauth, 'mypieye_test')
+        ret = GDriveStorage.create_folder(gauth, 'mypieye_test', 'root')
         self.assertIsNotNone(ret)
         folder_id = ret
 
@@ -87,13 +87,13 @@ class GDriveFolderTests(unittest.TestCase):
         self.assertIsNotNone(ret)
 
         # did we find the folder we created?
-        self.assertEqual(folder_id, ret['id'])
+        self.assertEqual(folder_id, ret)
 
         # create a subfolder
         ret = gstorage.create_subfolder('subfolder_test')
         self.assertIsNotNone(ret)
 
-        subid = ret['id']
+        subid = ret
 
         # find the subfolder
         ret = GDriveStorage.find_folders(gauth, parent_id=folder_id, folder_name='subfolder_test')
@@ -101,9 +101,9 @@ class GDriveFolderTests(unittest.TestCase):
         self.assertEqual(1, len(ret['files']))
 
         # delete the subfolder
-        ret = gstorage.delete_folder(folder_id=subid)
+        ret = GDriveStorage.delete_folder(gauth, folder_id=subid)
         self.assertTrue(ret)
 
         # delete main folder
-        ret = gstorage.delete_folder()
+        ret = GDriveStorage.delete_folder(gauth, folder_id=folder_id)
         self.assertTrue(ret)

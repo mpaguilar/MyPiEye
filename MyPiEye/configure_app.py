@@ -25,7 +25,7 @@ class ConfigureApp(object):
         success = (success and self.prepare_camera())
         success = (success and self.prepare_working_directories())
         success = (success and self.prepare_local_storage())
-        success = (success and self.config_gdrive())
+        success = (success and self.prepare_gdrive())
 
         return success
 
@@ -89,7 +89,7 @@ class ConfigureApp(object):
 
         return True
 
-    def config_gdrive(self):
+    def prepare_gdrive(self, credential_filename=None):
         """
          Checks `gdrive` setting, and if set to anything, will attempt to create `credential_folder`.
 
@@ -100,10 +100,15 @@ class ConfigureApp(object):
          This app must create the folder in order to find and use it. The scope is limited to prevent access to
          other files and folders on the user's drive. By default, it won't be able to find anything.
 
+        :param credential_filename: Used for testing.
         :return: True on success.
         """
 
         ok = True
+
+        credfname = credential_filename
+        if credfname is None:
+            credfname = 'google_auth.json'
 
         gfolder = self.config.get('gdrive', None)
         if gfolder is None:
@@ -115,7 +120,7 @@ class ConfigureApp(object):
             ok = False
 
         creds_folder = abspath(self.config['credential_folder'])
-        creds_file = abspath(join(creds_folder, 'google_auth.json'))
+        creds_file = abspath(join(creds_folder, credfname))
 
         log.info('Attempting authentication to GDrive')
         gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, creds_file)
@@ -124,14 +129,9 @@ class ConfigureApp(object):
 
         gstorage = GDriveStorage(gauth, gfolder)
 
-        ret = gstorage.main_folder()
-        if len(ret['files']) < 1:
-            log.info('Creating main folder on GDrive')
-            GDriveStorage.create_main_folder(gauth, gfolder)
-
-        if len(ret['files'] > 1):
-            log.error('More than one folder named {} found on GDrive'.format(gfolder))
-            return False
+        if gstorage.main_folder(create=True) is None:
+            log.error('Failed to create google folder.')
+            ok = False
 
         return ok
 
