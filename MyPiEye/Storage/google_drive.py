@@ -2,7 +2,7 @@ import requests
 import json
 import logging
 from time import sleep
-from os.path import exists
+from os.path import exists, basename
 
 log = logging.getLogger(__name__)
 
@@ -153,8 +153,8 @@ class GDriveStorage(object):
         hdrs = dict(self.headers)
 
         metadata = {
-            'name': filename,
-            'title': filename,
+            'name': basename(filename),
+            'title': basename(filename),
             'parents': [parent_id]
         }
 
