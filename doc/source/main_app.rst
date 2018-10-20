@@ -1,10 +1,13 @@
 MyPiEye
 -------
 
-The main workhorse. Runs the main loop.
-
 .. automodule:: MyPiEye
    :members:
+
+MainApp
+^^^^^^^
+
+The main workhorse.
 
 .. autoclass:: MainApp
    :members:

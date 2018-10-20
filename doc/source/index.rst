@@ -11,6 +11,7 @@ Welcome to MyPiEye's documentation!
    :caption: Contents:
 
    main_app
+   storage
    cli
 
 

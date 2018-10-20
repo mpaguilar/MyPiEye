@@ -10,9 +10,19 @@ log = logging.getLogger(__name__)
 
 class ColorLogFormatter(logging.Formatter):
     def __init__(self, log_format):
+        """
+
+        :param log_format: %s-formatted
+        """
         super().__init__(log_format)
 
     def format(self, record):
+        """
+        Adds color to log output.
+
+        :param record: logging record object
+        :return: formatted text
+        """
         sup = super().format(record)
         fore = Fore.RESET
 
@@ -89,7 +99,7 @@ def set_loglevel(level_str):
     """
     Converts a string into a logging level, and sets it accordingly
 
-    :param level_str:
+    :param level_str: 'DEBUG', 'WARN', etc.
     :return: True
     """
     lgr = logging.getLogger()

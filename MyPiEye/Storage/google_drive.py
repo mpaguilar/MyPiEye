@@ -13,6 +13,15 @@ GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
 class GDriveStorage(object):
 
     def __init__(self, gauth, gdrive_folder):
+        """
+        Represents a folder on GDrive. Only folders off the root are supported.
+
+        The app is restricted to only files and folders that it creates, so it is important that the same credentials
+        be used to initialize the app.
+
+        :param gauth: an initialized :class:`GDriveAuth` object.
+        :param gdrive_folder: the name of the folder.
+        """
         self.gauth = gauth
         self.headers = {
             'Authorization': 'Bearer {}'.format(self.gauth.access_token)
