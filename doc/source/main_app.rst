@@ -1,11 +1,7 @@
-MyPiEye
--------
-
 .. automodule:: MyPiEye
-   :members:
 
 MainApp
-^^^^^^^
+-------
 
 The main workhorse.
 
