@@ -1,11 +1,14 @@
 .. include:: overview.rst
 
-API Details
-===========
+.. toctree::
+   :maxdepth: 2
+   :caption: Installation:
+
+   installation
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: API:
 
    main_app
    storage

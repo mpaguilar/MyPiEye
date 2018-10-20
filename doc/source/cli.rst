@@ -1,5 +1,5 @@
-CLI module
-----------
+CLI
+---
 
 Utilities for making CLI life easier: color logging, extra formatters, config parsing.
 
