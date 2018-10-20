@@ -18,8 +18,8 @@ class GDriveStorage(object):
             'Authorization': 'Bearer {}'.format(self.gauth.access_token)
         }
 
-        self.gdrive_folder = gdrive_folder
-        self.gdrive_folder_id = self.main_folder(create=False)
+        self.folder_name = gdrive_folder
+        self.folder_id = self.main_folder(create=False)
 
     def main_folder(self, create=False):
         """
@@ -29,9 +29,9 @@ class GDriveStorage(object):
         :return: the id on success, None on fail.
         """
         # if we can't find it later, then it no longer exists.
-        self.gdrive_folder_id = None
+        self.folder_id = None
 
-        name = self.gdrive_folder
+        name = self.folder_name
         parent_id = 'root'
 
         retval = GDriveStorage.find_folders(self.gauth, parent_id, name)
@@ -47,14 +47,14 @@ class GDriveStorage(object):
             if create:
                 log.warning('Main folder {} does not exist. Creating.'.format(name))
 
-                self.gdrive_folder_id = GDriveStorage.create_folder(self.gauth, name, parent_id='root')
-                return self.gdrive_folder_id
+                self.folder_id = GDriveStorage.create_folder(self.gauth, name, parent_id='root')
+                return self.folder_id
             else:
                 log.error('main folder not found')
                 return None
         else:
-            self.gdrive_folder_id = files[0]['id']
-            return self.gdrive_folder_id
+            self.folder_id = files[0]['id']
+            return self.folder_id
 
     def create_subfolder(self, folder_name):
         """
@@ -63,14 +63,14 @@ class GDriveStorage(object):
         :return:
         """
 
-        assert self.gdrive_folder_id is not None, 'folder id is None'
+        assert self.folder_id is not None, 'folder id is None'
 
-        folders = GDriveStorage.find_folders(self.gauth, self.gdrive_folder_id, folder_name)
+        folders = GDriveStorage.find_folders(self.gauth, self.folder_id, folder_name)
         files = folders.get('files', [])
 
         if len(files) == 0:
             log.info('Creating subfolder {}'.format(folder_name))
-            return GDriveStorage.create_folder(self.gauth, folder_name, self.gdrive_folder_id)
+            return GDriveStorage.create_folder(self.gauth, folder_name, self.folder_id)
         elif len(files) == 1:
             return files[0]['id']
         else:
@@ -133,12 +133,12 @@ class GDriveStorage(object):
         return True
 
     def upload_file(self, subdir, filename):
-        assert self.gdrive_folder_id is not None, 'GDrive folder is not found'
+        assert self.folder_id is not None, 'GDrive folder is not found'
 
         log.debug('Uploading {}'.format(filename))
 
         parent_id = None
-        parent = GDriveStorage.find_folders(self.gauth, parent_id=self.gdrive_folder_id, folder_name=subdir)
+        parent = GDriveStorage.find_folders(self.gauth, parent_id=self.folder_id, folder_name=subdir)
 
         if len(parent['files']) == 0:
             ret = self.create_subfolder(subdir)
