@@ -5,16 +5,20 @@ import MyPiEye
 setup(
     name="MyPiEye",
     version="0.1",
-    author="Michael Aguilar",
-    packages=find_packages(),
+    author="Michael P. Aguilar",
+    packages=find_packages('MyPiEye'),
     entry_points={
         'console_scripts': [
             'mypieye = MyPiEye.__main__'
         ]
     },
 
+    package_dir={
+        '': 'MyPiEye'
+    },
+
     package_data={
-        '': ['mypieye.ini']
+        '': ['*.ini']
     },
 
     install_requires=[
