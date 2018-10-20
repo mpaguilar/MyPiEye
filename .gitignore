@@ -6,3 +6,4 @@ MyPiEye.egg-info
 build
 *.log
 *_auth.json
+doc/build
