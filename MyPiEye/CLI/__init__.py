@@ -10,9 +10,19 @@ log = logging.getLogger(__name__)
 
 class ColorLogFormatter(logging.Formatter):
     def __init__(self, log_format):
+        """
+
+        :param log_format: %s-formatted
+        """
         super().__init__(log_format)
 
     def format(self, record):
+        """
+        Adds color to log output.
+
+        :param record: logging record object
+        :return: formatted text
+        """
         sup = super().format(record)
         fore = Fore.RESET
 
@@ -51,6 +61,7 @@ def enable_log(fmt='[%(asctime)s] %(levelname)s %(module)s %(name)s %(message)s'
                enable_color=True, filename=None):
     """
     Clears all log handlers, and adds color handler and/or file handlers
+
     :param fmt: logging format string
     :param enable_color: True to enable
     :param filename: log file location
@@ -87,7 +98,8 @@ def enable_log(fmt='[%(asctime)s] %(levelname)s %(module)s %(name)s %(message)s'
 def set_loglevel(level_str):
     """
     Converts a string into a logging level, and sets it accordingly
-    :param level_str:
+
+    :param level_str: 'DEBUG', 'WARN', etc.
     :return: True
     """
     lgr = logging.getLogger()
@@ -98,9 +110,12 @@ def set_loglevel(level_str):
 def load_config(ctx, param, config_filename):
     """
     Called by Click arg parser when an ini is passed in.
+
     Merges the [global] ini configuration with the cli flags,
     and adds sections from the ini file.
+
     Returns the config as a dict.
+
     :param ctx: Click context, the params attribute is used
     :param param: Click passes the parameter name, may be None
     :param config_filename: The ini file to process

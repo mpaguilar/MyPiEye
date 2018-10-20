@@ -1,1 +1,0 @@
-Ensures git will store the directory.

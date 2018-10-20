@@ -5,7 +5,7 @@ from os.path import join, abspath
 from os import remove
 
 from .google_drive import GDriveAuth, GDriveStorage
-from .local import local_save
+from .local_filesystem import local_save
 
 CLIENT_ID = '990858881415-u53d5skorvuuq4hqjfj5pvq80d059744.apps.googleusercontent.com'
 CLIENT_SECRET = '-9q0wn7j8x7IGrCRcwuzQY0g'

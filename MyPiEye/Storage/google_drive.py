@@ -13,25 +13,34 @@ GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
 class GDriveStorage(object):
 
     def __init__(self, gauth, gdrive_folder):
+        """
+        Represents a folder on GDrive. Only folders off the root are supported.
+
+        The app is restricted to only files and folders that it creates, so it is important that the same credentials
+        be used to initialize the app.
+
+        :param gauth: an initialized :class:`GDriveAuth` object.
+        :param gdrive_folder: the name of the folder.
+        """
         self.gauth = gauth
         self.headers = {
             'Authorization': 'Bearer {}'.format(self.gauth.access_token)
         }
 
-        self.gdrive_folder = gdrive_folder
-        self.gdrive_folder_id = self.main_folder(create=False)
+        self.folder_name = gdrive_folder
+        self.folder_id = self.main_folder(create=False)
 
     def main_folder(self, create=False):
         """
-        Sets `self.gdrive_folder_id`
+        Sets `self.folder_id`
 
         :param create: Create the folder if it doesn't exist.
         :return: the id on success, None on fail.
         """
         # if we can't find it later, then it no longer exists.
-        self.gdrive_folder_id = None
+        self.folder_id = None
 
-        name = self.gdrive_folder
+        name = self.folder_name
         parent_id = 'root'
 
         retval = GDriveStorage.find_folders(self.gauth, parent_id, name)
@@ -47,30 +56,31 @@ class GDriveStorage(object):
             if create:
                 log.warning('Main folder {} does not exist. Creating.'.format(name))
 
-                self.gdrive_folder_id = GDriveStorage.create_folder(self.gauth, name, parent_id='root')
-                return self.gdrive_folder_id
+                self.folder_id = GDriveStorage.create_folder(self.gauth, name, parent_id='root')
+                return self.folder_id
             else:
                 log.error('main folder not found')
                 return None
         else:
-            self.gdrive_folder_id = files[0]['id']
-            return self.gdrive_folder_id
+            self.folder_id = files[0]['id']
+            return self.folder_id
 
     def create_subfolder(self, folder_name):
         """
         Creates a subfolder off of the main folder.
+
         :param folder_name:
         :return:
         """
 
-        assert self.gdrive_folder_id is not None, 'folder id is None'
+        assert self.folder_id is not None, 'folder id is None'
 
-        folders = GDriveStorage.find_folders(self.gauth, self.gdrive_folder_id, folder_name)
+        folders = GDriveStorage.find_folders(self.gauth, self.folder_id, folder_name)
         files = folders.get('files', [])
 
         if len(files) == 0:
             log.info('Creating subfolder {}'.format(folder_name))
-            return GDriveStorage.create_folder(self.gauth, folder_name, self.gdrive_folder_id)
+            return GDriveStorage.create_folder(self.gauth, folder_name, self.folder_id)
         elif len(files) == 1:
             return files[0]['id']
         else:
@@ -133,12 +143,12 @@ class GDriveStorage(object):
         return True
 
     def upload_file(self, subdir, filename):
-        assert self.gdrive_folder_id is not None, 'GDrive folder is not found'
+        assert self.folder_id is not None, 'GDrive folder is not found'
 
         log.debug('Uploading {}'.format(filename))
 
         parent_id = None
-        parent = GDriveStorage.find_folders(self.gauth, parent_id=self.gdrive_folder_id, folder_name=subdir)
+        parent = GDriveStorage.find_folders(self.gauth, parent_id=self.folder_id, folder_name=subdir)
 
         if len(parent['files']) == 0:
             ret = self.create_subfolder(subdir)
@@ -186,16 +196,24 @@ class GDriveAuth(object):
 
     Expected usage:
      - create object
-     - call `py.func:init_auth`. If the app hasn't been validated, it will return False. Otherwise, use object `access_token`.
-     - call `py:func:init_token`. This starts the authorization flow. Returns fields to be displayed to the user.
-     - call `py:func:validate_token` in a loop, until `True` is returned.
-     - Every so often, call `py:func:refresh_token`. Calling `init_auth` will work, too.
+     - call :func:`init_auth`. If the app hasn't been validated, it will return False. Otherwise, use object `access_token`.
+     - call :func:`init_token`. This starts the authorization flow. Returns fields to be displayed to the user.
+     - call :func:`validate_token` in a loop, until `True` is returned.
+     - Every so often, call :func:`refresh_token`. Calling :func:`init_auth` will work, too.
 
     Access can be revoked at https://myaccount.google.com/permissions?pli=1
 
     """
 
     def __init__(self, client_id, client_secret, credential_filename):
+
+        """
+        Google-provided items, and a filename to store the cookie.
+
+        :param client_id: From Google
+        :param client_secret: From Google
+        :param credential_filename: a filename
+        """
 
         assert isinstance(client_id, str)
         assert isinstance(client_secret, str)
@@ -211,6 +229,7 @@ class GDriveAuth(object):
     def init_auth(self):
         """
         Loads auth from file, and tries to connect. If the initial attempt fails, then it will try to refresh the token.
+
         :return: True if we have a valid auth_token
         """
         if exists(self.credential_filename):
@@ -228,6 +247,12 @@ class GDriveAuth(object):
 
     def load_auth(self):
 
+        """
+        Refreshes object properties with current token values.
+
+        :return:
+        """
+
         assert exists(self.credential_filename)
 
         with open(self.credential_filename, 'r') as f:
@@ -239,7 +264,8 @@ class GDriveAuth(object):
 
     def save_auth(self):
         """
-        Saves token info
+        Saves token info.
+
         :return: None
         """
         log.debug('Saving auth parameters')
@@ -255,6 +281,7 @@ class GDriveAuth(object):
     def try_auth(self):
         """
         Tries to get a list of files from the root. It doesn't matter if there are any.
+
         :return: True if authenticated.
         """
 
@@ -278,6 +305,7 @@ class GDriveAuth(object):
     def refresh_auth_token(self):
         """
         Attempts to refresh existing token. If successful, updates the file.
+
         :return: True on success.
         """
 
@@ -341,7 +369,7 @@ class GDriveAuth(object):
         The second stage of the validation flow. Checks if the validation code has been entered by the user at Google.
         Saves to `self.credential_file` if it is. Retries should be handled by the caller.
 
-        :param device_code: returned from `py:func:init_token`.
+        :param device_code: returned from :func:`init_token`.
         :return: True on success, None if waiting, and False on error.
         """
 
@@ -383,10 +411,11 @@ class GDriveAuth(object):
         """
         Helper for getting an initialized object. This will prompt the user at the command line with validation code
         if one has not been set.
+
         :param client_id:
         :param client_secret:
-        :param filename:
-        :return:
+        :param filename: the filename for the saved tokens. Used by :func:__init__
+        :return: None on failure, initialized :class:`GDriveAuth` object
         """
 
         gauth = cls(client_id, client_secret, filename)

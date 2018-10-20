@@ -55,7 +55,6 @@ def mypieye():
 def configure(**cli_flags):
     settings.update(cli_flags)
 
-
     color = settings['color']
 
     CLI.set_loglevel('INFO')
@@ -114,4 +113,5 @@ def run(**cli_flags):
     sys.exit(0)
 
 
-mypieye()
+if __name__ == '__main__':
+    mypieye()
