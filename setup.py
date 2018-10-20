@@ -1,10 +1,17 @@
-from setuptools import setup, find_namespace_packages
+from setuptools import setup, find_packages
+
+import MyPiEye
+
 setup(
     name="MyPiEye",
     version="0.1",
     author="Michael Aguilar",
-    packages=find_namespace_packages('MyPiEye.*'),
-    scripts=['MyPiEye/mypieye.py'],
+    packages=find_packages(),
+    entry_points={
+        'console_scripts': [
+            'mypieye = MyPiEye.__main__'
+        ]
+    },
 
     package_data={
         '': ['mypieye.ini']
@@ -26,6 +33,7 @@ setup(
         'rsa==4.0',
         'six==1.11.0',
         'uritemplate==3.0.0',
-        'urllib3==1.23'
+        'urllib3==1.23',
+        'opencv-python==3.4.3.18'
     ]
 )
