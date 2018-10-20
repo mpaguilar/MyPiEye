@@ -1,6 +1,6 @@
 import logging
 from colorama import init, Fore, Back, Style
-from os.path import exists, isdir, abspath
+from os.path import exists, abspath
 import configparser
 
 init()
@@ -47,7 +47,7 @@ LOG_LEVELS = {
 }
 
 
-def enable_log(fmt='[%(asctime)s] %(levelname)s %(module)s %(message)s',
+def enable_log(fmt='[%(asctime)s] %(levelname)s %(module)s %(name)s %(message)s',
                enable_color=True, filename=None):
     """
     Clears all log handlers, and adds color handler and/or file handlers

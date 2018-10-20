@@ -2,6 +2,7 @@ from concurrent.futures import ProcessPoolExecutor
 import asyncio
 import logging
 from os.path import join, abspath
+from os import remove
 
 from .google_drive import GDriveAuth, GDriveStorage
 from .local import local_save
@@ -52,3 +53,7 @@ class ImageStorage(object):
         gathered = asyncio.gather(*futures)
 
         loop.run_until_complete(gathered)
+        remove(box_name)
+        remove(nobox_name)
+
+

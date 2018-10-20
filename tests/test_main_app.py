@@ -2,7 +2,7 @@ import unittest
 from unittest import mock
 
 from main_app import MainApp, UsbCamera
-from motion_detect import MotionDetect
+from MyPiEye.motion_detect import MotionDetect
 
 
 config = {'workdir': 'd:/tmp', 'savedir': 'd:/tmp', 'gdrive': 'mypieye_test', 'camera': '0',
