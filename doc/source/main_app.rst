@@ -5,7 +5,7 @@ MainApp
 
 The main workhorse.
 
-.. autoclass:: MainApp
+.. autoclass:: MyPiEye.cmdline.MainApp
    :members:
    :undoc-members:
    :special-members: __init__

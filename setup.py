@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages, find_packages
 
 import MyPiEye
 
@@ -6,17 +6,12 @@ setup(
     name="MyPiEye",
     version="0.1",
     author="Michael P. Aguilar",
-    packages=find_packages('MyPiEye'),
+    packages=find_packages(exclude=['tests/*', 'doc/*', 'setupenv/*']),
     entry_points={
         'console_scripts': [
-            'mypieye = MyPiEye.__main__'
+            'mypieye = MyPiEye.cmdline'
         ]
     },
-
-    package_dir={
-        '': 'MyPiEye'
-    },
-
     package_data={
         '': ['*.ini']
     },

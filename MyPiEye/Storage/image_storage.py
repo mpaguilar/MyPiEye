@@ -7,26 +7,23 @@ from os import remove
 from .google_drive import GDriveAuth, GDriveStorage
 from .local_filesystem import local_save
 
-CLIENT_ID = '990858881415-u53d5skorvuuq4hqjfj5pvq80d059744.apps.googleusercontent.com'
-CLIENT_SECRET = '-9q0wn7j8x7IGrCRcwuzQY0g'
-
 log = logging.getLogger(__name__)
 
 
 class ImageStorage(object):
 
-    def __init__(self, fs_path=None, gdrive_folder=None, creds_folder='.'):
+    def __init__(self, fs_path=None, gdrive_settings=None, creds_folder='.'):
         """
 
         :param fs_path: the local filesystem path
-        :param gdrive_folder: the folder name on Google Drive
+        :param gdrive_settings: the ``[gdrive]`` settings from the .ini file
         """
 
         pth = abspath(creds_folder)
         self.creds_folder = pth
 
         self.fs_path = fs_path
-        self.gdrive_folder = gdrive_folder
+        self.gdrive_settings = gdrive_settings
         self.executor = ProcessPoolExecutor(max_workers=2)
 
     def save_files(self, subdir, box_name, nobox_name):
@@ -40,13 +37,16 @@ class ImageStorage(object):
             local_fut = loop.run_in_executor(None, local_save, self.fs_path, box_name, nobox_name, subdir)
             futures.append(local_fut)
 
-        if self.gdrive_folder is not None:
-
+        if self.gdrive_settings is not None:
             creds_file = abspath(join(self.creds_folder, 'google_auth.json'))
 
-            log.info('Saving to Google Drive {}'.format(self.gdrive_folder))
-            gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, creds_file)
-            gstorage = GDriveStorage(gauth, self.gdrive_folder)
+            folder_name = self.gdrive_settings['name']
+            client_id = self.gdrive_settings['client_id']
+            client_secret = self.gdrive_settings['client_secret']
+
+            log.info('Saving to Google Drive {}'.format(folder_name))
+            gauth = GDriveAuth.init_gauth(client_id, client_secret, creds_file)
+            gstorage = GDriveStorage(gauth, folder_name)
             gdrive_fut = loop.run_in_executor(None, gstorage.upload_file, subdir, box_name)
             futures.append(gdrive_fut)
 
@@ -55,5 +55,3 @@ class ImageStorage(object):
         loop.run_until_complete(gathered)
         remove(box_name)
         remove(nobox_name)
-
-

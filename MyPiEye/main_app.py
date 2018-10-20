@@ -10,10 +10,11 @@ from MyPiEye.usbcamera import UsbCamera
 
 log = logging.getLogger(__name__)
 
-
 """
 The workhorse of the program.
 """
+
+
 class MainApp(object):
 
     def __init__(self, config):
@@ -30,6 +31,7 @@ class MainApp(object):
             camera=camera_id
         )
 
+        # the camera can only be set from the .ini
         camera_settings = config.get('iniconfig', {})
 
         # convert the ini string key/val entries into a list of tuples
@@ -54,7 +56,9 @@ class MainApp(object):
         self.savedir = config['savedir']
         self.executor = ProcessPoolExecutor(max_workers=2)
 
-        self.storage = ImageStorage(fs_path=self.config['savedir'], gdrive_folder=self.config['gdrive'])
+        self.storage = ImageStorage(
+            fs_path=self.config['savedir'],
+            gdrive_settings=self.config.get('gdrive', None))
 
     def start(self):
         """
@@ -75,30 +79,6 @@ class MainApp(object):
             self.executor.shutdown()
 
         return True
-
-    def delete_tmp(self, fut):
-        """
-        Deletes tmp files. Should be attached to the future.
-
-        :param fut: A future with `box_name` and `nobox_name` properties attached
-        :return: None
-        """
-
-        error = fut.exception()
-        if error:
-            log.error('Error copying files')
-
-        try:
-            log.debug('Removing {}'.format(fut.box_name))
-            remove(fut.box_name)
-        except FileNotFoundError as fnfe:
-            log.error('Could not delete file: {}'.format(fnfe.filename))
-
-        try:
-            log.debug('Removing {}'.format(fut.nobox_name))
-            remove(fut.nobox_name)
-        except FileNotFoundError as fnfe:
-            log.error('Could not delete file: {}'.format(fnfe.filename))
 
     def store_files(self, box_name, nobox_name, capture_dt):
         """

@@ -106,6 +106,10 @@ class ConfigureApp(object):
 
         ok = True
 
+        gconfig = self.config.get('gdrive', None)
+        if gconfig is None:
+            return True
+
         credfname = credential_filename
         if credfname is None:
             credfname = 'google_auth.json'
