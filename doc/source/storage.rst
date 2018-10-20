@@ -22,14 +22,18 @@ Google Drive
 
 Save to Google. Maintaining the folder is completely manual, this only uploads.
 
+GDriveStorage
+"""""""""""""
 
-
-.. autoclass:: MyPiEye.Storage.GDriveAuth
+.. autoclass:: MyPiEye.Storage.GDriveStorage
    :members:
    :undoc-members:
    :special-members: __init__
 
-.. autoclass:: MyPiEye.Storage.GDriveStorage
+GDriveAuth
+""""""""""
+
+.. autoclass:: MyPiEye.Storage.GDriveAuth
    :members:
    :undoc-members:
    :special-members: __init__

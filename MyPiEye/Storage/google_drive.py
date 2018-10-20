@@ -32,7 +32,7 @@ class GDriveStorage(object):
 
     def main_folder(self, create=False):
         """
-        Sets `self.gdrive_folder_id`
+        Sets `self.folder_id`
 
         :param create: Create the folder if it doesn't exist.
         :return: the id on success, None on fail.
@@ -68,6 +68,7 @@ class GDriveStorage(object):
     def create_subfolder(self, folder_name):
         """
         Creates a subfolder off of the main folder.
+
         :param folder_name:
         :return:
         """
@@ -195,16 +196,24 @@ class GDriveAuth(object):
 
     Expected usage:
      - create object
-     - call `py.func:init_auth`. If the app hasn't been validated, it will return False. Otherwise, use object `access_token`.
-     - call `py:func:init_token`. This starts the authorization flow. Returns fields to be displayed to the user.
-     - call `py:func:validate_token` in a loop, until `True` is returned.
-     - Every so often, call `py:func:refresh_token`. Calling `init_auth` will work, too.
+     - call :func:`init_auth`. If the app hasn't been validated, it will return False. Otherwise, use object `access_token`.
+     - call :func:`init_token`. This starts the authorization flow. Returns fields to be displayed to the user.
+     - call :func:`validate_token` in a loop, until `True` is returned.
+     - Every so often, call :func:`refresh_token`. Calling :func:`init_auth` will work, too.
 
     Access can be revoked at https://myaccount.google.com/permissions?pli=1
 
     """
 
     def __init__(self, client_id, client_secret, credential_filename):
+
+        """
+        Google-provided items, and a filename to store the cookie.
+
+        :param client_id: From Google
+        :param client_secret: From Google
+        :param credential_filename: a filename
+        """
 
         assert isinstance(client_id, str)
         assert isinstance(client_secret, str)
@@ -220,6 +229,7 @@ class GDriveAuth(object):
     def init_auth(self):
         """
         Loads auth from file, and tries to connect. If the initial attempt fails, then it will try to refresh the token.
+
         :return: True if we have a valid auth_token
         """
         if exists(self.credential_filename):
@@ -237,6 +247,12 @@ class GDriveAuth(object):
 
     def load_auth(self):
 
+        """
+        Refreshes object properties with current token values.
+
+        :return:
+        """
+
         assert exists(self.credential_filename)
 
         with open(self.credential_filename, 'r') as f:
@@ -248,7 +264,8 @@ class GDriveAuth(object):
 
     def save_auth(self):
         """
-        Saves token info
+        Saves token info.
+
         :return: None
         """
         log.debug('Saving auth parameters')
@@ -264,6 +281,7 @@ class GDriveAuth(object):
     def try_auth(self):
         """
         Tries to get a list of files from the root. It doesn't matter if there are any.
+
         :return: True if authenticated.
         """
 
@@ -287,6 +305,7 @@ class GDriveAuth(object):
     def refresh_auth_token(self):
         """
         Attempts to refresh existing token. If successful, updates the file.
+
         :return: True on success.
         """
 
@@ -350,7 +369,7 @@ class GDriveAuth(object):
         The second stage of the validation flow. Checks if the validation code has been entered by the user at Google.
         Saves to `self.credential_file` if it is. Retries should be handled by the caller.
 
-        :param device_code: returned from `py:func:init_token`.
+        :param device_code: returned from :func:`init_token`.
         :return: True on success, None if waiting, and False on error.
         """
 
@@ -392,10 +411,11 @@ class GDriveAuth(object):
         """
         Helper for getting an initialized object. This will prompt the user at the command line with validation code
         if one has not been set.
+
         :param client_id:
         :param client_secret:
-        :param filename:
-        :return:
+        :param filename: the filename for the saved tokens. Used by :func:__init__
+        :return: None on failure, initialized :class:`GDriveAuth` object
         """
 
         gauth = cls(client_id, client_secret, filename)
