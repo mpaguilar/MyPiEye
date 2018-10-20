@@ -7,12 +7,11 @@ Welcome to MyPiEye's documentation!
 ===================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
-
-.. automodule:: MyPiEye
-   :members:
+   main_app
+   cli
 
 
 

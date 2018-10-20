@@ -51,6 +51,7 @@ def enable_log(fmt='[%(asctime)s] %(levelname)s %(module)s %(name)s %(message)s'
                enable_color=True, filename=None):
     """
     Clears all log handlers, and adds color handler and/or file handlers
+
     :param fmt: logging format string
     :param enable_color: True to enable
     :param filename: log file location
@@ -87,6 +88,7 @@ def enable_log(fmt='[%(asctime)s] %(levelname)s %(module)s %(name)s %(message)s'
 def set_loglevel(level_str):
     """
     Converts a string into a logging level, and sets it accordingly
+
     :param level_str:
     :return: True
     """
@@ -98,9 +100,12 @@ def set_loglevel(level_str):
 def load_config(ctx, param, config_filename):
     """
     Called by Click arg parser when an ini is passed in.
+
     Merges the [global] ini configuration with the cli flags,
     and adds sections from the ini file.
+
     Returns the config as a dict.
+
     :param ctx: Click context, the params attribute is used
     :param param: Click passes the parameter name, may be None
     :param config_filename: The ini file to process

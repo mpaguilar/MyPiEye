@@ -11,12 +11,13 @@ from MyPiEye.usbcamera import UsbCamera
 log = logging.getLogger(__name__)
 
 
+"""
+The workhorse of the program.
+"""
 class MainApp(object):
 
     def __init__(self, config):
         """
-        The workhorse of the program.
-
         :param config: a dict of consolidated options (defaults, ini, cmdline)
         """
 
