@@ -96,7 +96,7 @@ Once validated, it will create the folder at google, and any local folders.
 Disabling GDrive
 ^^^^^^^^^^^^^^^^
 
-Leave the ``gdrive`` ini setting empty.
+Omit the ``[gdrive]`` section.
 
 ::
 

@@ -33,6 +33,6 @@ setup(
         'six==1.11.0',
         'uritemplate==3.0.0',
         'urllib3==1.23',
-        'opencv-python==3.4.3.18'
+        'opencv-python-headless==3.4.3.18'
     ]
 )
