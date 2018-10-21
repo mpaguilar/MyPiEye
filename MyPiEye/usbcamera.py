@@ -73,9 +73,7 @@ class UsbCamera(object):
                 log.warning('x: {}, y: {}, fps: {}'.format(x, y, fps))
 
             return True
-        else:
-
-            self.camera =
+        
 
 
     def close_camera(self):
