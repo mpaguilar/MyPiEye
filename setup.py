@@ -6,10 +6,10 @@ setup(
     name="MyPiEye",
     version="0.1",
     author="Michael P. Aguilar",
-    packages=find_packages(exclude=['tests/*', 'doc/*', 'setupenv/*']),
+    packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'mypieye = MyPiEye.cmdline'
+            'mypieye = MyPiEye.cmdline:mypieye'
         ]
     },
     package_data={

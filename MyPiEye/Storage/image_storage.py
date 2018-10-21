@@ -40,7 +40,7 @@ class ImageStorage(object):
         if self.gdrive_settings is not None:
             creds_file = abspath(join(self.creds_folder, 'google_auth.json'))
 
-            folder_name = self.gdrive_settings['name']
+            folder_name = self.gdrive_settings['folder_name']
             client_id = self.gdrive_settings['client_id']
             client_secret = self.gdrive_settings['client_secret']
 

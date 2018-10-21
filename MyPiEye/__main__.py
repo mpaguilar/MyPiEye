@@ -1,3 +1,3 @@
-from cmdline import mypieye
+from .cmdline import mypieye
 
 mypieye()

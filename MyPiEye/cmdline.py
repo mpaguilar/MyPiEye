@@ -11,17 +11,16 @@ from MyPiEye.configure_app import ConfigureApp
 log = logging.getLogger('mypieye')
 
 windows_settings = {
-    'workdir': 'c:/temp',
+    'workdir': None,
     'savedir': 'c:/temp'
 }
 
 linux_settings = {
-    'workdir': '/tmp/snaps',
+    'workdir': None,
     'savedir': None
 }
 
 global_settings = {
-    'gdrive': None,
     'camera': '0',
     'resolution': '720p',
     'show_timings': False,
@@ -53,6 +52,7 @@ def mypieye():
 @click.option('--iniconfig',
               default=settings['config'], help='key/val (.ini) config file', callback=CLI.load_config)
 def configure(**cli_flags):
+    print('Configuring...you may be prompted')
     settings.update(cli_flags)
 
     color = settings['color']
@@ -64,12 +64,17 @@ def configure(**cli_flags):
 
     config = ConfigureApp(settings)
     if not config.initialize():
+
         log.critical('Failed to configure app')
         sys.exit(-1)
+
+    print('Application configured')
 
     if not config.check():
         log.critical('Start checks failed')
         sys.exit(-1)
+
+    print('Start checks passed')
 
 
 @mypieye.command()
@@ -103,6 +108,11 @@ def run(**cli_flags):
         sys.exit(-2)
 
     log.info('Starting...')
+
+    config = ConfigureApp(settings)
+    if not config.check():
+        log.critical('Start checks failed')
+        sys.exit(-1)
 
     mainapp = MainApp(settings)
 

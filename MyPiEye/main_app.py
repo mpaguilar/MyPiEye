@@ -45,8 +45,10 @@ class MainApp(object):
         # get the minimum sizes
         minsizes = camera_settings.get('minsizes', {})
 
+        workdir = config.get('workdir', None)
+
         self.motiondetect = MotionDetect(
-            workdir=config['workdir'],
+            workdir=workdir,
             # ini entries are always read as strings
             minsize=literal_eval(minsizes.get('minsize', '0')),
             ignore_boxes=ignore_boxes
