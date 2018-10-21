@@ -4,6 +4,8 @@ import logging
 from os.path import join, abspath
 from os import remove
 
+import requests.exceptions
+
 from .google_drive import GDriveAuth, GDriveStorage
 from .local_filesystem import local_save
 
@@ -44,11 +46,14 @@ class ImageStorage(object):
             client_id = self.gdrive_settings['client_id']
             client_secret = self.gdrive_settings['client_secret']
 
-            log.info('Saving to Google Drive {}'.format(folder_name))
-            gauth = GDriveAuth.init_gauth(client_id, client_secret, creds_file)
-            gstorage = GDriveStorage(gauth, folder_name)
-            gdrive_fut = loop.run_in_executor(None, gstorage.upload_file, subdir, box_name)
-            futures.append(gdrive_fut)
+            try:
+                log.info('Saving to Google Drive {}'.format(folder_name))
+                gauth = GDriveAuth.init_gauth(client_id, client_secret, creds_file)
+                gstorage = GDriveStorage(gauth, folder_name)
+                gdrive_fut = loop.run_in_executor(None, gstorage.upload_file, subdir, box_name)
+                futures.append(gdrive_fut)
+            except requests.exceptions.HTTPError as http_err:
+                log.critical('Error: {}'.format(http_err))
 
         gathered = asyncio.gather(*futures)
 
