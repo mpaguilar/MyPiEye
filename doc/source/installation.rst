@@ -109,6 +109,17 @@ Running
 
 ``mypieye --help`` offers more.
 
+Running on RPi
+^^^^^^^^^^^^^^
+
+You may need to upgrade setuptools for it to work
+
+::
+
+    sudo pip3 install -U setuptools
+
+
+
 
 
 
