@@ -1,3 +1,3 @@
 import runpy
 
-runpy.run_module('MyPiEye', run_name="mypieye", alter_sys=True)
+runpy.run_module('MyPiEye', run_name="__main__", alter_sys=True)

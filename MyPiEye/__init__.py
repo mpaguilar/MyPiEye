@@ -1,2 +1,2 @@
 # for Sphinx, mostly
-from MyPiEye.__main__ import MainApp as MainApp
+# from MyPiEye.cmdline import MainApp as MainApp

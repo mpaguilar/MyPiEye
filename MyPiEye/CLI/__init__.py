@@ -150,7 +150,8 @@ def load_config(ctx, param, config_filename):
         log.warning('No [global] section found in .ini')
         ret['global'] = {}
 
-    ctx.params.update(ret['global'])
+    ret.update(ret['global'])
     del ret['global']
+    ctx.params = ret
 
     return ret

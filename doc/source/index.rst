@@ -1,13 +1,19 @@
-MyPiEye
-=======
+.. include:: overview.rst
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Installation:
+
+   installation
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API:
 
    main_app
    storage
    cli
+
 
 Indices and tables
 ==================

@@ -20,6 +20,9 @@ class ConfigureApp(object):
         Runs through config settings, creating resources if necessary
         :return: True on success, False on error
         """
+
+        print('initializing')
+
         success = True
 
         success = (success and self.prepare_camera())
@@ -34,6 +37,8 @@ class ConfigureApp(object):
         Checks to see if settings exist. Does not use camera.
         :return: True on success
         """
+
+        log.info('Checking camera settings')
 
         camera = self.config.get('camera', None)
         if camera is None:
@@ -58,6 +63,7 @@ class ConfigureApp(object):
         :return:  True on success.
         """
 
+        log.info('Preparing local storage')
         # check savedir, may be None
         if self.config.get('savedir', None) is None:
             log.info('savedir not set. Skipping.')
@@ -75,6 +81,8 @@ class ConfigureApp(object):
         Creates `workdir`, for staging file uploads. Must be set.
         :return: True on success.
         """
+
+        log.info('Preparing working directories')
         # create workdir
         if self.config.get('workdir', None) is None:
             log.error('workdir must be set')
@@ -104,34 +112,57 @@ class ConfigureApp(object):
         :return: True on success.
         """
 
+        log.info('Preparing Google Drive')
         ok = True
+
+        gconfig = self.config.get('gdrive', None)
+        if gconfig is None:
+            log.info('gdrive section not found. Skipping.')
+            return True
 
         credfname = credential_filename
         if credfname is None:
             credfname = 'google_auth.json'
 
-        gfolder = self.config.get('gdrive', None)
-        if gfolder is None:
-            log.info('gdrive not set. Skipping.')
-            return True
-
         if self.config.get('credential_folder') is None:
             log.error('credential_folder must be set.')
             ok = False
 
-        creds_folder = abspath(self.config['credential_folder'])
-        creds_file = abspath(join(creds_folder, credfname))
-
-        log.info('Attempting authentication to GDrive')
-        gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, creds_file)
-
-        log.info('Searching for main folder {} on GDrive'.format(gfolder))
-
-        gstorage = GDriveStorage(gauth, gfolder)
-
-        if gstorage.main_folder(create=True) is None:
-            log.error('Failed to create google folder.')
+        folder_name = gconfig.get('folder_name', None)
+        if folder_name is None:
+            log.error('folder_name must be set')
             ok = False
+
+        client_id = None
+        client_secret = None
+        creds_file = None
+
+        if ok:
+            creds_folder = abspath(self.config['credential_folder'])
+            creds_file = abspath(join(creds_folder, credfname))
+
+            client_id = gconfig.get('client_id', None)
+            if client_id is None:
+                log.error('GDrive requires client_id')
+                ok = False
+
+            client_secret = gconfig.get('client_secret', None)
+            if client_secret is None:
+                log.error('GDrive requires client_secret')
+                ok = False
+
+        if ok:
+
+            log.info('Attempting authentication to GDrive')
+            gauth = GDriveAuth.init_gauth(client_id, gconfig['client_secret'], creds_file)
+
+            log.info('Searching for main folder {} on GDrive'.format(folder_name))
+
+            gstorage = GDriveStorage(gauth, folder_name)
+
+            if gstorage.main_folder(create=True) is None:
+                log.error('Failed to create google folder.')
+                ok = False
 
         return ok
 
@@ -147,7 +178,11 @@ class ConfigureApp(object):
 
         # check workdir
         workdir = self.config['workdir']
-        if not exists(workdir):
+        if workdir is None:
+            log.error('workdir must be set')
+            ret = False
+
+        if workdir is not None and not exists(workdir):
             log.error('Working directory does not exist: {}'.format(workdir))
             ret = False
 

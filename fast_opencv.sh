@@ -28,3 +28,6 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
     ..
 
 make
+
+sudo make install
+sudo ldconfig
