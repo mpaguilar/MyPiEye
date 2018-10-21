@@ -78,7 +78,6 @@ def enable_log(fmt='[%(asctime)s] %(levelname)s %(module)s %(name)s %(message)s'
 
     lgr = logging.getLogger()
     lgr.handlers.clear()
-    logfilename = abspath(filename)
 
     if enable_color:
         loghandler = logging.StreamHandler()
@@ -87,6 +86,7 @@ def enable_log(fmt='[%(asctime)s] %(levelname)s %(module)s %(name)s %(message)s'
         lgr.addHandler(loghandler)
 
     if filename is not None and filename != '':
+        logfilename = abspath(filename)
         fhandler = logging.FileHandler(logfilename)
         logfmt = logging.Formatter(fmt)
         fhandler.setFormatter(logfmt)
