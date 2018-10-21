@@ -21,8 +21,9 @@ class CliTests(unittest.TestCase):
                               'client_secret': ''},
                    'minsizes': {'minsize': '1500', 'min_width': '100', 'min_height': '50'},
                    'ignore': {'trees': '(0, 0, 1980, 500)', 'lbush': '(648, 537, 448, 221)',
-                              'rbush3': '(1601, 476, 188, 92)',
-                              'rbush1': '(1715, 594, 177, 122)', 'rbush2': '(1716, 457, 75, 77)'}}
+                              'rbush3': '(1601, 476, 188, 92)', 'rbush1': '(1715, 594, 177, 122)',
+                              'rbush2': '(1716, 457, 75, 77)'}, 'savedir': 'd:/tmp/mypieye', 'credential_folder': '.',
+                   'resolution': '720p', 'camera': '0', 'loglevel': 'DEBUG', 'logfile': '', 'color': 'True'}
 
         self.assertIsNotNone(ret)
         self.assertIsInstance(ret, dict)

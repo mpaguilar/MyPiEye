@@ -1,4 +1,7 @@
 import unittest
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 from MyPiEye.configure_app import ConfigureApp
 
@@ -34,9 +37,15 @@ class CongfigureAppTests(unittest.TestCase):
         self.assertTrue(ret)
 
     def test_prepare_gdrive(self):
+
         config = {
-            'gdrive': 'mypieye_test_config',
-            'credential_folder': 'data'
+            'credential_folder': 'data',
+            'gdrive':
+                {
+                    'folder_name': 'mypieye_test_config',
+                    'client_id': '',
+                    'client_secret': ''
+                }
         }
 
         ca = ConfigureApp(config)

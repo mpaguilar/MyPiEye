@@ -133,12 +133,28 @@ class ConfigureApp(object):
             log.error('folder_name must be set')
             ok = False
 
+        client_id = None
+        client_secret = None
+        creds_file = None
+
         if ok:
             creds_folder = abspath(self.config['credential_folder'])
             creds_file = abspath(join(creds_folder, credfname))
 
+            client_id = gconfig.get('client_id', None)
+            if client_id is None:
+                log.error('GDrive requires client_id')
+                ok = False
+
+            client_secret = gconfig.get('client_secret', None)
+            if client_secret is None:
+                log.error('GDrive requires client_secret')
+                ok = False
+
+        if ok:
+
             log.info('Attempting authentication to GDrive')
-            gauth = GDriveAuth.init_gauth(gconfig['client_id'], gconfig['client_secret'], creds_file)
+            gauth = GDriveAuth.init_gauth(client_id, gconfig['client_secret'], creds_file)
 
             log.info('Searching for main folder {} on GDrive'.format(folder_name))
 
