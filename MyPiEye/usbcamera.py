@@ -41,7 +41,7 @@ class UsbCamera(object):
         return True
 
 
-    def _init_camera(self):
+    def _init_camera(self, orig=True):
 
         """
         Opens the video capture
@@ -50,28 +50,33 @@ class UsbCamera(object):
         False if attempting to open the camera fails
         """
 
-        log.info('Using OpenCV version {}.{}'.format(cv2.getVersionMajor(), cv2.getVersionMinor()))
+        if orig:
+            log.info('Using OpenCV version {}.{}'.format(cv2.getVersionMajor(), cv2.getVersionMinor()))
 
-        if self.camera_id is not None:
-            log.info('Using camera {}'.format(self.camera_id))
-            self.camera = cv2.VideoCapture(self.camera_id)
+            if self.camera_id is not None:
+                log.info('Using camera {}'.format(self.camera_id))
+                self.camera = cv2.VideoCapture(self.camera_id)
 
-            x, y, fps = self.resolution
-            self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, x)
-            self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, y)
-            self.camera.set(cv2.CAP_PROP_FPS, fps)
+                x, y, fps = self.resolution
+                self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, x)
+                self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, y)
+                self.camera.set(cv2.CAP_PROP_FPS, fps)
 
-            if not self.camera.isOpened():
-                log.error('Failed to open camera')
-                return False
+                if not self.camera.isOpened():
+                    log.error('Failed to open camera')
+                    return False
 
-            self.is_open = True
-            x = self.camera.get(cv2.CAP_PROP_FRAME_WIDTH)
-            y = self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT)
-            fps = self.camera.get(cv2.CAP_PROP_FPS)
-            log.warning('x: {}, y: {}, fps: {}'.format(x, y, fps))
+                self.is_open = True
+                x = self.camera.get(cv2.CAP_PROP_FRAME_WIDTH)
+                y = self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT)
+                fps = self.camera.get(cv2.CAP_PROP_FPS)
+                log.warning('x: {}, y: {}, fps: {}'.format(x, y, fps))
 
-        return True
+            return True
+        else:
+
+            self.camera =
+
 
     def close_camera(self):
         if self.camera_id is not None and self.camera is not None:
