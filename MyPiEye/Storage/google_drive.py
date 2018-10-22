@@ -183,6 +183,8 @@ class GDriveStorage(object):
 
         upload_res.raise_for_status()
 
+        log.info('Upload {} complete'.format(img_fname))
+
         retval = upload_res.json()
 
         return retval

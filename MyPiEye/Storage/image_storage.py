@@ -59,5 +59,8 @@ class ImageStorage(object):
         except requests.exceptions.HTTPError as http_err:
             log.critical('Error: {}'.format(http_err))
 
+        log.info('Files saved')
+        log.debug('Removing {}'.format(box_name))
         remove(box_name)
+        log.debug('Removing {}'.format(nobox_name))
         remove(nobox_name)
