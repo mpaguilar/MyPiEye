@@ -175,6 +175,10 @@ class GDriveStorage(object):
         }
 
         upload_res = requests.post(url, files=files, headers=hdrs)
+
+        if not upload_res.ok:
+            log.error('Error ({})_uploading {}'.format(upload_res.status_code, filename))
+
         upload_res.raise_for_status()
 
         retval = upload_res.json()
