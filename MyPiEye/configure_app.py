@@ -97,7 +97,7 @@ class ConfigureApp(object):
 
         return True
 
-    def prepare_gdrive(self, credential_filename=None):
+    def prepare_gdrive(self, credential_filename='google_auth.json'):
         """
          Checks `gdrive` setting, and if set to anything, will attempt to create `credential_folder`.
 
@@ -120,10 +120,6 @@ class ConfigureApp(object):
             log.info('gdrive section not found. Skipping.')
             return True
 
-        credfname = credential_filename
-        if credfname is None:
-            credfname = 'google_auth.json'
-
         if self.config.get('credential_folder') is None:
             log.error('credential_folder must be set.')
             ok = False
@@ -139,7 +135,7 @@ class ConfigureApp(object):
 
         if ok:
             creds_folder = abspath(self.config['credential_folder'])
-            creds_file = abspath(join(creds_folder, credfname))
+            creds_file = abspath(join(creds_folder, credential_filename))
 
             client_id = gconfig.get('client_id', None)
             if client_id is None:
@@ -203,5 +199,54 @@ class ConfigureApp(object):
         if res != 'small' and res != '720p' and res != '1080p':
             log.error('Invalid resolution: {}'.format(res))
             ret = False
+
+        if not self.check_gdrive():
+            ret = False
+
+        return ret
+
+    def check_gdrive(self):
+
+        gconfig = self.config.get('gdrive', None)
+
+        if gconfig is None:
+            log.info('No [gdrive] section found')
+            return True
+
+        ret = True
+
+        if self.config.get('credential_folder') is None:
+            log.error('credential_folder must be set.')
+            ret = False
+
+        folder_name = gconfig.get('folder_name', None)
+        if folder_name is None:
+            log.error('folder_name must be set')
+            ret = False
+
+        client_id = gconfig.get('client_id', None)
+        if client_id is None:
+            log.error('GDrive requires client_id')
+            ret = False
+
+        client_secret = gconfig.get('client_secret', None)
+        if client_secret is None:
+            log.error('GDrive requires client_secret')
+            ret = False
+
+        if ret:
+            creds_folder = abspath(self.config['credential_folder'])
+            creds_file = abspath(join(creds_folder, 'google_auth.json'))
+
+            log.info('Attempting authentication to GDrive')
+            gauth = GDriveAuth.init_gauth(client_id, gconfig['client_secret'], creds_file)
+
+            log.info('Searching for main folder {} on GDrive'.format(folder_name))
+
+            gstorage = GDriveStorage(gauth, folder_name)
+
+            if gstorage.main_folder(create=False) is None:
+                log.error('Failed to find google folder.')
+                ret = False
 
         return ret
