@@ -2,7 +2,7 @@ import requests
 import json
 import logging
 from time import sleep
-from os.path import exists, basename
+from os.path import exists, basename, abspath
 
 log = logging.getLogger(__name__)
 logging.getLogger('urllib3').setLevel(logging.WARN)
@@ -169,15 +169,17 @@ class GDriveStorage(object):
             'parents': [parent_id]
         }
 
+        img_fname = abspath(filename)
+
         files = {
             'data': ('metadata', json.dumps(metadata), 'application/json; charset=UTF-8'),
-            'file': (filename, open(filename, 'rb'), 'image/jpeg')
+            'file': (filename, open(img_fname, 'rb'), 'image/jpeg')
         }
 
         upload_res = requests.post(url, files=files, headers=hdrs)
 
         if not upload_res.ok:
-            log.error('Error ({})_uploading {}'.format(upload_res.status_code, filename))
+            log.error('Error ({})_uploading {}'.format(upload_res.status_code, img_fname))
 
         upload_res.raise_for_status()
 
