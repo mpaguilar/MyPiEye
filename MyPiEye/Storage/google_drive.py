@@ -181,8 +181,6 @@ class GDriveStorage(object):
             # been able to prevent it.
             with open(filename, 'rb') as ifile:
                 fdata = ifile.read()
-                print(len(fdata))
-
 
                 files = {
                     'data': ('metadata', json.dumps(metadata), 'application/json; charset=UTF-8'),
