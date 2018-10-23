@@ -5,6 +5,8 @@
    :caption: Installation:
 
    installation
+   configuration
+   running
 
 .. toctree::
    :maxdepth: 2
