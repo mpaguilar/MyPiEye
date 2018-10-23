@@ -14,10 +14,9 @@ logging.getLogger('urllib3').setLevel(logging.WARN)
 
 GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
 
-folder_lock = multiprocessing.Lock()
-
 
 class GDriveStorage(object):
+    folder_lock = multiprocessing.Lock()
 
     def __init__(self, gauth, gdrive_folder):
         """
@@ -36,8 +35,6 @@ class GDriveStorage(object):
 
         self.folder_name = gdrive_folder
         self.folder_id = self.main_folder(create=False)
-
-
 
     def main_folder(self, create=False):
         """
@@ -101,7 +98,7 @@ class GDriveStorage(object):
                 log.error('Found {} subfolders with name {}'.format(len(files), folder_name))
 
         finally:
-            self.folder_lock.release()
+            GDriveStorage.folder_lock.release()
 
         return fid
 
