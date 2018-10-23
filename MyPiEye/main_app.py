@@ -56,7 +56,7 @@ class MainApp(object):
 
         # self.check should have ensured it exists
         self.savedir = config['savedir']
-        self.executor = ProcessPoolExecutor(max_workers=2)
+        self.executor = ProcessPoolExecutor(max_workers=4)
 
         self.storage = ImageStorage(
             fs_path=self.config['savedir'],
@@ -97,13 +97,6 @@ class MainApp(object):
         # self.storage.save_files(subdir, box_name, nobox_name)
         self.executor.submit(self.storage.save_files, subdir=subdir, box_name=box_name, nobox_name=nobox_name)
 
-        # res = self.executor.submit(
-        #     save_files, self.config['savedir'], subdir=subdir, box_name=box_name, nobox_name=nobox_name)
-
-        # res.box_name = box_name
-        # res.nobox_name = nobox_name
-        # res.add_done_callback(self.delete_tmp)
-
     def watch_for_motions(self):
         """
         Main loop for watching for changes
@@ -130,8 +123,6 @@ class MainApp(object):
                 # yield (dtstamp, nobox_name, box_name, movements)
                 log.debug('image captured')
                 self.store_files(box_name=box_name, nobox_name=nobox_name, capture_dt=capture_dt)
-
-            sleep(.1)
 
         if retries >= 2:
             log.error('Failed to get image after {} attempts'.format(retries + 1))
