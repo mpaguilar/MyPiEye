@@ -92,6 +92,7 @@ class GDriveStorage(object):
             if len(files) == 0:
                 log.info('Creating subfolder {}'.format(folder_name))
                 fid = GDriveStorage.create_folder(self.gauth, folder_name, self.folder_id)
+                sleep(.5)
             elif len(files) == 1:
                 fid = files[0]['id']
             else:
