@@ -38,7 +38,10 @@ def local_save(savedir, box_name, nobox_name, subdirectory):
     box_path = '{}/box/{}'.format(savedir, basename(box_name))
     nobox_path = '{}/nobox/{}'.format(savedir, basename(nobox_name))
 
+    log.debug('Copying {}'.format(box_name))
     copyfile('{}'.format(box_name), box_path)
+
+    log.debug('Copying {}'.format(nobox_name))
     copyfile('{}'.format(nobox_name), nobox_path)
 
     return box_path, nobox_path
