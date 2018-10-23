@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>MyPiEye.Storage.image_storage &mdash; MyPiEye  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> MyPiEye
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Installation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">“Quick” Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../running.html">Running</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../main_app.html">MainApp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../storage.html">Storage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cli.html">CLI</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">MyPiEye</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>MyPiEye.Storage.image_storage</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for MyPiEye.Storage.image_storage</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="k">import</span> <span class="n">ProcessPoolExecutor</span><span class="p">,</span> <span class="n">ThreadPoolExecutor</span><span class="p">,</span> <span class="n">wait</span>
+<span class="kn">import</span> <span class="nn">asyncio</span>
+
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">join</span><span class="p">,</span> <span class="n">abspath</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">remove</span>
+
+<span class="kn">from</span> <span class="nn">.google_drive</span> <span class="k">import</span> <span class="n">GDriveAuth</span><span class="p">,</span> <span class="n">GDriveStorage</span>
+<span class="kn">from</span> <span class="nn">.local_filesystem</span> <span class="k">import</span> <span class="n">local_save</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">get_logger</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="ImageStorage"><a class="viewcode-back" href="../../../storage.html#MyPiEye.Storage.ImageStorage">[docs]</a><span class="k">class</span> <span class="nc">ImageStorage</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">executor</span> <span class="o">=</span> <span class="n">ProcessPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ImageStorage.__init__"><a class="viewcode-back" href="../../../storage.html#MyPiEye.Storage.ImageStorage.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">creds_folder</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param config: the main config</span>
+<span class="sd">        :param creds_folder: where to store the .json (unused?)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">pth</span> <span class="o">=</span> <span class="n">abspath</span><span class="p">(</span><span class="n">creds_folder</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">creds_folder</span> <span class="o">=</span> <span class="n">pth</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;savedir&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gdrive_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;gdrive&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">futures</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;ImageStorage initialized&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ImageStorage.save"><a class="viewcode-back" href="../../../storage.html#MyPiEye.Storage.ImageStorage.save">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">subdir</span><span class="p">,</span> <span class="n">box_name</span><span class="p">,</span> <span class="n">nobox_name</span><span class="p">):</span>
+        <span class="n">futures</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">fs_path</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;savedir&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fs_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saving to local filesystem </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fs_path</span><span class="p">))</span>
+            <span class="c1"># local_save(self.fs_path, box_name, nobox_name, subdir)</span>
+            <span class="n">local_save</span><span class="p">(</span><span class="n">fs_path</span><span class="p">,</span> <span class="n">box_name</span><span class="p">,</span> <span class="n">nobox_name</span><span class="p">,</span> <span class="n">subdir</span><span class="p">)</span>
+
+        <span class="n">gdrive_settings</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;gdrive&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">creds_folder</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;credential_folder&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">gdrive_settings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">creds_file</span> <span class="o">=</span> <span class="n">abspath</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">creds_folder</span><span class="p">,</span> <span class="s1">&#39;google_auth.json&#39;</span><span class="p">))</span>
+            <span class="n">folder_name</span> <span class="o">=</span> <span class="n">gdrive_settings</span><span class="p">[</span><span class="s1">&#39;folder_name&#39;</span><span class="p">]</span>
+            <span class="n">client_id</span> <span class="o">=</span> <span class="n">gdrive_settings</span><span class="p">[</span><span class="s1">&#39;client_id&#39;</span><span class="p">]</span>
+            <span class="n">client_secret</span> <span class="o">=</span> <span class="n">gdrive_settings</span><span class="p">[</span><span class="s1">&#39;client_secret&#39;</span><span class="p">]</span>
+
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saving to Google Drive </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">folder_name</span><span class="p">))</span>
+            <span class="n">gauth</span> <span class="o">=</span> <span class="n">GDriveAuth</span><span class="o">.</span><span class="n">init_gauth</span><span class="p">(</span><span class="n">client_id</span><span class="p">,</span> <span class="n">client_secret</span><span class="p">,</span> <span class="n">creds_file</span><span class="p">)</span>
+            <span class="n">gstorage</span> <span class="o">=</span> <span class="n">GDriveStorage</span><span class="p">(</span><span class="n">gauth</span><span class="p">,</span> <span class="n">folder_name</span><span class="p">)</span>
+            <span class="n">gstorage</span><span class="o">.</span><span class="n">upload_file</span><span class="p">(</span><span class="n">subdir</span><span class="p">,</span> <span class="n">box_name</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Removing </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">box_name</span><span class="p">))</span>
+        <span class="n">remove</span><span class="p">(</span><span class="n">box_name</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Removing </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nobox_name</span><span class="p">))</span>
+        <span class="n">remove</span><span class="p">(</span><span class="n">nobox_name</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="ImageStorage.save_files"><a class="viewcode-back" href="../../../storage.html#MyPiEye.Storage.ImageStorage.save_files">[docs]</a>    <span class="k">def</span> <span class="nf">save_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subdir</span><span class="p">,</span> <span class="n">box_name</span><span class="p">,</span> <span class="n">nobox_name</span><span class="p">):</span>
+
+        <span class="n">fut</span> <span class="o">=</span> <span class="n">ImageStorage</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">ImageStorage</span><span class="o">.</span><span class="n">save</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">subdir</span><span class="p">,</span> <span class="n">box_name</span><span class="p">,</span> <span class="n">nobox_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fut</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">waiting</span> <span class="o">=</span> <span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">futures</span><span class="p">,</span> <span class="o">.</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">futures</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">waiting</span><span class="p">)</span>
+
+        <span class="k">return</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Michael P. Aguilar
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+  
+
+  <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
