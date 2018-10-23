@@ -1,4 +1,5 @@
 import requests
+from requests_toolbelt.multipart.encoder import MultipartEncoder
 import json
 import logging
 from time import sleep
@@ -173,24 +174,35 @@ class GDriveStorage(object):
         retry = 0
 
         while retry < 3:
+            try:
+                with open(filename, 'rb') as ifile:
+                    fdata = ifile.read()
 
-            files = {
-                'data': ('metadata', json.dumps(metadata), 'application/json; charset=UTF-8'),
-                'file': (filename, open(filename, 'rb'), 'image/jpeg')
-            }
+                    print(len(fdata))
 
 
-            upload_res = requests.post(url, files=files, headers=hdrs)
+                files = {
+                    'data': ('metadata', json.dumps(metadata), 'application/json; charset=UTF-8'),
+                    'file': (filename, open(filename, 'rb'), 'image/jpeg')
+                }
+                menc = MultipartEncoder(
+                    fields=files)
 
-            if not upload_res.ok:
-                log.error('Error ({})_uploading {}'.format(upload_res.status_code, filename))
-                content = upload_res.json()
-                log.error(content['error']['message'])
-                retry += 1
-                sleep(.3)
+                hdrs.update({'Content-Type': menc.content_type})
 
-            else:
-                break
+                upload_res = requests.post(url, data=menc, headers=hdrs)
+
+                if not upload_res.ok:
+                    log.error('Error ({})_uploading {}'.format(upload_res.status_code, filename))
+                    content = upload_res.json()
+                    log.error(content['error']['message'])
+                    retry += 1
+                    sleep(.3)
+
+                else:
+                    break
+            finally:
+                ifile.close()
 
         upload_res.raise_for_status()
 
