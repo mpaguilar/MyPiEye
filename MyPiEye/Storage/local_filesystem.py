@@ -3,7 +3,9 @@ from os.path import basename, exists
 from os import makedirs
 import logging
 
-log = logging.getLogger(__name__)
+import multiprocessing
+
+log = multiprocessing.get_logger()
 
 
 def local_save(savedir, box_name, nobox_name, subdirectory):

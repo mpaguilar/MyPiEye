@@ -6,7 +6,9 @@ from time import sleep
 from os.path import exists, basename, abspath
 from time import sleep
 
-log = logging.getLogger(__name__)
+import multiprocessing
+log = multiprocessing.get_logger()
+
 logging.getLogger('urllib3').setLevel(logging.WARN)
 
 GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
@@ -88,8 +90,6 @@ class GDriveStorage(object):
         else:
             log.error('Found {} subfolders with name {}'.format(len(files), folder_name))
             return None
-
-
 
     @staticmethod
     def find_folders(gauth, parent_id, folder_name):
@@ -175,17 +175,14 @@ class GDriveStorage(object):
         upload_res = None
 
         while retry < 1:
-            # on the RPi, I think I'm running into a race
-            # where the file isn't completely written.
-            # this seems to alleviate it, because I haven't
-            # been able to prevent it.
+
             with open(filename, 'rb') as ifile:
                 fdata = ifile.read()
 
                 files = {
                     'data': ('metadata', json.dumps(metadata), 'application/json; charset=UTF-8'),
                     'file': (filename, fdata, 'image/jpeg')
-                    }
+                }
 
                 menc = MultipartEncoder(
                     fields=files)
@@ -204,7 +201,6 @@ class GDriveStorage(object):
                     log.error(content['error']['message'])
                     retry += 1
                     sleep(.3)
-
 
         upload_res.raise_for_status()
 

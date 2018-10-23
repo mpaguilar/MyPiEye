@@ -40,7 +40,7 @@ settings.update(global_settings)
 
 def clean_exit(sig, _):
     log.critical('Program aborted with signal {}'.format(sig))
-    sys.exit(0)
+    sys.exit(sig)
 
 
 @click.group()

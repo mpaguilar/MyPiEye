@@ -2,6 +2,7 @@ import logging
 from colorama import init, Fore, Back, Style
 from os.path import exists, abspath
 import configparser
+import multiprocessing
 
 init()
 
@@ -65,7 +66,7 @@ def enable_log(fmt='[%(asctime)s] [%(process)5s] %(levelname)s %(module)s %(name
     :param fmt: logging format string
     :param enable_color: True to enable
     :param filename: log file location
-    :return: True
+    :return: Logger object
     """
 
     # if there's no special requirements for logging
