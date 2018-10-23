@@ -19,4 +19,3 @@ if not log_configured:
     mlogr.addHandler(loghandler)
     log_configured = True
 
-
