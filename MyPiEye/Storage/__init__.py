@@ -1,21 +1,19 @@
-import multiprocessing
-import logging
-import signal
-import sys
-
-from MyPiEye.CLI import ColorLogFormatter
-
 from .image_storage import ImageStorage
 from .google_drive import GDriveStorage, GDriveAuth
 from .local_filesystem import local_save
 
-log_configured = False
-mlogr = multiprocessing.get_logger()
+from MyPiEye.CLI import ColorLogFormatter
+import logging
+import multiprocessing
 
-if not log_configured:
+
+def get_logger():
+    mlogr = multiprocessing.get_logger()
     loghandler = logging.StreamHandler()
     logfmt = ColorLogFormatter('[%(asctime)s] [%(process)5s] %(levelname)s %(module)s %(name)s %(message)s')
     loghandler.setFormatter(logfmt)
     mlogr.addHandler(loghandler)
-    log_configured = True
+    return mlogr
 
+
+get_logger()

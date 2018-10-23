@@ -1,11 +1,10 @@
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, wait
 import asyncio
 
-import logging
+import multiprocessing
+
 from os.path import join, abspath
 from os import remove
-
-import multiprocessing
 
 from .google_drive import GDriveAuth, GDriveStorage
 from .local_filesystem import local_save
@@ -28,59 +27,42 @@ class ImageStorage(object):
         self.fs_path = fs_path
         self.gdrive_settings = gdrive_settings
 
+        self.executor = ProcessPoolExecutor(max_workers=2)
+
         log.debug('ImageStorage initialized')
+
+    @staticmethod
+    def do_gdrive(subdir, box_name, folder_name, creds_file, client_id, client_secret):
+
+        log.info('Saving to Google Drive {}'.format(folder_name))
+        gauth = GDriveAuth.init_gauth(client_id, client_secret, creds_file)
+        gstorage = GDriveStorage(gauth, folder_name)
+        gstorage.upload_file(subdir, box_name)
 
     def save_files(self, subdir, box_name, nobox_name):
 
         log.info('Saving files in {}'.format(subdir))
 
-        if self.fs_path is not None:
-            log.info('Saving to local filesystem {}'.format(self.fs_path))
-            local_save(self.fs_path, box_name, nobox_name, subdir)
-
-        if self.gdrive_settings is not None:
-            creds_file = abspath(join(self.creds_folder, 'google_auth.json'))
-            folder_name = self.gdrive_settings['folder_name']
-            client_id = self.gdrive_settings['client_id']
-            client_secret = self.gdrive_settings['client_secret']
-
-            log.info('Saving to Google Drive {}'.format(folder_name))
-            gauth = GDriveAuth.init_gauth(client_id, client_secret, creds_file)
-            gstorage = GDriveStorage(gauth, folder_name)
-            gstorage.upload_file(subdir, box_name)
-
-        """
-        
-        loop = asyncio.get_event_loop()
-
         futures = []
-        
+
         if self.fs_path is not None:
             log.info('Saving to local filesystem {}'.format(self.fs_path))
-            local_fut = loop.run_in_executor(None, local_save, self.fs_path, box_name, nobox_name, subdir)
-            futures.append(local_fut)
+            # local_save(self.fs_path, box_name, nobox_name, subdir)
+            fut = self.executor.submit(local_save, self.fs_path, box_name, nobox_name, subdir)
+            futures.append(fut)
 
         if self.gdrive_settings is not None:
             creds_file = abspath(join(self.creds_folder, 'google_auth.json'))
-
             folder_name = self.gdrive_settings['folder_name']
             client_id = self.gdrive_settings['client_id']
             client_secret = self.gdrive_settings['client_secret']
 
-            log.info('Saving to Google Drive {}'.format(folder_name))
-            gauth = GDriveAuth.init_gauth(client_id, client_secret, creds_file)
-            gstorage = GDriveStorage(gauth, folder_name)
-            gdrive_fut = loop.run_in_executor(None, gstorage.upload_file, subdir, box_name)
-            futures.append(gdrive_fut)
+            fut = self.executor.submit(ImageStorage.do_gdrive,
+                                       subdir, box_name, folder_name,
+                                       creds_file, client_id, client_secret)
+            futures.append(fut)
 
-        gathered = asyncio.gather(*futures)
-
-        try:
-            loop.run_until_complete(gathered)
-            log.info('Files saved')
-        except requests.exceptions.HTTPError as http_err:
-            log.critical('Error: {}'.format(http_err))
-        """
+        _, waiting = wait(futures)
 
         log.debug('Removing {}'.format(box_name))
         remove(box_name)

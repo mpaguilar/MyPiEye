@@ -57,11 +57,10 @@ class MainApp(object):
 
         # self.check should have ensured it exists
         self.savedir = config['savedir']
-        self.executor = ProcessPoolExecutor(max_workers=2)
+        # self.executor = ProcessPoolExecutor(max_workers=2)
         self.storage = ImageStorage(
             fs_path=self.config['savedir'],
             gdrive_settings=self.config.get('gdrive', None))
-
 
     def start(self):
         """
@@ -78,8 +77,8 @@ class MainApp(object):
         finally:
             log.warning('Shutting down')
             self.camera.close_camera()
-            log.warning('Waiting on external process shutdown')
-            self.executor.shutdown()
+            # log.warning('Waiting on external process shutdown')
+            # self.executor.shutdown()
 
         return True
 
@@ -95,9 +94,9 @@ class MainApp(object):
 
         subdir = capture_dt.strftime('%y%m%d')
 
-        # self.storage.save_files(subdir, box_name, nobox_name)
-        fut = self.executor.submit(self.storage.save_files, subdir=subdir, box_name=box_name, nobox_name=nobox_name)
-        fut.add_done_callback(lambda f: log.info('Save complete {}'.format(nobox_name)))
+        self.storage.save_files(subdir, box_name, nobox_name)
+        # fut = self.executor.submit(self.storage.save_files, subdir=subdir, box_name=box_name, nobox_name=nobox_name)
+        # fut.add_done_callback(lambda f: log.info('Save complete {}'.format(nobox_name)))
 
     def watch_for_motions(self):
         """

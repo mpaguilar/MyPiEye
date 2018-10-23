@@ -10,7 +10,6 @@ import multiprocessing
 log = multiprocessing.get_logger()
 
 logging.getLogger('urllib3').setLevel(logging.WARN)
-logging.getLogger('util').setLevel(logging.WARN)
 
 GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
 
