@@ -14,6 +14,8 @@ logging.getLogger('urllib3').setLevel(logging.WARN)
 
 GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
 
+folder_lock = multiprocessing.Lock()
+
 
 class GDriveStorage(object):
 
@@ -35,7 +37,7 @@ class GDriveStorage(object):
         self.folder_name = gdrive_folder
         self.folder_id = self.main_folder(create=False)
 
-        self.folder_lock = multiprocessing.Lock()
+
 
     def main_folder(self, create=False):
         """
@@ -82,7 +84,7 @@ class GDriveStorage(object):
 
         assert self.folder_id is not None, 'folder id is None'
 
-        self.folder_lock.acquire()
+        GDriveStorage.folder_lock.acquire()
 
         try:
             folders = GDriveStorage.find_folders(self.gauth, self.folder_id, folder_name)
