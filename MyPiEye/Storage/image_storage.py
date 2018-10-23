@@ -33,14 +33,6 @@ class ImageStorage(object):
         log.debug('ImageStorage initialized')
 
     @staticmethod
-    def do_gdrive(subdir, box_name, folder_name, creds_file, client_id, client_secret):
-
-        log.info('Saving to Google Drive {}'.format(folder_name))
-        gauth = GDriveAuth.init_gauth(client_id, client_secret, creds_file)
-        gstorage = GDriveStorage(gauth, folder_name)
-        gstorage.upload_file(subdir, box_name)
-
-    @staticmethod
     def save(config, subdir, box_name, nobox_name):
         futures = []
         fs_path = config.get('savedir', None)
@@ -58,8 +50,10 @@ class ImageStorage(object):
             client_id = gdrive_settings['client_id']
             client_secret = gdrive_settings['client_secret']
 
-            ImageStorage.do_gdrive(subdir, box_name, folder_name,
-                                   creds_file, client_id, client_secret)
+            log.info('Saving to Google Drive {}'.format(folder_name))
+            gauth = GDriveAuth.init_gauth(client_id, client_secret, creds_file)
+            gstorage = GDriveStorage(gauth, folder_name)
+            gstorage.upload_file(subdir, box_name)
 
         log.debug('Removing {}'.format(box_name))
         remove(box_name)

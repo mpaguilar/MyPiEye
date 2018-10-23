@@ -134,7 +134,7 @@ class GDriveStorage(object):
                 menc = MultipartEncoder(
                     fields=files)
 
-                hdrs.update({'Content-Type': menc.content_type})
+                hdrs.update({'Content-Type': 'multipart/related; boundary={}'.format(menc.boundary_value)})
 
                 upload_res = requests.post(url, data=menc, headers=hdrs)
 
