@@ -29,6 +29,7 @@ setup(
         'pyasn1==0.4.4',
         'pyasn1-modules==0.2.2',
         'requests==2.19.1',
+        'requests-toolbelt==0.8.0',
         'rsa==4.0',
         'six==1.11.0',
         'uritemplate==3.0.0',

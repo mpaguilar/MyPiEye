@@ -1,4 +1,5 @@
 import requests
+from requests_toolbelt.multipart.encoder import MultipartEncoder
 import json
 import logging
 from time import sleep
@@ -171,26 +172,41 @@ class GDriveStorage(object):
         }
 
         retry = 0
+        upload_res = None
 
-        while retry < 3:
+        while retry < 1:
+            # on the RPi, I think I'm running into a race
+            # where the file isn't completely written.
+            # this seems to alleviate it, because I haven't
+            # been able to prevent it.
+            with open(filename, 'rb') as ifile:
+                fdata = ifile.read()
+                print(len(fdata))
 
-            files = {
-                'data': ('metadata', json.dumps(metadata), 'application/json; charset=UTF-8'),
-                'file': (filename, open(filename, 'rb'), 'image/jpeg')
-            }
 
+                files = {
+                    'data': ('metadata', json.dumps(metadata), 'application/json; charset=UTF-8'),
+                    'file': (filename, fdata, 'image/jpeg')
+                    }
 
-            upload_res = requests.post(url, files=files, headers=hdrs)
+                menc = MultipartEncoder(
+                    fields=files)
 
-            if not upload_res.ok:
-                log.error('Error ({})_uploading {}'.format(upload_res.status_code, filename))
-                content = upload_res.json()
-                log.error(content['error']['message'])
-                retry += 1
-                sleep(.3)
+                hdrs.update({'Content-Type': menc.content_type})
+                log.debug('headers: {}'.format(hdrs))
 
-            else:
-                break
+                upload_res = requests.post(url, data=menc, headers=hdrs)
+
+                if upload_res.ok:
+                    log.debug('Upload responded ok: {}'.format(upload_res.status_code))
+                    break
+                else:
+                    log.error('Error ({})_uploading {}'.format(upload_res.status_code, filename))
+                    content = upload_res.json()
+                    log.error(content['error']['message'])
+                    retry += 1
+                    sleep(.3)
+
 
         upload_res.raise_for_status()
 

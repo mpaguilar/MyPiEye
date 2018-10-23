@@ -1,8 +1,4 @@
-sudo apt install -y git
 sudo apt install -y libopencv-dev
-
-sudo apt install -y python3-pip
-
 sudo apt install -y liblapack3
 sudo apt install -y libopenblas-base
 sudo apt install -y libatlas3-base
