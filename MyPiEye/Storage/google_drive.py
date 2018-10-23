@@ -16,6 +16,7 @@ GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
 
 
 class GDriveStorage(object):
+    folder_lock = multiprocessing.Lock()
 
     def __init__(self, gauth, gdrive_folder):
         """
@@ -43,54 +44,71 @@ class GDriveStorage(object):
         :return: the id on success, None on fail.
         """
         # if we can't find it later, then it no longer exists.
-        self.folder_id = None
 
-        name = self.folder_name
-        parent_id = 'root'
+        GDriveStorage.folder_lock.acquire()
 
-        retval = GDriveStorage.find_folders(self.gauth, parent_id, name)
+        try:
+            self.folder_id = None
 
-        files = retval.get('files', [])
+            name = self.folder_name
+            parent_id = 'root'
 
-        assert len(files) <= 1, 'More than one folder named {}'.format(name)
-        if len(files) > 1:
-            log.error('More than one folder named {}'.format(name))
-            return None
+            retval = GDriveStorage.find_folders(self.gauth, parent_id, name)
 
-        elif len(files) < 1:
-            if create:
-                log.warning('Main folder {} does not exist. Creating.'.format(name))
+            files = retval.get('files', [])
 
-                self.folder_id = GDriveStorage.create_folder(self.gauth, name, parent_id='root')
-                return self.folder_id
-            else:
-                log.error('main folder not found')
+            assert len(files) <= 1, 'More than one folder named {}'.format(name)
+            if len(files) > 1:
+                log.error('More than one folder named {}'.format(name))
                 return None
-        else:
-            self.folder_id = files[0]['id']
-            return self.folder_id
 
-    def create_subfolder(self, folder_name):
+            elif len(files) < 1:
+                if create:
+                    log.warning('Main folder {} does not exist. Creating.'.format(name))
+
+                    self.folder_id = GDriveStorage.create_folder(self.gauth, name, parent_id='root')
+                    return self.folder_id
+                else:
+                    log.error('main folder not found')
+                    return None
+            else:
+                self.folder_id = files[0]['id']
+                return self.folder_id
+
+        finally:
+            GDriveStorage.folder_lock.release()
+
+    def subfolder(self, folder_name):
         """
-        Creates a subfolder off of the main folder.
+        Finds or creates a subfolder off of the main folder.
 
         :param folder_name:
-        :return:
+        :return: the ID of the folder
         """
 
         assert self.folder_id is not None, 'folder id is None'
 
-        folders = GDriveStorage.find_folders(self.gauth, self.folder_id, folder_name)
-        files = folders.get('files', [])
+        GDriveStorage.folder_lock.acquire()
 
-        if len(files) == 0:
-            log.info('Creating subfolder {}'.format(folder_name))
-            return GDriveStorage.create_folder(self.gauth, folder_name, self.folder_id)
-        elif len(files) == 1:
-            return files[0]['id']
-        else:
-            log.error('Found {} subfolders with name {}'.format(len(files), folder_name))
-            return None
+        try:
+            folders = GDriveStorage.find_folders(self.gauth, self.folder_id, folder_name)
+            files = folders.get('files', [])
+
+            fid = None
+
+            if len(files) == 0:
+                log.warning('Creating subfolder {}'.format(folder_name))
+                fid = GDriveStorage.create_folder(self.gauth, folder_name, self.folder_id)
+                sleep(.5)
+            elif len(files) == 1:
+                fid = files[0]['id']
+            else:
+                log.error('Found {} subfolders with name {}'.format(len(files), folder_name))
+
+        finally:
+            GDriveStorage.folder_lock.release()
+
+        return fid
 
     @staticmethod
     def save(filename, metadata, headers):
@@ -129,14 +147,13 @@ class GDriveStorage(object):
         parent = GDriveStorage.find_folders(self.gauth, parent_id=self.folder_id, folder_name=subdir)
 
         if len(parent['files']) == 0:
-            ret = self.create_subfolder(subdir)
+            ret = self.subfolder(subdir)
             assert ret is not None
             parent_id = ret
         else:
             parent_id = parent['files'][0]['id']
 
         assert parent_id is not None, 'Parent id is None'
-
 
         metadata = {
             'name': basename(filename),

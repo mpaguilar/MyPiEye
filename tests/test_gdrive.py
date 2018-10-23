@@ -91,7 +91,7 @@ class GDriveFolderTests(unittest.TestCase):
         self.assertEqual(folder_id, ret)
 
         # create a subfolder
-        ret = gstorage.create_subfolder('subfolder_test')
+        ret = gstorage.subfolder('subfolder_test')
         self.assertIsNotNone(ret)
 
         subid = ret

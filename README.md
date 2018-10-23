@@ -30,4 +30,5 @@ Configuration is mostly handled within an .ini file.
 By default it will look for `mypieye.ini` in the current directory. It can also be specified at the command line with
 the `--iniconfig` switch.
 
-Detailed info can be found in docs/html.
+Detailed info can be found in doc/html.
+
