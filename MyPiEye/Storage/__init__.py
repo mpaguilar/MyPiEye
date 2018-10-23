@@ -20,9 +20,3 @@ if not log_configured:
     log_configured = True
 
 
-def clean_exit(sig, _):
-    mlogr.critical('Program aborted with signal {}'.format(sig))
-    sys.exit(sig)
-
-
-signal.signal(signal.SIGINT, clean_exit)
