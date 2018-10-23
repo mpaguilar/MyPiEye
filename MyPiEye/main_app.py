@@ -58,9 +58,7 @@ class MainApp(object):
         # self.check should have ensured it exists
         self.savedir = config['savedir']
         # self.executor = ProcessPoolExecutor(max_workers=2)
-        self.storage = ImageStorage(
-            fs_path=self.config['savedir'],
-            gdrive_settings=self.config.get('gdrive', None))
+        self.storage = ImageStorage(config)
 
     def start(self):
         """
@@ -95,6 +93,7 @@ class MainApp(object):
         subdir = capture_dt.strftime('%y%m%d')
 
         self.storage.save_files(subdir, box_name, nobox_name)
+        # ImageStorage.save(self.config, subdir, box_name, nobox_name)
         # fut = self.executor.submit(self.storage.save_files, subdir=subdir, box_name=box_name, nobox_name=nobox_name)
         # fut.add_done_callback(lambda f: log.info('Save complete {}'.format(nobox_name)))
 
