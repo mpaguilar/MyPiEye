@@ -94,7 +94,8 @@ class MainApp(object):
 
         subdir = capture_dt.strftime('%y%m%d')
 
-        self.storage.save_files(subdir, box_name, nobox_name)
+        # self.storage.save_files(subdir, box_name, nobox_name)
+        self.executor.submit(self.storage.save_files, subdir=subdir, box_name=box_name, nobox_name=nobox_name)
 
         # res = self.executor.submit(
         #     save_files, self.config['savedir'], subdir=subdir, box_name=box_name, nobox_name=nobox_name)
