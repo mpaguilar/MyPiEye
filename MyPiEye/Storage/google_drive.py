@@ -175,10 +175,12 @@ class GDriveStorage(object):
 
         while retry < 3:
             try:
+                # on the RPi, I think I'm running into a race
+                # where the file isn't completely written.
+                # this seems to alleviate it, because I haven't
+                # been able to prevent it.
                 with open(filename, 'rb') as ifile:
                     fdata = ifile.read()
-
-                    print(len(fdata))
 
 
                 files = {
