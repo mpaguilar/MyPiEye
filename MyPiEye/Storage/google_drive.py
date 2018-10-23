@@ -7,6 +7,7 @@ from os.path import exists, basename, abspath
 from time import sleep
 
 import multiprocessing
+
 log = multiprocessing.get_logger()
 
 logging.getLogger('urllib3').setLevel(logging.WARN)
@@ -91,6 +92,34 @@ class GDriveStorage(object):
             log.error('Found {} subfolders with name {}'.format(len(files), folder_name))
             return None
 
+    @staticmethod
+    def save(filename, metadata, headers):
+        url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
+
+        with open(filename, 'rb') as ifile:
+            fdata = ifile.read()
+
+            files = {
+                'data': ('metadata', json.dumps(metadata), 'application/json; charset=UTF-8'),
+                'file': (filename, fdata, 'image/jpeg')
+            }
+
+            menc = MultipartEncoder(
+                fields=files)
+
+            headers.update({'Content-Type': 'multipart/related; boundary={}'.format(menc.boundary_value)})
+
+            upload_res = requests.post(url, data=menc, headers=headers)
+
+            if upload_res.ok:
+                log.debug('Upload responded ok: {}'.format(upload_res.status_code))
+                return True
+            else:
+                log.error('Error ({})_uploading {}'.format(upload_res.status_code, filename))
+                content = upload_res.json()
+                log.error(content['error']['message'])
+                return False
+
     def upload_file(self, subdir, filename):
         assert self.folder_id is not None, 'GDrive folder is not found'
 
@@ -108,9 +137,6 @@ class GDriveStorage(object):
 
         assert parent_id is not None, 'Parent id is None'
 
-        url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
-
-        hdrs = dict(self.headers)
 
         metadata = {
             'name': basename(filename),
@@ -119,42 +145,16 @@ class GDriveStorage(object):
         }
 
         retry = 0
-        upload_res = None
 
         while retry < 1:
 
-            with open(filename, 'rb') as ifile:
-                fdata = ifile.read()
-
-                files = {
-                    'data': ('metadata', json.dumps(metadata), 'application/json; charset=UTF-8'),
-                    'file': (filename, fdata, 'image/jpeg')
-                }
-
-                menc = MultipartEncoder(
-                    fields=files)
-
-                hdrs.update({'Content-Type': 'multipart/related; boundary={}'.format(menc.boundary_value)})
-
-                upload_res = requests.post(url, data=menc, headers=hdrs)
-
-                if upload_res.ok:
-                    log.debug('Upload responded ok: {}'.format(upload_res.status_code))
-                    break
-                else:
-                    log.error('Error ({})_uploading {}'.format(upload_res.status_code, filename))
-                    content = upload_res.json()
-                    log.error(content['error']['message'])
-                    retry += 1
-                    sleep(.3)
-
-        upload_res.raise_for_status()
+            if GDriveStorage.save(filename, metadata, dict(self.headers)):
+                break
+            retry += 1
 
         log.info('Upload {} complete'.format(filename))
 
-        retval = upload_res.json()
-
-        return retval
+        return
 
     @staticmethod
     def find_folders(gauth, parent_id, folder_name):
@@ -208,8 +208,6 @@ class GDriveStorage(object):
         delete_res.raise_for_status()
 
         return True
-
-
 
 
 class GDriveAuth(object):
