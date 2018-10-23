@@ -4,6 +4,7 @@ from os import remove, environ
 
 from Storage.google_drive import GDriveAuth, GDriveStorage
 
+# no, these don't work. You'll have to generate your own.
 CLIENT_ID = '990858881415-u53d5skorvuuq4hqjfj5pvq80d059744.apps.googleusercontent.com'
 CLIENT_SECRET = '-9q0wn7j8x7IGrCRcwuzQY0g'
 GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'

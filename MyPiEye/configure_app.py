@@ -4,9 +4,6 @@ from os import makedirs
 
 from MyPiEye.Storage.google_drive import GDriveAuth, GDriveStorage
 
-CLIENT_ID = '990858881415-u53d5skorvuuq4hqjfj5pvq80d059744.apps.googleusercontent.com'
-CLIENT_SECRET = '-9q0wn7j8x7IGrCRcwuzQY0g'
-
 log = logging.getLogger(__name__)
 
 
