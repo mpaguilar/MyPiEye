@@ -172,39 +172,41 @@ class GDriveStorage(object):
         }
 
         retry = 0
+        upload_res = None
 
-        while retry < 3:
-            try:
-                # on the RPi, I think I'm running into a race
-                # where the file isn't completely written.
-                # this seems to alleviate it, because I haven't
-                # been able to prevent it.
-                with open(filename, 'rb') as ifile:
-                    fdata = ifile.read()
+        while retry < 1:
+            # on the RPi, I think I'm running into a race
+            # where the file isn't completely written.
+            # this seems to alleviate it, because I haven't
+            # been able to prevent it.
+            with open(filename, 'rb') as ifile:
+                fdata = ifile.read()
+                print(len(fdata))
 
 
                 files = {
                     'data': ('metadata', json.dumps(metadata), 'application/json; charset=UTF-8'),
-                    'file': (filename, open(filename, 'rb'), 'image/jpeg')
-                }
+                    'file': (filename, fdata, 'image/jpeg')
+                    }
+
                 menc = MultipartEncoder(
                     fields=files)
 
                 hdrs.update({'Content-Type': menc.content_type})
+                log.debug('headers: {}'.format(hdrs))
 
                 upload_res = requests.post(url, data=menc, headers=hdrs)
 
-                if not upload_res.ok:
+                if upload_res.ok:
+                    log.debug('Upload responded ok: {}'.format(upload_res.status_code))
+                    break
+                else:
                     log.error('Error ({})_uploading {}'.format(upload_res.status_code, filename))
                     content = upload_res.json()
                     log.error(content['error']['message'])
                     retry += 1
                     sleep(.3)
 
-                else:
-                    break
-            finally:
-                ifile.close()
 
         upload_res.raise_for_status()
 

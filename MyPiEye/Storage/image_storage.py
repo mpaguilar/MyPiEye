@@ -26,7 +26,7 @@ class ImageStorage(object):
 
         self.fs_path = fs_path
         self.gdrive_settings = gdrive_settings
-        self.executor = ProcessPoolExecutor(max_workers=2)
+        self.executor = ProcessPoolExecutor(max_workers=4)
 
     def save_files(self, subdir, box_name, nobox_name):
 
