@@ -47,8 +47,7 @@ class ImageStorage(object):
         if fs_path is not None:
             log.info('Saving to local filesystem {}'.format(fs_path))
             # local_save(self.fs_path, box_name, nobox_name, subdir)
-            fut = ImageStorage.executor.submit(local_save, fs_path, box_name, nobox_name, subdir)
-            futures.append(fut)
+            local_save(fs_path, box_name, nobox_name, subdir)
 
         gdrive_settings = config.get('gdrive', None)
         creds_folder = config.get('credential_folder', '.')
@@ -59,12 +58,8 @@ class ImageStorage(object):
             client_id = gdrive_settings['client_id']
             client_secret = gdrive_settings['client_secret']
 
-            fut = ImageStorage.executor.submit(ImageStorage.do_gdrive,
-                                               subdir, box_name, folder_name,
-                                               creds_file, client_id, client_secret)
-            futures.append(fut)
-
-        wait(futures)
+            ImageStorage.do_gdrive(subdir, box_name, folder_name,
+                                   creds_file, client_id, client_secret)
 
         log.debug('Removing {}'.format(box_name))
         remove(box_name)

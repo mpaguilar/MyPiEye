@@ -40,7 +40,6 @@ class UsbCamera(object):
 
         return True
 
-
     def _init_camera(self, orig=True):
 
         """
@@ -74,9 +73,10 @@ class UsbCamera(object):
 
             return True
 
-
-
     def close_camera(self):
+        if not hasattr(self, 'camera'):
+            return
+        
         if self.camera_id is not None and self.camera is not None:
             log.warning('Shutting down video capture')
             self.camera.release()
