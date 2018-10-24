@@ -1,6 +1,8 @@
 import logging
 from os.path import exists, join, abspath
 from os import makedirs
+from dateutil import tz
+from datetime import datetime
 
 from MyPiEye.Storage.google_drive import GDriveAuth, GDriveStorage
 
@@ -190,6 +192,15 @@ class ConfigureApp(object):
             log.error('Camera is required')
             ret = False
 
+        timezone = self.config.get('timezone', None)
+        if tz is None:
+            log.warning('timezone is not set')
+        else:
+            tzstr = tz.gettz(timezone)
+            log.info('Timezone set to {}'.format(tzstr))
+            now = datetime.now(tzstr).strftime('%Y/%m/%d %H:%M:%S')
+            print('Local time: {}'.format(now))
+
         # click forces a choice, but check it anyway
         res = self.config['resolution']
 
@@ -224,6 +235,10 @@ class ConfigureApp(object):
 
         if s3_config.get('bucket_name', None) is None:
             log.error('S3: bucket_name is required')
+            ret = False
+
+        if s3_config.get('aws_region', None) is None:
+            log.error('S3: aws_region is required')
             ret = False
 
         if s3_config.get('prefix', None) is None:

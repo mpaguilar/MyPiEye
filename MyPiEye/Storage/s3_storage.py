@@ -1,10 +1,12 @@
 from os.path import basename
 from datetime import datetime
+from dateutil import tz
+
 import multiprocessing
 
 import logging
 import boto3
-boto3.set_stream_logger('boto3.resources', logging.INFO)
+boto3.set_stream_logger('', logging.INFO)
 
 log = multiprocessing.get_logger()
 
@@ -13,6 +15,9 @@ class S3Storage(object):
     def __init__(self, config):
         self.config = config
         self.s3_config = config['s3']
+
+        self.local_tz = self.config.get('timezone', 'UTC')
+        self.local_tz = tz.gettz(self.local_tz)
 
         self.bucket_name = self.s3_config['bucket_name']
         self.prefix = self.s3_config.get('prefix', '')
@@ -26,8 +31,9 @@ class S3Storage(object):
 
         self.s3 = self.session.resource('s3')
         self.bucket = self.s3.Bucket(self.bucket_name)
+        self.region = self.s3_config['aws_region']
 
-        db = self.session.resource('dynamodb', region_name='us-east-1')
+        db = self.session.resource('dynamodb', region_name=self.region)
         self.camera_table = db.Table('HouseCams')
 
     def upload(self, subdir, box_name):
@@ -46,7 +52,8 @@ class S3Storage(object):
         self.camera_table.put_item(
             Item={
                 'cam_id': self.s3_config.get('prefix', 'no_id'),
-                'last_update': datetime.now().strftime('%Y/%m/%d %H:%M:%S'),
+                'last_update_utc': datetime.utcnow().strftime('%Y/%m/%d %H:%M:%S'),
+                'last_update': datetime.now(self.local_tz).strftime('%Y/%m/%d %H:%M:%S'),
                 'filename': upload_path
             }
         )
