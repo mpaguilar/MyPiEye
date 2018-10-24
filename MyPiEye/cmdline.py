@@ -85,7 +85,8 @@ def configure(**cli_flags):
 @click.option('--color/--no-color', default=settings['color'], help='Pretty color output')
 @click.option('--iniconfig',
               default=settings['config'], help='key/val (.ini) config file', callback=CLI.load_config)
-def run(**cli_flags):
+@click.pass_context
+def run(ctx, **cli_flags):
     """
     Start capturing and watching.
     Exit codes greater than zero are a command parsing error.
@@ -95,7 +96,9 @@ def run(**cli_flags):
     # handle Ctrl+C, so it doesn't give a stack dump.
     signal.signal(signal.SIGINT, clean_exit)
 
+    settings.update(ctx.params['iniconfig'])
     settings.update(cli_flags)
+    del settings['iniconfig']
 
     # let's just assume these are okay
     loglevel = settings['loglevel']

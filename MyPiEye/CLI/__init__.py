@@ -153,6 +153,6 @@ def load_config(ctx, param, config_filename):
 
     ret.update(ret['global'])
     del ret['global']
-    ctx.params = ret
+    # ctx.params = ret
 
     return ret
