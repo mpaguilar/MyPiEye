@@ -4,7 +4,7 @@ import MyPiEye
 
 setup(
     name="MyPiEye",
-    version="0.1.1",
+    version="0.1.2",
     author="Michael P. Aguilar",
     packages=find_packages(),
     entry_points={
