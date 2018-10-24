@@ -171,7 +171,7 @@ class GDriveStorage(object):
 
         log.info('Upload {} complete'.format(filename))
 
-        return
+        return True
 
     @staticmethod
     def find_folders(gauth, parent_id, folder_name):
