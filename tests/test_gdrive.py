@@ -3,6 +3,9 @@ import logging
 from os import remove, environ
 
 from Storage.google_drive import GDriveAuth, GDriveStorage
+from CLI import load_config
+
+from unittest.mock import Mock
 
 # no, these don't work. You'll have to generate your own.
 CLIENT_ID = '990858881415-u53d5skorvuuq4hqjfj5pvq80d059744.apps.googleusercontent.com'
@@ -15,36 +18,56 @@ logging.basicConfig(level=logging.DEBUG)
 class GDriveTests(unittest.TestCase):
 
     _folder_id = None
+    _config = None
 
     @classmethod
     def setUpClass(cls):
-        gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
+        cls._config = load_config(Mock(), Mock(), 'D:\\Data\\projects\\python\\tmp\\mypieye.ini')
+        cls._config['credential_folder'] = 'D:\\Data\\projects\\python\\tmp'
+
+        gauth = GDriveAuth.init_gauth(
+            cls._config['gdrive']['client_id'],
+            cls._config['gdrive']['client_secret'],
+            'google_auth.json')
+
         ret = GDriveStorage.create_folder(gauth, 'mypieye_test_upload', parent_id='root')
 
         cls._folder_id = ret
 
     @classmethod
     def tearDownClass(cls):
-        gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
+        gauth = GDriveAuth.init_gauth(
+            cls._config['gdrive']['client_id'],
+            cls._config['gdrive']['client_secret'],
+            'google_auth.json')
+
         ret = GDriveStorage.delete_folder(gauth, cls._folder_id)
 
         assert ret
 
     def test_validated_auth(self):
         # test validated app
-        gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
+        gauth = GDriveAuth.init_gauth(
+            GDriveTests._config['gdrive']['client_id'],
+            GDriveTests._config['gdrive']['client_secret'],
+            'google_auth.json')
+
         self.assertIsNotNone(gauth)
         self.assertIsNotNone(gauth.access_token)
         self.assertIsNotNone(gauth.refresh_token)
         self.assertIsNotNone(gauth.token_expires)
 
     def test_upload(self):
-        gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
+        gauth = GDriveAuth.init_gauth(
+            GDriveTests._config['gdrive']['client_id'],
+            GDriveTests._config['gdrive']['client_secret'],
+            'google_auth.json')
+
         gstorage = GDriveStorage(gauth, 'mypieye_test_upload')
 
         # upload the file
         ret = gstorage.upload_file('testsub', 'data/test_image.jpg')
-        self.assertIsNotNone(ret)
+        self.assertTrue(ret)
 
 
 class GDriveFolderTests(unittest.TestCase):
@@ -58,23 +81,30 @@ class GDriveFolderTests(unittest.TestCase):
         """
         IMPORTANT: this will prompt at the command line!
         """
-        remove('data/test_auth.json')
+        remove('google_auth.json')
 
         # test validation
-        gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
+        gauth = GDriveAuth.init_gauth(
+            GDriveTests._config['gdrive']['client_id'],
+            GDriveTests._config['gdrive']['client_secret'],
+            'google_auth.json')
+
         self.assertIsNotNone(gauth)
         self.assertIsNotNone(gauth.access_token)
         self.assertIsNotNone(gauth.refresh_token)
         self.assertIsNotNone(gauth.token_expires)
 
-    # @unittest.skipUnless(environ.get('INTEGRATION', False), 'Integration test')
+    @unittest.skipUnless(environ.get('INTEGRATION', False), 'Integration test')
     def test_folder_creation(self):
         """
         Attempts to create main folder, subfolder, and then delete them.
         :return:
         """
 
-        gauth = GDriveAuth.init_gauth(CLIENT_ID, CLIENT_SECRET, 'data/test_auth.json')
+        gauth = GDriveAuth.init_gauth(
+            GDriveTests._config['gdrive']['client_id'],
+            GDriveTests._config['gdrive']['client_secret'],
+            'google_auth.json')
 
         # create main folder
         ret = GDriveStorage.create_folder(gauth, 'mypieye_test', 'root')
@@ -91,7 +121,7 @@ class GDriveFolderTests(unittest.TestCase):
         self.assertEqual(folder_id, ret)
 
         # create a subfolder
-        ret = gstorage.create_subfolder('subfolder_test')
+        ret = gstorage.subfolder('subfolder_test')
         self.assertIsNotNone(ret)
 
         subid = ret

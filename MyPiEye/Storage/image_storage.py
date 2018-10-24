@@ -7,6 +7,7 @@ from os.path import join, abspath
 from os import remove
 
 from .google_drive import GDriveAuth, GDriveStorage
+from .s3_storage import S3Storage
 from .local_filesystem import local_save
 
 log = multiprocessing.get_logger()
@@ -28,17 +29,10 @@ class ImageStorage(object):
 
         self.fs_path = self.config['savedir']
         self.gdrive_settings = self.config.get('gdrive', None)
+        self.s3_config = self.config.get('s3', None)
         self.futures = []
 
         log.debug('ImageStorage initialized')
-
-    @staticmethod
-    def do_gdrive(subdir, box_name, folder_name, creds_file, client_id, client_secret):
-
-        log.info('Saving to Google Drive {}'.format(folder_name))
-        gauth = GDriveAuth.init_gauth(client_id, client_secret, creds_file)
-        gstorage = GDriveStorage(gauth, folder_name)
-        gstorage.upload_file(subdir, box_name)
 
     @staticmethod
     def save(config, subdir, box_name, nobox_name):
@@ -49,6 +43,11 @@ class ImageStorage(object):
             # local_save(self.fs_path, box_name, nobox_name, subdir)
             local_save(fs_path, box_name, nobox_name, subdir)
 
+        s3_config = config.get('s3', None)
+        if s3_config is not None:
+            s3 = S3Storage(config)
+            s3.upload(subdir, nobox_name)
+
         gdrive_settings = config.get('gdrive', None)
         creds_folder = config.get('credential_folder', '.')
 
@@ -58,9 +57,12 @@ class ImageStorage(object):
             client_id = gdrive_settings['client_id']
             client_secret = gdrive_settings['client_secret']
 
-            ImageStorage.do_gdrive(subdir, box_name, folder_name,
-                                   creds_file, client_id, client_secret)
+            log.info('Saving to Google Drive {}'.format(folder_name))
+            gauth = GDriveAuth.init_gauth(client_id, client_secret, creds_file)
+            gstorage = GDriveStorage(gauth, folder_name)
+            gstorage.upload_file(subdir, box_name)
 
+        log.info('Removing temp files.')
         log.debug('Removing {}'.format(box_name))
         remove(box_name)
         log.debug('Removing {}'.format(nobox_name))

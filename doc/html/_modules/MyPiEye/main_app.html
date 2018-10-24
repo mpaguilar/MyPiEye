@@ -1,0 +1,332 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>MyPiEye.main_app &mdash; MyPiEye  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> MyPiEye
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Installation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">“Quick” Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../running.html">Running</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../main_app.html">MainApp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../storage.html">Storage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli.html">CLI</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MyPiEye</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>MyPiEye.main_app</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for MyPiEye.main_app</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">ast</span> <span class="k">import</span> <span class="n">literal_eval</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="k">import</span> <span class="n">sleep</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">remove</span>
+<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="k">import</span> <span class="n">ProcessPoolExecutor</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+
+<span class="kn">from</span> <span class="nn">MyPiEye.Storage</span> <span class="k">import</span> <span class="n">ImageStorage</span>
+<span class="kn">from</span> <span class="nn">MyPiEye.motion_detect</span> <span class="k">import</span> <span class="n">MotionDetect</span>
+<span class="kn">from</span> <span class="nn">MyPiEye.usbcamera</span> <span class="k">import</span> <span class="n">UsbCamera</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The workhorse of the program.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="MainApp"><a class="viewcode-back" href="../../main_app.html#MyPiEye.cmdline.MainApp">[docs]</a><span class="k">class</span> <span class="nc">MainApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+<div class="viewcode-block" id="MainApp.__init__"><a class="viewcode-back" href="../../main_app.html#MyPiEye.cmdline.MainApp.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param config: a dict of consolidated options (defaults, ini, cmdline)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+
+        <span class="c1"># instanciates, but doesn&#39;t initialize</span>
+        <span class="n">camera_id</span> <span class="o">=</span> <span class="n">literal_eval</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;camera&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">camera</span> <span class="o">=</span> <span class="n">UsbCamera</span><span class="p">(</span>
+            <span class="n">resolution</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;resolution&#39;</span><span class="p">],</span>
+            <span class="n">camera</span><span class="o">=</span><span class="n">camera_id</span>
+        <span class="p">)</span>
+
+        <span class="c1"># the camera can only be set from the .ini</span>
+        <span class="n">camera_settings</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;iniconfig&#39;</span><span class="p">,</span> <span class="p">{})</span>
+
+        <span class="c1"># convert the ini string key/val entries into a list of tuples</span>
+        <span class="n">ignore_dict</span> <span class="o">=</span> <span class="n">camera_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">ignore_boxes</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ignore_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">literal_eval</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="n">ignore_boxes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+        <span class="c1"># get the minimum sizes</span>
+        <span class="n">minsizes</span> <span class="o">=</span> <span class="n">camera_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;minsizes&#39;</span><span class="p">,</span> <span class="p">{})</span>
+
+        <span class="n">workdir</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;workdir&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">motiondetect</span> <span class="o">=</span> <span class="n">MotionDetect</span><span class="p">(</span>
+            <span class="n">workdir</span><span class="o">=</span><span class="n">workdir</span><span class="p">,</span>
+            <span class="c1"># ini entries are always read as strings</span>
+            <span class="n">minsize</span><span class="o">=</span><span class="n">literal_eval</span><span class="p">(</span><span class="n">minsizes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;minsize&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">)),</span>
+            <span class="n">ignore_boxes</span><span class="o">=</span><span class="n">ignore_boxes</span>
+        <span class="p">)</span>
+
+        <span class="c1"># self.check should have ensured it exists</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">savedir</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;savedir&#39;</span><span class="p">]</span>
+        <span class="c1"># self.executor = ProcessPoolExecutor(max_workers=2)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">storage</span> <span class="o">=</span> <span class="n">ImageStorage</span><span class="p">(</span><span class="n">config</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MainApp.start"><a class="viewcode-back" href="../../main_app.html#MyPiEye.cmdline.MainApp.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the camera, and starts the main loop. Cleans up when it stops.</span>
+
+<span class="sd">        :return: False on fail, True if the loop ends.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">camera</span><span class="o">.</span><span class="n">init_camera</span><span class="p">():</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Failed to open camera&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">watch_for_motions</span><span class="p">()</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Shutting down&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">camera</span><span class="o">.</span><span class="n">close_camera</span><span class="p">()</span>
+            <span class="c1"># log.warning(&#39;Waiting on external process shutdown&#39;)</span>
+            <span class="c1"># self.executor.shutdown()</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="MainApp.store_files"><a class="viewcode-back" href="../../main_app.html#MyPiEye.cmdline.MainApp.store_files">[docs]</a>    <span class="k">def</span> <span class="nf">store_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">box_name</span><span class="p">,</span> <span class="n">nobox_name</span><span class="p">,</span> <span class="n">capture_dt</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sends file details to the executor.</span>
+
+<span class="sd">        :param box_name: the path to the temporary annotated file</span>
+<span class="sd">        :param nobox_name: the path to the temporary clean file</span>
+<span class="sd">        :param capture_dt: a datetime when motion was detected</span>
+<span class="sd">        :return: None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">subdir</span> <span class="o">=</span> <span class="n">capture_dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">save_files</span><span class="p">(</span><span class="n">subdir</span><span class="p">,</span> <span class="n">box_name</span><span class="p">,</span> <span class="n">nobox_name</span><span class="p">)</span></div>
+        <span class="c1"># ImageStorage.save(self.config, subdir, box_name, nobox_name)</span>
+        <span class="c1"># fut = self.executor.submit(self.storage.save_files, subdir=subdir, box_name=box_name, nobox_name=nobox_name)</span>
+        <span class="c1"># fut.add_done_callback(lambda f: log.info(&#39;Save complete {}&#39;.format(nobox_name)))</span>
+
+<div class="viewcode-block" id="MainApp.watch_for_motions"><a class="viewcode-back" href="../../main_app.html#MyPiEye.cmdline.MainApp.watch_for_motions">[docs]</a>    <span class="k">def</span> <span class="nf">watch_for_motions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Main loop for watching for changes</span>
+
+<span class="sd">        :return: Yields tuple of changes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">retries</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">while</span> <span class="kc">True</span> <span class="ow">and</span> <span class="n">retries</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">current_img</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">camera</span><span class="o">.</span><span class="n">get_image</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">current_img</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Failed to get image&#39;</span><span class="p">)</span>
+                <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">retries</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+
+            <span class="n">retries</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="n">motion</span><span class="p">,</span> <span class="n">capture_dt</span><span class="p">,</span> <span class="n">nobox_name</span><span class="p">,</span> <span class="n">box_name</span><span class="p">,</span> <span class="n">movements</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">motiondetect</span><span class="o">.</span><span class="n">motions</span><span class="p">(</span>
+                <span class="n">current_img</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">motion</span><span class="p">:</span>
+                <span class="c1"># yield (dtstamp, nobox_name, box_name, movements)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;image captured&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">store_files</span><span class="p">(</span><span class="n">box_name</span><span class="o">=</span><span class="n">box_name</span><span class="p">,</span> <span class="n">nobox_name</span><span class="o">=</span><span class="n">nobox_name</span><span class="p">,</span> <span class="n">capture_dt</span><span class="o">=</span><span class="n">capture_dt</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">retries</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Failed to get image after </span><span class="si">{}</span><span class="s1"> attempts&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">retries</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Michael P. Aguilar
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

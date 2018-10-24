@@ -1,0 +1,556 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Storage &mdash; MyPiEye  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="CLI" href="cli.html" />
+    <link rel="prev" title="MainApp" href="main_app.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> MyPiEye
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Installation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">“Quick” Start</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="main_app.html">MainApp</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Storage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#local-filesystem">Local Filesystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#google-drive">Google Drive</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#gdrivestorage">GDriveStorage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gdriveauth">GDriveAuth</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MyPiEye</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Storage</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/storage.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-MyPiEye.Storage">
+<span id="storage"></span><h1>Storage<a class="headerlink" href="#module-MyPiEye.Storage" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="MyPiEye.Storage.ImageStorage">
+<em class="property">class </em><code class="descclassname">MyPiEye.Storage.</code><code class="descname">ImageStorage</code><span class="sig-paren">(</span><em>config</em>, <em>creds_folder='.'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/image_storage.html#ImageStorage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.ImageStorage" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="MyPiEye.Storage.ImageStorage.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>config</em>, <em>creds_folder='.'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/image_storage.html#ImageStorage.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.ImageStorage.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>config</strong> – the main config</li>
+<li><strong>creds_folder</strong> – where to store the .json (unused?)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="MyPiEye.Storage.ImageStorage.executor">
+<code class="descname">executor</code><em class="property"> = &lt;concurrent.futures.process.ProcessPoolExecutor object&gt;</em><a class="headerlink" href="#MyPiEye.Storage.ImageStorage.executor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="MyPiEye.Storage.ImageStorage.save">
+<em class="property">static </em><code class="descname">save</code><span class="sig-paren">(</span><em>config</em>, <em>subdir</em>, <em>box_name</em>, <em>nobox_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/image_storage.html#ImageStorage.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.ImageStorage.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="MyPiEye.Storage.ImageStorage.save_files">
+<code class="descname">save_files</code><span class="sig-paren">(</span><em>subdir</em>, <em>box_name</em>, <em>nobox_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/image_storage.html#ImageStorage.save_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.ImageStorage.save_files" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<div class="section" id="local-filesystem">
+<h2>Local Filesystem<a class="headerlink" href="#local-filesystem" title="Permalink to this headline">¶</a></h2>
+<p>Saves both annotated (with boxes) and non-annotated files.</p>
+<dl class="function">
+<dt id="MyPiEye.Storage.local_filesystem.local_save">
+<code class="descclassname">MyPiEye.Storage.local_filesystem.</code><code class="descname">local_save</code><span class="sig-paren">(</span><em>savedir</em>, <em>box_name</em>, <em>nobox_name</em>, <em>subdirectory</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/local_filesystem.html#local_save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.local_filesystem.local_save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copies the files to the local filesystem.
+If the subdirectories don’t exist, they will be created.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>savedir</strong> – The local base directory to save files</li>
+<li><strong>box_name</strong> – the filename of the image with boxes</li>
+<li><strong>nobox_name</strong> – the filename of a clean image</li>
+<li><strong>subdirectory</strong> – the subdirectory to store them in</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">tuple of resolved filenames. Raises if the base directory doesn’t exist.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="google-drive">
+<h2>Google Drive<a class="headerlink" href="#google-drive" title="Permalink to this headline">¶</a></h2>
+<p>Save to Google. Maintaining the folder is completely manual, this only uploads.</p>
+<div class="section" id="gdrivestorage">
+<h3>GDriveStorage<a class="headerlink" href="#gdrivestorage" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="MyPiEye.Storage.GDriveStorage">
+<em class="property">class </em><code class="descclassname">MyPiEye.Storage.</code><code class="descname">GDriveStorage</code><span class="sig-paren">(</span><em>gauth</em>, <em>gdrive_folder</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveStorage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="MyPiEye.Storage.GDriveStorage.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>gauth</em>, <em>gdrive_folder</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveStorage.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a folder on GDrive. Only folders off the root are supported.</p>
+<p>The app is restricted to only files and folders that it creates, so it is important that the same credentials
+be used to initialize the app.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>gauth</strong> – an initialized <a class="reference internal" href="#MyPiEye.Storage.GDriveAuth" title="MyPiEye.Storage.GDriveAuth"><code class="xref py py-class docutils literal notranslate"><span class="pre">GDriveAuth</span></code></a> object.</li>
+<li><strong>gdrive_folder</strong> – the name of the folder.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="MyPiEye.Storage.GDriveStorage.create_folder">
+<em class="property">static </em><code class="descname">create_folder</code><span class="sig-paren">(</span><em>gauth</em>, <em>folder_name</em>, <em>parent_id='root'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveStorage.create_folder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage.create_folder" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="MyPiEye.Storage.GDriveStorage.create_subfolder">
+<code class="descname">create_subfolder</code><span class="sig-paren">(</span><em>folder_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveStorage.create_subfolder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage.create_subfolder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a subfolder off of the main folder.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>folder_name</strong> – </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="MyPiEye.Storage.GDriveStorage.delete_folder">
+<em class="property">static </em><code class="descname">delete_folder</code><span class="sig-paren">(</span><em>gauth</em>, <em>folder_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveStorage.delete_folder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage.delete_folder" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="MyPiEye.Storage.GDriveStorage.find_folders">
+<em class="property">static </em><code class="descname">find_folders</code><span class="sig-paren">(</span><em>gauth</em>, <em>parent_id</em>, <em>folder_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveStorage.find_folders"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage.find_folders" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="MyPiEye.Storage.GDriveStorage.main_folder">
+<code class="descname">main_folder</code><span class="sig-paren">(</span><em>create=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveStorage.main_folder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage.main_folder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets <cite>self.folder_id</cite></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>create</strong> – Create the folder if it doesn’t exist.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the id on success, None on fail.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="MyPiEye.Storage.GDriveStorage.save">
+<em class="property">static </em><code class="descname">save</code><span class="sig-paren">(</span><em>filename</em>, <em>metadata</em>, <em>headers</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveStorage.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="MyPiEye.Storage.GDriveStorage.upload_file">
+<code class="descname">upload_file</code><span class="sig-paren">(</span><em>subdir</em>, <em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveStorage.upload_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage.upload_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="gdriveauth">
+<h3>GDriveAuth<a class="headerlink" href="#gdriveauth" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="MyPiEye.Storage.GDriveAuth">
+<em class="property">class </em><code class="descclassname">MyPiEye.Storage.</code><code class="descname">GDriveAuth</code><span class="sig-paren">(</span><em>client_id</em>, <em>client_secret</em>, <em>credential_filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveAuth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveAuth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provider for uploading to Google Drive.</p>
+<dl class="docutils">
+<dt>Auth info is kept in a caller-specified JSON file with the following fields:</dt>
+<dd><ul class="first last simple">
+<li>refresh_token</li>
+<li>access_token</li>
+<li>expires_in</li>
+</ul>
+</dd>
+</dl>
+<p>The easiest way to use it is to call the class method <cite>py:func:get_access_token</cite>. Note that this will prompt
+the user at the command line if the app hasn’t been authorized yet.</p>
+<dl class="docutils">
+<dt>Expected usage:</dt>
+<dd><ul class="first last simple">
+<li>create object</li>
+<li>call <a class="reference internal" href="#MyPiEye.Storage.GDriveAuth.init_auth" title="MyPiEye.Storage.GDriveAuth.init_auth"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_auth()</span></code></a>. If the app hasn’t been validated, it will return False. Otherwise, use object <cite>access_token</cite>.</li>
+<li>call <a class="reference internal" href="#MyPiEye.Storage.GDriveAuth.init_token" title="MyPiEye.Storage.GDriveAuth.init_token"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_token()</span></code></a>. This starts the authorization flow. Returns fields to be displayed to the user.</li>
+<li>call <a class="reference internal" href="#MyPiEye.Storage.GDriveAuth.validate_token" title="MyPiEye.Storage.GDriveAuth.validate_token"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_token()</span></code></a> in a loop, until <cite>True</cite> is returned.</li>
+<li>Every so often, call <code class="xref py py-func docutils literal notranslate"><span class="pre">refresh_token()</span></code>. Calling <a class="reference internal" href="#MyPiEye.Storage.GDriveAuth.init_auth" title="MyPiEye.Storage.GDriveAuth.init_auth"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_auth()</span></code></a> will work, too.</li>
+</ul>
+</dd>
+</dl>
+<p>Access can be revoked at <a class="reference external" href="https://myaccount.google.com/permissions?pli=1">https://myaccount.google.com/permissions?pli=1</a></p>
+<dl class="method">
+<dt id="MyPiEye.Storage.GDriveAuth.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>client_id</em>, <em>client_secret</em>, <em>credential_filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveAuth.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveAuth.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Google-provided items, and a filename to store the cookie.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>client_id</strong> – From Google</li>
+<li><strong>client_secret</strong> – From Google</li>
+<li><strong>credential_filename</strong> – a filename</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="MyPiEye.Storage.GDriveAuth.init_auth">
+<code class="descname">init_auth</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveAuth.init_auth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveAuth.init_auth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads auth from file, and tries to connect. If the initial attempt fails, then it will try to refresh the token.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if we have a valid auth_token</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="MyPiEye.Storage.GDriveAuth.init_gauth">
+<em class="property">classmethod </em><code class="descname">init_gauth</code><span class="sig-paren">(</span><em>client_id</em>, <em>client_secret</em>, <em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveAuth.init_gauth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveAuth.init_gauth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper for getting an initialized object. This will prompt the user at the command line with validation code
+if one has not been set.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>client_id</strong> – </li>
+<li><strong>client_secret</strong> – </li>
+<li><strong>filename</strong> – the filename for the saved tokens. Used by :func:__init__</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None on failure, initialized <a class="reference internal" href="#MyPiEye.Storage.GDriveAuth" title="MyPiEye.Storage.GDriveAuth"><code class="xref py py-class docutils literal notranslate"><span class="pre">GDriveAuth</span></code></a> object</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="MyPiEye.Storage.GDriveAuth.init_token">
+<code class="descname">init_token</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveAuth.init_token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveAuth.init_token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Begin the validation flow for user confirmation and permission. Used for “new” installations.
+The user should be prompted with the returned values so they can go to Google and allow this app
+to access their Google Drive files and folders.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">tuple with <cite>verification_url</cite>, <cite>user_code</cite>, and <cite>device_code</cite></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="MyPiEye.Storage.GDriveAuth.load_auth">
+<code class="descname">load_auth</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveAuth.load_auth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveAuth.load_auth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Refreshes object properties with current token values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="MyPiEye.Storage.GDriveAuth.refresh_auth_token">
+<code class="descname">refresh_auth_token</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveAuth.refresh_auth_token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveAuth.refresh_auth_token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempts to refresh existing token. If successful, updates the file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True on success.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="MyPiEye.Storage.GDriveAuth.save_auth">
+<code class="descname">save_auth</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveAuth.save_auth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveAuth.save_auth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves token info.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="MyPiEye.Storage.GDriveAuth.try_auth">
+<code class="descname">try_auth</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveAuth.try_auth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveAuth.try_auth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tries to get a list of files from the root. It doesn’t matter if there are any.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if authenticated.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="MyPiEye.Storage.GDriveAuth.validate_token">
+<code class="descname">validate_token</code><span class="sig-paren">(</span><em>device_code</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveAuth.validate_token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveAuth.validate_token" title="Permalink to this definition">¶</a></dt>
+<dd><p>The second stage of the validation flow. Checks if the validation code has been entered by the user at Google.
+Saves to <cite>self.credential_file</cite> if it is. Retries should be handled by the caller.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>device_code</strong> – returned from <a class="reference internal" href="#MyPiEye.Storage.GDriveAuth.init_token" title="MyPiEye.Storage.GDriveAuth.init_token"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_token()</span></code></a>.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True on success, None if waiting, and False on error.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="cli.html" class="btn btn-neutral float-right" title="CLI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="main_app.html" class="btn btn-neutral" title="MainApp" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Michael P. Aguilar
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
