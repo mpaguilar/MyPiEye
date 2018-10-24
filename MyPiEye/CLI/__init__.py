@@ -69,16 +69,19 @@ def enable_log(fmt='[%(asctime)s] [%(process)5s] %(levelname)s %(module)s %(name
     :return: Logger object
     """
 
+    lgr = logging.getLogger()
+    lgr.handlers.clear()
+
     # if there's no special requirements for logging
     # we still want the formatting.
     if not enable_color and \
             filename is None and \
             filename != '':
-        logging.basicConfig(format=fmt)
+        loghandler = logging.StreamHandler()
+        logfmt = logging.Formatter(fmt)
+        loghandler.setFormatter(logfmt)
+        lgr.addHandler(loghandler)
         return True
-
-    lgr = logging.getLogger()
-    lgr.handlers.clear()
 
     if enable_color:
         loghandler = logging.StreamHandler()
