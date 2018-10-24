@@ -226,6 +226,10 @@ class ConfigureApp(object):
             log.error('S3: bucket_name is required')
             ret = False
 
+        if s3_config.get('aws_region', None) is None:
+            log.error('S3: aws_region is required')
+            ret = False
+
         if s3_config.get('prefix', None) is None:
             log.warning('S3: prefix is empty or missing')
 

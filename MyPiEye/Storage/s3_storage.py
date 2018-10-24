@@ -26,8 +26,9 @@ class S3Storage(object):
 
         self.s3 = self.session.resource('s3')
         self.bucket = self.s3.Bucket(self.bucket_name)
+        self.region = self.s3_config['aws_region']
 
-        db = self.session.resource('dynamodb', region_name='us-east-1')
+        db = self.session.resource('dynamodb', region_name=self.region)
         self.camera_table = db.Table('HouseCams')
 
     def upload(self, subdir, box_name):
@@ -46,7 +47,7 @@ class S3Storage(object):
         self.camera_table.put_item(
             Item={
                 'cam_id': self.s3_config.get('prefix', 'no_id'),
-                'last_update': datetime.now().strftime('%Y/%m/%d %H:%M:%S'),
+                'last_update_utc': datetime.utcnow().strftime('%Y/%m/%d %H:%M:%S'),
                 'filename': upload_path
             }
         )
