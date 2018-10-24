@@ -1,5 +1,7 @@
 from os.path import basename
 from datetime import datetime
+from dateutil import tz
+
 import multiprocessing
 
 import logging
@@ -13,6 +15,9 @@ class S3Storage(object):
     def __init__(self, config):
         self.config = config
         self.s3_config = config['s3']
+
+        self.local_tz = self.config.get('timezone', 'UTC')
+        self.local_tz = tz.gettz(self.local_tz)
 
         self.bucket_name = self.s3_config['bucket_name']
         self.prefix = self.s3_config.get('prefix', '')
@@ -48,6 +53,7 @@ class S3Storage(object):
             Item={
                 'cam_id': self.s3_config.get('prefix', 'no_id'),
                 'last_update_utc': datetime.utcnow().strftime('%Y/%m/%d %H:%M:%S'),
+                'last_update': datetime.now(self.local_tz).strftime('%Y/%m/%d %H:%M:%S'),
                 'filename': upload_path
             }
         )
