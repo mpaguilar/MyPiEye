@@ -6,7 +6,7 @@ import multiprocessing
 
 import logging
 import boto3
-boto3.set_stream_logger('boto3.resources', logging.INFO)
+boto3.set_stream_logger('', logging.INFO)
 
 log = multiprocessing.get_logger()
 
