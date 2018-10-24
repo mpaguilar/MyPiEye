@@ -31,7 +31,7 @@ class S3Storage(object):
         self.camera_table = db.Table('HouseCams')
 
     def upload(self, subdir, box_name):
-        log.info('Uploading to S3 {}'.format(box_name))
+        log.info('Uploading {} to S3 prefix {}'.format(box_name, self.prefix))
         bname = basename(box_name)
 
         upload_path = '{}/{}'.format(subdir, bname)

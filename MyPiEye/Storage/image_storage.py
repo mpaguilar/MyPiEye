@@ -62,6 +62,7 @@ class ImageStorage(object):
             gstorage = GDriveStorage(gauth, folder_name)
             gstorage.upload_file(subdir, box_name)
 
+        log.info('Removing temp files.')
         log.debug('Removing {}'.format(box_name))
         remove(box_name)
         log.debug('Removing {}'.format(nobox_name))
