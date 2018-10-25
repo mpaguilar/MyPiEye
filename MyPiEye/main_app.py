@@ -1,12 +1,12 @@
 import logging
 from ast import literal_eval
 from time import sleep
-from os import remove
+from os.path import abspath
 from concurrent.futures import ProcessPoolExecutor
-import multiprocessing
 
 from MyPiEye.Storage import ImageStorage
 from MyPiEye.motion_detect import MotionDetect
+
 from MyPiEye.usbcamera import UsbCamera
 
 log = logging.getLogger(__name__)
@@ -46,10 +46,11 @@ class MainApp(object):
         # get the minimum sizes
         minsizes = camera_settings.get('minsizes', {})
 
-        workdir = config.get('workdir', None)
+        self.workdir = config['workdir']
+        self.workdir = abspath(self.workdir)
 
         self.motiondetect = MotionDetect(
-            workdir=workdir,
+            workdir=self.workdir,
             # ini entries are always read as strings
             minsize=literal_eval(minsizes.get('minsize', '0')),
             ignore_boxes=ignore_boxes
@@ -57,7 +58,8 @@ class MainApp(object):
 
         # self.check should have ensured it exists
         self.savedir = config['savedir']
-        # self.executor = ProcessPoolExecutor(max_workers=2)
+        self.executor = ProcessPoolExecutor(max_workers=2)
+
         self.storage = ImageStorage(config)
 
     def start(self):
@@ -75,27 +77,42 @@ class MainApp(object):
         finally:
             log.warning('Shutting down')
             self.camera.close_camera()
-            # log.warning('Waiting on external process shutdown')
-            # self.executor.shutdown()
+            log.warning('Waiting on external process shutdown')
+            self.executor.shutdown()
 
         return True
 
-    def store_files(self, box_name, nobox_name, capture_dt):
+    def save_images(self, cv_image, capture_dt, motions):
         """
-        Sends file details to the executor.
+        Saves CV2 image to various locations, with annotations.
 
-        :param box_name: the path to the temporary annotated file
-        :param nobox_name: the path to the temporary clean file
-        :param capture_dt: a datetime when motion was detected
-        :return: None
+        :param cv_image: CV2 image
+        :param capture_dt: ``datetime``, UTC expected
+        :param motions: list of box lists.
+        :return:
         """
+        ymd = capture_dt.strftime('%y%m%d')
+        hms = capture_dt.strftime('%H%M%S.%f')
+        dtstamp = capture_dt.strftime('%y/%m/%d %H:%M:%S.%f')
 
-        subdir = capture_dt.strftime('%y%m%d')
+        # unaltered
+        clean_fname = '{}/{}.{}.jpg'.format(self.workdir, ymd, hms)
+        MotionDetect.save_cv_image(cv_image, clean_fname)
+        log.info('Saved {}'.format(clean_fname))
 
-        self.storage.save_files(subdir, box_name, nobox_name, capture_dt)
-        # ImageStorage.save(self.config, subdir, box_name, nobox_name)
-        # fut = self.executor.submit(self.storage.save_files, subdir=subdir, box_name=box_name, nobox_name=nobox_name)
-        # fut.add_done_callback(lambda f: log.info('Save complete {}'.format(nobox_name)))
+        # timestamp
+        ts_fname = '{}/{}.{}.ts.jpg'.format(self.workdir, ymd, hms)
+        ts_image = MotionDetect.add_timestamp(cv_image, dtstamp)
+        MotionDetect.save_cv_image(ts_image, ts_fname)
+        log.info('Saved {}'.format(ts_fname))
+
+        # fully annotated
+        full_fname = '{}/{}.{}.box.jpg'.format(self.workdir, ymd, hms)
+        full_image = MotionDetect.add_motion_boxes(ts_image, motions)
+        MotionDetect.save_cv_image(full_image, full_fname)
+        log.info('Saved {}'.format(full_fname))
+
+        return clean_fname, ts_fname, full_fname
 
     def watch_for_motions(self):
         """
@@ -107,6 +124,7 @@ class MainApp(object):
         retries = 0
 
         while True and retries < 3:
+            # Note: this is a CV2 image.
             current_img = self.camera.get_image()
             if current_img is None:
                 log.error('Failed to get image')
@@ -116,13 +134,23 @@ class MainApp(object):
 
             retries = 0
 
-            motion, capture_dt, nobox_name, box_name, movements = self.motiondetect.motions(
-                current_img)
+            motion = self.motiondetect.motions(current_img)
 
-            if motion:
-                # yield (dtstamp, nobox_name, box_name, movements)
-                log.debug('image captured')
-                self.store_files(box_name=box_name, nobox_name=nobox_name, capture_dt=capture_dt)
+            if motion is not None:
+                log.debug('Motion detected.')
+
+                capture_dt, movements = motion
+
+                # process and save temp images
+                files = self.save_images(current_img, capture_dt, movements)
+
+                # store the temp files in their permanent locations
+                subdir = capture_dt.strftime('%y%m%d')
+                self.storage.save_files(subdir, files[2], files[1], capture_dt)
+
+            else:
+                # nothing to do, so goof off a fraction of a second
+                sleep(.1)
 
         if retries >= 2:
             log.error('Failed to get image after {} attempts'.format(retries + 1))

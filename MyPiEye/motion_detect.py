@@ -1,10 +1,7 @@
-from os.path import exists
 from datetime import datetime
+import logging
 
 import cv2
-import numpy as np
-
-import logging
 
 log = logging.getLogger(__name__)
 
@@ -38,37 +35,6 @@ class MotionDetect:
 
         self.false_return = (False, None, None, None)
 
-    def make_gray(self, img):
-        """
-        Converts image to grayscale.
-
-        :param img: CV image
-        :return: gray CV image
-        """
-        g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        g = cv2.GaussianBlur(g, (21, 21), 0)
-        return g
-
-    def annotate_image(self, img, dtstamp, movements):
-        """
-        Adds timestamp, motion boxes
-
-        :param img: CV image
-        :param dtstamp: timestamp
-        :param movements: list of motion boxes
-        :return: a copy of the CV image, annotated
-        """
-        copied = img.copy()
-        for b in movements:
-            (x, y, w, h) = b['rect']
-            cv2.rectangle(copied, (x, y), (x + w, y + h), (255, 255, 255), 2)
-
-        cv2.putText(copied, dtstamp + ' UTC',
-                    (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
-                    .7, (255, 255, 255), 2
-                    )
-        return copied
-
     def compare_images(self, img1, img2):
         """
         Compares two CV images, looking for changes. If the box doesn't meet mininum
@@ -81,27 +47,16 @@ class MotionDetect:
         """
         movements = []
 
-        gray1 = self.make_gray(img1)
-        gray2 = self.make_gray(img2)
+        contours = MotionDetect.find_contours(img1, img2)
 
-        frame_diff = cv2.absdiff(gray1, gray2)
-        thresh = cv2.threshold(frame_diff, 25, 255, cv2.THRESH_BINARY)
-        thresh = thresh[1]
+        # we may not want some of these to count
+        for size, rect in contours:
 
-        thresh = cv2.dilate(thresh, None, iterations=2)
-        contours = cv2.findContours(
-            thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
-
-        if 0 == len(contours):
-            return (False, [])
-
-        for c in contours:
-            size = cv2.contourArea(c)
-            rect = cv2.boundingRect(c)
-
+            # is this one being ignored?
             if self.ignore(rect, size):
                 continue
 
+            # add it to the list
             movements.append({
                 'rect': rect,
                 'size': size
@@ -111,114 +66,6 @@ class MotionDetect:
             return False, []
 
         return True, movements
-
-
-
-    def compare_files(self, file1, file2):
-        """
-        Compares two files.
-
-        :return: the result of compare_images
-        """
-
-        if not exists(file1):
-            print("Error opening {}".format(file1))
-            return self.false_return
-
-        if not exists(file2):
-            print("Error opening {}".format(file2))
-            return self.false_return
-
-        img1 = cv2.imread(file1)
-        img2 = cv2.imread(file2)
-
-        return self.compare_images(img1, img2)
-
-    def convert_pil(self, img):
-        """
-        Converts a PIL image (from webcam stream) to CV image
-
-        :param img: PIL image
-        :return: CV image
-        """
-        if not img:
-            log.error("Bad image")
-            return []
-
-        img = img.convert('RGB')
-        img = np.array(img)
-        cvimg = img[:, :, ::-1].copy()
-        return cvimg
-
-    def motions(self, current_img):
-        """
-        Compares passed in image with stored previous image.
-        If previous image does not exist, then a negative result (no changes) is returned.
-
-        :param current_img: CV image
-        :return: a tuple containing the result, and if True,
-            a datetime when the image was processed, a filename for the current image,
-            a filename for the annotated image, and a list of motions detected as boxes.
-
-        """
-
-        ret = (False, '', '', '', '')
-
-        dtnow = datetime.utcnow()
-        ymd = dtnow.strftime('%y%m%d')
-        hms = dtnow.strftime('%H%M%S.%f')
-        dtstamp = dtnow.strftime('%y/%m/%d %H:%M:%S.%f')
-
-        if 0 == len(current_img):
-            log.error('Invalid image: {}'.format(current_img))
-            # if the resolution changes, we'll blow up
-            self.prev_filename = None
-
-            return self.false_return
-
-        # temporary files have hms filename
-        self.current_filename = '{}/{}.jpg'.format(self.workdir, hms)
-        # cv2.imwrite(self.current_filename, current_img)
-
-        if self.prev_image is not None:
-
-            motion, movements = self.compare_images(
-                self.prev_image, current_img)
-
-            if motion:
-                # motion files have ymd.hms filename
-                log.debug("Motion detected in {} places".format(len(movements)))
-                box_fname = '{}/{}.{}.box.jpg'.format(self.workdir, ymd, hms)
-                orig_fname = '{}/{}.{}.jpg'.format(self.workdir, ymd, hms)
-
-                with_box = self.annotate_image(current_img, dtstamp, movements)
-
-                cv2.imwrite(box_fname, with_box)
-                cv2.imwrite(orig_fname, current_img)
-
-                ret = (True, dtnow, orig_fname, box_fname, movements)
-
-            # self.del_filename = self.prev_filename
-
-        self.prev_image = current_img.copy()
-
-        return ret
-
-    def set_ignore(self, set_minsize, set_ignore_boxes, min_height, min_width):
-        """
-        Sets minimums and ignore boxes
-
-        :param set_minsize: the smallest box allowed
-        :param set_ignore_boxes: a list of regions to ignore
-        :param min_height: the smallest height allowed
-        :param min_width: the smallest width allowed
-        :return:
-        """
-
-        self.minsize = set_minsize
-        self.min_height = min_height
-        self.min_width = min_width
-        self.ignore_boxes = set_ignore_boxes
 
     def ignore(self, movement, size):
         """
@@ -241,12 +88,141 @@ class MotionDetect:
             return True
 
         for igbox in self.ignore_boxes:
-
-            # print(' - ignore: {}'.format(igbox))
-            # size: 2950.0,  x: 1448, y: 0, w: 65, h: 98
             (ix, iy, iw, ih) = igbox
             if ix <= x and (ix + iw) >= (x + w) and \
                     iy <= y and (iy + ih) >= (y + h):
                 return True
 
         return False
+
+    def motions(self, current_img):
+        """
+        Compares passed in image with stored previous image.
+        If previous image does not exist, then a negative result (no changes) is returned.
+
+        when motion is detected, returns a tuple containing a datetime and a list of motions detected as boxes.
+
+        :param current_img: CV image
+        :return: None if no motion
+
+        """
+
+        ret = None
+
+        dtnow = datetime.utcnow()
+
+        if 0 == len(current_img):
+            log.error('Invalid image: {}'.format(current_img))
+            # if the resolution changes, we'll blow up
+            self.prev_filename = None
+
+            return None
+
+        if self.prev_image is not None:
+
+            motion, movements = self.compare_images(
+                self.prev_image, current_img)
+
+            if motion:
+                ret = (dtnow, movements)
+            else:
+                ret = None
+
+        self.prev_image = current_img.copy()
+
+        return ret
+
+    @staticmethod
+    def find_contours(img1, img2):
+        """
+        Relies on OpenCV to do the hard work.
+
+        :param img1: cv image
+        :param img2: cv image
+        :return: A list of (size, rect) tuples.
+        """
+        # CV voodoo happens here
+
+        # color doesn't help, get rid of it
+        gray1 = MotionDetect.make_gray(img1)
+        gray2 = MotionDetect.make_gray(img2)
+
+        # finds differences as blobs
+        frame_diff = cv2.absdiff(gray1, gray2)
+        # refines those blobs to make them blocky
+        thresh = cv2.threshold(frame_diff, 25, 255, cv2.THRESH_BINARY)
+        # returns a tuple, we only want the second value
+        thresh = thresh[1]
+
+        # make those blocks really stand out.
+        thresh = cv2.dilate(thresh, None, iterations=2)
+
+        # these are ulitmately what we want
+        contours = cv2.findContours(
+            thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
+
+        ret = []
+        for c in contours:
+            # get measurements we can use
+            size = cv2.contourArea(c)
+            rect = cv2.boundingRect(c)
+            yield (size, rect)
+
+    @staticmethod
+    def make_gray(cv_image):
+        """
+        Converts image to grayscale.
+
+        :param cv_image: CV image
+        :return: gray CV image
+        """
+        g = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+        g = cv2.GaussianBlur(g, (21, 21), 0)
+        return g
+
+    @staticmethod
+    def save_cv_image(cv_image, filename):
+        """
+        Write the image as a file.
+
+        :param cv_image:
+        :param filename:
+        :return:
+        """
+        cv2.imwrite(filename, cv_image)
+
+    @staticmethod
+    def add_motion_boxes(cv_image, movements):
+        """
+        Adds white boxes where motion was detected
+
+        :param cv_image: CV2 image to copy and modify
+        :param movements: a list of movement lists.
+        :return: a copy CV2 image with boxes.
+        """
+        copied = cv_image.copy()
+        for b in movements:
+            (x, y, w, h) = b['rect']
+            cv2.rectangle(copied, (x, y), (x + w, y + h), (255, 255, 255), 2)
+
+        return copied
+
+    @staticmethod
+    def add_timestamp(cv_image, dtstamp):
+        """
+        Adds a timestamp to the image.
+
+        :param cv_image: The image to copy and modify
+        :param dtstamp: time as formatted string.
+        :return:
+        """
+        copied = cv_image.copy()
+
+        cv2.putText(copied, dtstamp,
+                    (20, 20),  # start location
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    .7,  # font scale?
+                    (255, 255, 255), 2  # look these up again
+                    )
+
+        return copied
