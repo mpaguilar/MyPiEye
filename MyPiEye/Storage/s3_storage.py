@@ -1,4 +1,4 @@
-from os.path import basename
+from os.path import basename, dirname
 from datetime import datetime
 from dateutil import tz
 
@@ -73,6 +73,7 @@ class S3Storage(object):
         self.image_table.put_item(
             Item={
                 's3key': upload_path,
+                'path': dirname(upload_path),
                 'bucket': self.bucket_name,
                 'capture_time': capture_dt.strftime('%Y/%m/%d %H:%M:%S')
             }
