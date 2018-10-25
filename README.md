@@ -10,6 +10,7 @@ What works:
  - Image comparison
  - Image save to local drive
  - Image save to Google Drive
+ - Image save to AWS, with metadata support
  
  
 If you don't mind a little bit of tweaking and prodding here and there, it works. The core functionality is

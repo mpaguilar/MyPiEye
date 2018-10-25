@@ -29,7 +29,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Storage" href="storage.html" />
-    <link rel="prev" title="“Quick” Start" href="installation.html" /> 
+    <link rel="prev" title="Running" href="running.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -81,6 +81,8 @@
               <p class="caption"><span class="caption-text">Installation:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">“Quick” Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running.html">Running</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API:</span></p>
 <ul class="current">
@@ -171,6 +173,28 @@
 </dd></dl>
 
 <dl class="method">
+<dt id="MyPiEye.cmdline.MainApp.save_images">
+<code class="descname">save_images</code><span class="sig-paren">(</span><em>cv_image</em>, <em>capture_dt</em>, <em>motions</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/main_app.html#MainApp.save_images"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.cmdline.MainApp.save_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves CV2 image to various locations, with annotations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>cv_image</strong> – CV2 image</li>
+<li><strong>capture_dt</strong> – <code class="docutils literal notranslate"><span class="pre">datetime</span></code>, UTC expected</li>
+<li><strong>motions</strong> – list of box lists.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="MyPiEye.cmdline.MainApp.start">
 <code class="descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/main_app.html#MainApp.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.cmdline.MainApp.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initializes the camera, and starts the main loop. Cleans up when it stops.</p>
@@ -179,28 +203,6 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">False on fail, True if the loop ends.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="MyPiEye.cmdline.MainApp.store_files">
-<code class="descname">store_files</code><span class="sig-paren">(</span><em>box_name</em>, <em>nobox_name</em>, <em>capture_dt</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/main_app.html#MainApp.store_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.cmdline.MainApp.store_files" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sends file details to the executor.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>box_name</strong> – the path to the temporary annotated file</li>
-<li><strong>nobox_name</strong> – the path to the temporary clean file</li>
-<li><strong>capture_dt</strong> – a datetime when motion was detected</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
-</td>
 </tr>
 </tbody>
 </table>
@@ -235,7 +237,7 @@
         <a href="storage.html" class="btn btn-neutral float-right" title="Storage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="installation.html" class="btn btn-neutral" title="“Quick” Start" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="running.html" class="btn btn-neutral" title="Running" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

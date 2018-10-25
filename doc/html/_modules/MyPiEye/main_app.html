@@ -153,12 +153,12 @@
 <span></span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">ast</span> <span class="k">import</span> <span class="n">literal_eval</span>
 <span class="kn">from</span> <span class="nn">time</span> <span class="k">import</span> <span class="n">sleep</span>
-<span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">remove</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">abspath</span>
 <span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="k">import</span> <span class="n">ProcessPoolExecutor</span>
-<span class="kn">import</span> <span class="nn">multiprocessing</span>
 
 <span class="kn">from</span> <span class="nn">MyPiEye.Storage</span> <span class="k">import</span> <span class="n">ImageStorage</span>
 <span class="kn">from</span> <span class="nn">MyPiEye.motion_detect</span> <span class="k">import</span> <span class="n">MotionDetect</span>
+
 <span class="kn">from</span> <span class="nn">MyPiEye.usbcamera</span> <span class="k">import</span> <span class="n">UsbCamera</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -198,10 +198,11 @@
         <span class="c1"># get the minimum sizes</span>
         <span class="n">minsizes</span> <span class="o">=</span> <span class="n">camera_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;minsizes&#39;</span><span class="p">,</span> <span class="p">{})</span>
 
-        <span class="n">workdir</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;workdir&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">workdir</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;workdir&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">workdir</span> <span class="o">=</span> <span class="n">abspath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workdir</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">motiondetect</span> <span class="o">=</span> <span class="n">MotionDetect</span><span class="p">(</span>
-            <span class="n">workdir</span><span class="o">=</span><span class="n">workdir</span><span class="p">,</span>
+            <span class="n">workdir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workdir</span><span class="p">,</span>
             <span class="c1"># ini entries are always read as strings</span>
             <span class="n">minsize</span><span class="o">=</span><span class="n">literal_eval</span><span class="p">(</span><span class="n">minsizes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;minsize&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">)),</span>
             <span class="n">ignore_boxes</span><span class="o">=</span><span class="n">ignore_boxes</span>
@@ -209,7 +210,8 @@
 
         <span class="c1"># self.check should have ensured it exists</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">savedir</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;savedir&#39;</span><span class="p">]</span>
-        <span class="c1"># self.executor = ProcessPoolExecutor(max_workers=2)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">executor</span> <span class="o">=</span> <span class="n">ProcessPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">storage</span> <span class="o">=</span> <span class="n">ImageStorage</span><span class="p">(</span><span class="n">config</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="MainApp.start"><a class="viewcode-back" href="../../main_app.html#MyPiEye.cmdline.MainApp.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -227,27 +229,42 @@
         <span class="k">finally</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Shutting down&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">camera</span><span class="o">.</span><span class="n">close_camera</span><span class="p">()</span>
-            <span class="c1"># log.warning(&#39;Waiting on external process shutdown&#39;)</span>
-            <span class="c1"># self.executor.shutdown()</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Waiting on external process shutdown&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="kc">True</span></div>
 
-<div class="viewcode-block" id="MainApp.store_files"><a class="viewcode-back" href="../../main_app.html#MyPiEye.cmdline.MainApp.store_files">[docs]</a>    <span class="k">def</span> <span class="nf">store_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">box_name</span><span class="p">,</span> <span class="n">nobox_name</span><span class="p">,</span> <span class="n">capture_dt</span><span class="p">):</span>
+<div class="viewcode-block" id="MainApp.save_images"><a class="viewcode-back" href="../../main_app.html#MyPiEye.cmdline.MainApp.save_images">[docs]</a>    <span class="k">def</span> <span class="nf">save_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cv_image</span><span class="p">,</span> <span class="n">capture_dt</span><span class="p">,</span> <span class="n">motions</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Sends file details to the executor.</span>
+<span class="sd">        Saves CV2 image to various locations, with annotations.</span>
 
-<span class="sd">        :param box_name: the path to the temporary annotated file</span>
-<span class="sd">        :param nobox_name: the path to the temporary clean file</span>
-<span class="sd">        :param capture_dt: a datetime when motion was detected</span>
-<span class="sd">        :return: None</span>
+<span class="sd">        :param cv_image: CV2 image</span>
+<span class="sd">        :param capture_dt: ``datetime``, UTC expected</span>
+<span class="sd">        :param motions: list of box lists.</span>
+<span class="sd">        :return:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ymd</span> <span class="o">=</span> <span class="n">capture_dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">hms</span> <span class="o">=</span> <span class="n">capture_dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H%M%S.</span><span class="si">%f</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">dtstamp</span> <span class="o">=</span> <span class="n">capture_dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%y/%m/</span><span class="si">%d</span><span class="s1"> %H:%M:%S.</span><span class="si">%f</span><span class="s1">&#39;</span><span class="p">)</span>
 
-        <span class="n">subdir</span> <span class="o">=</span> <span class="n">capture_dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="c1"># unaltered</span>
+        <span class="n">clean_fname</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/</span><span class="si">{}</span><span class="s1">.</span><span class="si">{}</span><span class="s1">.jpg&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workdir</span><span class="p">,</span> <span class="n">ymd</span><span class="p">,</span> <span class="n">hms</span><span class="p">)</span>
+        <span class="n">MotionDetect</span><span class="o">.</span><span class="n">save_cv_image</span><span class="p">(</span><span class="n">cv_image</span><span class="p">,</span> <span class="n">clean_fname</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saved </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">clean_fname</span><span class="p">))</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">save_files</span><span class="p">(</span><span class="n">subdir</span><span class="p">,</span> <span class="n">box_name</span><span class="p">,</span> <span class="n">nobox_name</span><span class="p">)</span></div>
-        <span class="c1"># ImageStorage.save(self.config, subdir, box_name, nobox_name)</span>
-        <span class="c1"># fut = self.executor.submit(self.storage.save_files, subdir=subdir, box_name=box_name, nobox_name=nobox_name)</span>
-        <span class="c1"># fut.add_done_callback(lambda f: log.info(&#39;Save complete {}&#39;.format(nobox_name)))</span>
+        <span class="c1"># timestamp</span>
+        <span class="n">ts_fname</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/</span><span class="si">{}</span><span class="s1">.</span><span class="si">{}</span><span class="s1">.ts.jpg&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workdir</span><span class="p">,</span> <span class="n">ymd</span><span class="p">,</span> <span class="n">hms</span><span class="p">)</span>
+        <span class="n">ts_image</span> <span class="o">=</span> <span class="n">MotionDetect</span><span class="o">.</span><span class="n">add_timestamp</span><span class="p">(</span><span class="n">cv_image</span><span class="p">,</span> <span class="n">dtstamp</span><span class="p">)</span>
+        <span class="n">MotionDetect</span><span class="o">.</span><span class="n">save_cv_image</span><span class="p">(</span><span class="n">ts_image</span><span class="p">,</span> <span class="n">ts_fname</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saved </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ts_fname</span><span class="p">))</span>
+
+        <span class="c1"># fully annotated</span>
+        <span class="n">full_fname</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/</span><span class="si">{}</span><span class="s1">.</span><span class="si">{}</span><span class="s1">.box.jpg&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workdir</span><span class="p">,</span> <span class="n">ymd</span><span class="p">,</span> <span class="n">hms</span><span class="p">)</span>
+        <span class="n">full_image</span> <span class="o">=</span> <span class="n">MotionDetect</span><span class="o">.</span><span class="n">add_motion_boxes</span><span class="p">(</span><span class="n">ts_image</span><span class="p">,</span> <span class="n">motions</span><span class="p">)</span>
+        <span class="n">MotionDetect</span><span class="o">.</span><span class="n">save_cv_image</span><span class="p">(</span><span class="n">full_image</span><span class="p">,</span> <span class="n">full_fname</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saved </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_fname</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">clean_fname</span><span class="p">,</span> <span class="n">ts_fname</span><span class="p">,</span> <span class="n">full_fname</span></div>
 
 <div class="viewcode-block" id="MainApp.watch_for_motions"><a class="viewcode-back" href="../../main_app.html#MyPiEye.cmdline.MainApp.watch_for_motions">[docs]</a>    <span class="k">def</span> <span class="nf">watch_for_motions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -259,6 +276,7 @@
         <span class="n">retries</span> <span class="o">=</span> <span class="mi">0</span>
 
         <span class="k">while</span> <span class="kc">True</span> <span class="ow">and</span> <span class="n">retries</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="c1"># Note: this is a CV2 image.</span>
             <span class="n">current_img</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">camera</span><span class="o">.</span><span class="n">get_image</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">current_img</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Failed to get image&#39;</span><span class="p">)</span>
@@ -268,13 +286,23 @@
 
             <span class="n">retries</span> <span class="o">=</span> <span class="mi">0</span>
 
-            <span class="n">motion</span><span class="p">,</span> <span class="n">capture_dt</span><span class="p">,</span> <span class="n">nobox_name</span><span class="p">,</span> <span class="n">box_name</span><span class="p">,</span> <span class="n">movements</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">motiondetect</span><span class="o">.</span><span class="n">motions</span><span class="p">(</span>
-                <span class="n">current_img</span><span class="p">)</span>
+            <span class="n">motion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">motiondetect</span><span class="o">.</span><span class="n">motions</span><span class="p">(</span><span class="n">current_img</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">motion</span><span class="p">:</span>
-                <span class="c1"># yield (dtstamp, nobox_name, box_name, movements)</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;image captured&#39;</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">store_files</span><span class="p">(</span><span class="n">box_name</span><span class="o">=</span><span class="n">box_name</span><span class="p">,</span> <span class="n">nobox_name</span><span class="o">=</span><span class="n">nobox_name</span><span class="p">,</span> <span class="n">capture_dt</span><span class="o">=</span><span class="n">capture_dt</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">motion</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Motion detected.&#39;</span><span class="p">)</span>
+
+                <span class="n">capture_dt</span><span class="p">,</span> <span class="n">movements</span> <span class="o">=</span> <span class="n">motion</span>
+
+                <span class="c1"># process and save temp images</span>
+                <span class="n">files</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_images</span><span class="p">(</span><span class="n">current_img</span><span class="p">,</span> <span class="n">capture_dt</span><span class="p">,</span> <span class="n">movements</span><span class="p">)</span>
+
+                <span class="c1"># store the temp files in their permanent locations</span>
+                <span class="n">subdir</span> <span class="o">=</span> <span class="n">capture_dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">save_files</span><span class="p">(</span><span class="n">subdir</span><span class="p">,</span> <span class="n">files</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">files</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">capture_dt</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># nothing to do, so goof off a fraction of a second</span>
+                <span class="n">sleep</span><span class="p">(</span><span class="o">.</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">retries</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Failed to get image after </span><span class="si">{}</span><span class="s1"> attempts&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">retries</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span></div></div>

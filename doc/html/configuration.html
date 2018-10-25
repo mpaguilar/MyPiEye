@@ -84,11 +84,11 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Configuration</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#ini-configuration">.ini Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#google-configuration">Google Configuration</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#disabling-gdrive">Disabling GDrive</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#setting-up-the-application">Setting up the application</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#getting-an-access-token">Getting an access token</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#aws-configuration">AWS Configuration</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="running.html">Running</a></li>
@@ -169,29 +169,28 @@ needs to be created using those credentials. There are some local folders to be 
 <p>Start with one of the sample .ini files, and modify to your taste.</p>
 <div class="section" id="ini-configuration">
 <h2>.ini Configuration<a class="headerlink" href="#ini-configuration" title="Permalink to this headline">¶</a></h2>
-<p>There are three sections, <code class="docutils literal notranslate"><span class="pre">[global]</span></code>, <code class="docutils literal notranslate"><span class="pre">[minsizes]</span></code>, <code class="docutils literal notranslate"><span class="pre">[ignore]</span></code>.</p>
+<p>Configuration is key-value pairs, in an .ini style. To disable a feature, like <code class="docutils literal notranslate"><span class="pre">s3</span></code> or <code class="docutils literal notranslate"><span class="pre">gdrive</span></code>, remark out its
+section.</p>
 <ul class="simple">
-<li><code class="docutils literal notranslate"><span class="pre">global</span></code> handles things like which camera to use, working and save directories.</li>
+<li><code class="docutils literal notranslate"><span class="pre">[global]</span></code> handles things like which camera to use, working and save directories.</li>
 <li><dl class="first docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">minsizes</span></code> sets the smallest “box” that will be captured. This helps prevent false positives</dt>
+<dt><code class="docutils literal notranslate"><span class="pre">[minsizes]</span></code> sets the smallest “box” that will be captured. This helps prevent false positives</dt>
 <dd>when a leaf scurries across your lawn.</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">ignore</span></code> specfies boxes to ignore. The pattern is top-start, left-start, width, length.</dt>
+<dt><code class="docutils literal notranslate"><span class="pre">[ignore]</span></code> specfies boxes to ignore. The pattern is top-start, left-start, width, length.</dt>
 <dd>Multiple keys can be used, but they must be unique. This can be tricky, because the values depend on the
 capture resolution.</dd>
 </dl>
 </li>
+<li><code class="docutils literal notranslate"><span class="pre">[gdrive]</span></code> Settings for saving to GDrive. Note that you must set up the application, then authorize this instance.</li>
+<li><code class="docutils literal notranslate"><span class="pre">[s3]</span></code> AWS settings, for the bucket and optional database.</li>
 </ul>
 </div>
 <div class="section" id="google-configuration">
 <h2>Google Configuration<a class="headerlink" href="#google-configuration" title="Permalink to this headline">¶</a></h2>
 <p>This assumes you know something about Google APIs setup and configuration.</p>
-<div class="section" id="disabling-gdrive">
-<h3>Disabling GDrive<a class="headerlink" href="#disabling-gdrive" title="Permalink to this headline">¶</a></h3>
-<p>Omit the <code class="docutils literal notranslate"><span class="pre">[gdrive]</span></code> section.</p>
-</div>
 <div class="section" id="setting-up-the-application">
 <h3>Setting up the application<a class="headerlink" href="#setting-up-the-application" title="Permalink to this headline">¶</a></h3>
 <p>Use <a class="reference external" href="https://console.developers.google.com/">https://console.developers.google.com/</a> to set up the application, and give it access to the
@@ -212,6 +211,11 @@ it creates.</p>
 </dd>
 </dl>
 </div>
+</div>
+<div class="section" id="aws-configuration">
+<h2>AWS Configuration<a class="headerlink" href="#aws-configuration" title="Permalink to this headline">¶</a></h2>
+<p>Create a key with permissions to S3 and DynamoDB.</p>
+<p>Create the bucket and DynamoDB tables.</p>
 </div>
 </div>
 
