@@ -80,26 +80,6 @@ class MotionDetect:
 
         return True, movements
 
-    def compare_files(self, file1, file2):
-        """
-        Compares two files.
-
-        :return: the result of compare_images
-        """
-
-        if not exists(file1):
-            print("Error opening {}".format(file1))
-            return self.false_return
-
-        if not exists(file2):
-            print("Error opening {}".format(file2))
-            return self.false_return
-
-        img1 = cv2.imread(file1)
-        img2 = cv2.imread(file2)
-
-        return self.compare_images(img1, img2)
-
     @staticmethod
     def make_gray(img):
         """
@@ -114,10 +94,24 @@ class MotionDetect:
 
     @staticmethod
     def save_cv_image(cv_image, filename):
+        """
+        Write the image as a file.
+
+        :param cv_image:
+        :param filename:
+        :return:
+        """
         cv2.imwrite(filename, cv_image)
 
     @staticmethod
     def add_motion_boxes(cv_image, movements):
+        """
+        Adds white boxes where motion was detected
+
+        :param cv_image: CV2 image to copy and modify
+        :param movements: a list of movement lists.
+        :return: a copy CV2 image with boxes.
+        """
         copied = cv_image.copy()
         for b in movements:
             (x, y, w, h) = b['rect']
