@@ -139,6 +139,13 @@ class MotionDetect:
 
     @staticmethod
     def find_contours(img1, img2):
+        """
+        Relies on OpenCV to do the hard work.
+
+        :param img1: cv image
+        :param img2: cv image
+        :return: A list of (size, rect) tuples.
+        """
         # CV voodoo happens here
 
         # color doesn't help, get rid of it
