@@ -92,7 +92,7 @@ class MainApp(object):
 
         subdir = capture_dt.strftime('%y%m%d')
 
-        self.storage.save_files(subdir, box_name, nobox_name)
+        self.storage.save_files(subdir, box_name, nobox_name, capture_dt)
         # ImageStorage.save(self.config, subdir, box_name, nobox_name)
         # fut = self.executor.submit(self.storage.save_files, subdir=subdir, box_name=box_name, nobox_name=nobox_name)
         # fut.add_done_callback(lambda f: log.info('Save complete {}'.format(nobox_name)))

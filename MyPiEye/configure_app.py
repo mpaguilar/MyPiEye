@@ -189,7 +189,12 @@ class ConfigureApp(object):
 
         camera = self.config.get('camera', None)
         if camera is None:
-            log.error('Camera is required')
+            log.error('camera is required')
+            ret = False
+
+        camera_id = self.config.get('camera_id', None)
+        if camera_id is None:
+            log.error('camera_id is required')
             ret = False
 
         timezone = self.config.get('timezone', None)
@@ -199,7 +204,7 @@ class ConfigureApp(object):
             tzstr = tz.gettz(timezone)
             log.info('Timezone set to {}'.format(tzstr))
             now = datetime.now(tzstr).strftime('%Y/%m/%d %H:%M:%S')
-            print('Local time: {}'.format(now))
+            log.info('Local time: {}'.format(now))
 
         # click forces a choice, but check it anyway
         res = self.config['resolution']
@@ -243,6 +248,12 @@ class ConfigureApp(object):
 
         if s3_config.get('prefix', None) is None:
             log.warning('S3: prefix is empty or missing')
+
+        if s3_config.get('camera_table', None) is None:
+            log.warning('AWS: camera_table is empty or missing')
+
+        if s3_config.get('image_table', None) is None:
+            log.warning('AWS: image_table is empty or missing')
 
         return ret
 

@@ -11,12 +11,10 @@ from MyPiEye.configure_app import ConfigureApp
 log = logging.getLogger('mypieye')
 
 windows_settings = {
-    'workdir': None,
     'savedir': 'c:/temp'
 }
 
 linux_settings = {
-    'workdir': None,
     'savedir': None
 }
 
@@ -51,9 +49,12 @@ def mypieye():
 @mypieye.command()
 @click.option('--iniconfig',
               default=settings['config'], help='key/val (.ini) config file', callback=CLI.load_config)
-def configure(**cli_flags):
+@click.pass_context
+def configure(ctx, **cli_flags):
     print('Configuring...you may be prompted')
+    settings.update(ctx.params['iniconfig'])
     settings.update(cli_flags)
+    del settings['iniconfig']
 
     color = settings['color']
 
