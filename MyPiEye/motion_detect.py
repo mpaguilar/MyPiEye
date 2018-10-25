@@ -49,27 +49,19 @@ class MotionDetect:
         """
         movements = []
 
-        gray1 = MotionDetect.make_gray(img1)
-        gray2 = MotionDetect.make_gray(img2)
-
-        frame_diff = cv2.absdiff(gray1, gray2)
-        thresh = cv2.threshold(frame_diff, 25, 255, cv2.THRESH_BINARY)
-        thresh = thresh[1]
-
-        thresh = cv2.dilate(thresh, None, iterations=2)
-        contours = cv2.findContours(
-            thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
+        contours = MotionDetect.find_contours(img1, img2)
 
         if 0 == len(contours):
-            return (False, [])
+            return False, []
 
-        for c in contours:
-            size = cv2.contourArea(c)
-            rect = cv2.boundingRect(c)
+        # we may not want some of these to count
+        for size, rect in contours:
 
+            # is this one being ignored?
             if self.ignore(rect, size):
                 continue
 
+            # add it to the list
             movements.append({
                 'rect': rect,
                 'size': size
@@ -80,15 +72,111 @@ class MotionDetect:
 
         return True, movements
 
+    def ignore(self, movement, size):
+        """
+        Checks movement box against list of ignored boxes, and minimum size, width, height
+
+        :param movement:
+        :param size:
+        :return: True if ignored.
+        """
+
+        if self.minsize != 0 and size < self.minsize:
+            return True
+
+        x, y, w, h = movement
+
+        if w <= self.min_width:
+            return True
+
+        if h <= self.min_height:
+            return True
+
+        for igbox in self.ignore_boxes:
+            (ix, iy, iw, ih) = igbox
+            if ix <= x and (ix + iw) >= (x + w) and \
+                    iy <= y and (iy + ih) >= (y + h):
+                return True
+
+        return False
+
+    def motions(self, current_img):
+        """
+        Compares passed in image with stored previous image.
+        If previous image does not exist, then a negative result (no changes) is returned.
+
+        when motion is detected, returns a tuple containing a datetime and a list of motions detected as boxes.
+
+        :param current_img: CV image
+        :return: None if no motion
+
+        """
+
+        ret = None
+
+        dtnow = datetime.utcnow()
+
+        if 0 == len(current_img):
+            log.error('Invalid image: {}'.format(current_img))
+            # if the resolution changes, we'll blow up
+            self.prev_filename = None
+
+            return None
+
+        if self.prev_image is not None:
+
+            motion, movements = self.compare_images(
+                self.prev_image, current_img)
+
+            if motion:
+                ret = (dtnow, movements)
+            else:
+                ret = None
+
+        self.prev_image = current_img.copy()
+
+        return ret
+
     @staticmethod
-    def make_gray(img):
+    def find_contours(img1, img2):
+        # CV voodoo happens here
+
+        # color doesn't help, get rid of it
+        gray1 = MotionDetect.make_gray(img1)
+        gray2 = MotionDetect.make_gray(img2)
+
+        # finds differences as blobs
+        frame_diff = cv2.absdiff(gray1, gray2)
+        # refines those blobs to make them blocky
+        thresh = cv2.threshold(frame_diff, 25, 255, cv2.THRESH_BINARY)
+        # returns a tuple, we only want the second value
+        thresh = thresh[1]
+
+        # make those blocks really stand out.
+        thresh = cv2.dilate(thresh, None, iterations=2)
+
+        # these are ulitmately what we want
+        contours = cv2.findContours(
+            thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
+
+        ret = []
+        for c in contours:
+            # get measurements we can use
+            size = cv2.contourArea(c)
+            rect = cv2.boundingRect(c)
+            ret.append((size, rect))
+
+        return ret
+
+    @staticmethod
+    def make_gray(cv_image):
         """
         Converts image to grayscale.
 
-        :param img: CV image
+        :param cv_image: CV image
         :return: gray CV image
         """
-        g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        g = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
         g = cv2.GaussianBlur(g, (21, 21), 0)
         return g
 
@@ -138,107 +226,3 @@ class MotionDetect:
                     )
 
         return copied
-
-    def motions(self, current_img):
-        """
-        Compares passed in image with stored previous image.
-        If previous image does not exist, then a negative result (no changes) is returned.
-
-        :param current_img: CV image
-        :return: a tuple containing the result, and if True,
-            a datetime when the image was processed, a filename for the current image,
-            a filename for the annotated image, and a list of motions detected as boxes.
-
-        """
-
-        ret = None
-
-        dtnow = datetime.utcnow()
-        ymd = dtnow.strftime('%y%m%d')
-        hms = dtnow.strftime('%H%M%S.%f')
-        dtstamp = dtnow.strftime('%y/%m/%d %H:%M:%S.%f')
-
-        if 0 == len(current_img):
-            log.error('Invalid image: {}'.format(current_img))
-            # if the resolution changes, we'll blow up
-            self.prev_filename = None
-
-            return None
-
-        if self.prev_image is not None:
-
-            motion, movements = self.compare_images(
-                self.prev_image, current_img)
-
-            if motion:
-                ret = (dtnow, movements)
-            else:
-                ret = None
-
-                """
-                
-                # motion files have ymd.hms filename
-                log.debug("Motion detected in {} places".format(len(movements)))
-                box_fname = '{}/{}.{}.box.jpg'.format(self.workdir, ymd, hms)
-                orig_fname = '{}/{}.{}.jpg'.format(self.workdir, ymd, hms)
-
-                with_box = self.annotate_image(current_img, dtstamp, movements)
-
-                cv2.imwrite(box_fname, with_box)
-                cv2.imwrite(orig_fname, current_img)
-
-                ret = (True, dtnow, orig_fname, box_fname, movements)
-                """
-
-            # self.del_filename = self.prev_filename
-
-        self.prev_image = current_img.copy()
-
-        return ret
-
-    def set_ignore(self, set_minsize, set_ignore_boxes, min_height, min_width):
-        """
-        Sets minimums and ignore boxes
-
-        :param set_minsize: the smallest box allowed
-        :param set_ignore_boxes: a list of regions to ignore
-        :param min_height: the smallest height allowed
-        :param min_width: the smallest width allowed
-        :return:
-        """
-
-        self.minsize = set_minsize
-        self.min_height = min_height
-        self.min_width = min_width
-        self.ignore_boxes = set_ignore_boxes
-
-    def ignore(self, movement, size):
-        """
-        Checks movement box against list of ignored boxes, and minimum size, width, height
-
-        :param movement:
-        :param size:
-        :return: True if ignored.
-        """
-
-        if self.minsize != 0 and size < self.minsize:
-            return True
-
-        x, y, w, h = movement
-
-        if w <= self.min_width:
-            return True
-
-        if h <= self.min_height:
-            return True
-
-        for igbox in self.ignore_boxes:
-
-            # print(' - ignore: {}'.format(igbox))
-            # size: 2950.0,  x: 1448, y: 0, w: 65, h: 98
-            (ix, iy, iw, ih) = igbox
-            if ix <= x and (ix + iw) >= (x + w) and \
-                    iy <= y and (iy + ih) >= (y + h):
-                return True
-
-        return False
