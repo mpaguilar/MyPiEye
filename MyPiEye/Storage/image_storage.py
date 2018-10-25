@@ -35,7 +35,7 @@ class ImageStorage(object):
         log.debug('ImageStorage initialized')
 
     @staticmethod
-    def save(config, subdir, box_name, nobox_name):
+    def save(config, subdir, box_name, nobox_name, capture_dt):
         futures = []
         fs_path = config.get('savedir', None)
         if fs_path is not None:
@@ -46,7 +46,7 @@ class ImageStorage(object):
         s3_config = config.get('s3', None)
         if s3_config is not None:
             s3 = S3Storage(config)
-            s3.upload(subdir, nobox_name)
+            s3.upload(subdir, nobox_name, capture_dt)
 
         gdrive_settings = config.get('gdrive', None)
         creds_folder = config.get('credential_folder', '.')
@@ -70,9 +70,9 @@ class ImageStorage(object):
 
         return True
 
-    def save_files(self, subdir, box_name, nobox_name):
+    def save_files(self, subdir, box_name, nobox_name, capture_dt):
 
-        fut = ImageStorage.executor.submit(ImageStorage.save, self.config, subdir, box_name, nobox_name)
+        fut = ImageStorage.executor.submit(ImageStorage.save, self.config, subdir, box_name, nobox_name, capture_dt)
         self.futures.append(fut)
         _, waiting = wait(self.futures, .1)
         self.futures = list(waiting)

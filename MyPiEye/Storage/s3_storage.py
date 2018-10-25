@@ -35,8 +35,9 @@ class S3Storage(object):
 
         db = self.session.resource('dynamodb', region_name=self.region)
         self.camera_table = db.Table('HouseCams')
+        self.image_table = db.Table('ImageData')
 
-    def upload(self, subdir, box_name):
+    def upload(self, subdir, box_name, capture_dt):
         log.info('Uploading {} to S3 prefix {}'.format(box_name, self.prefix))
         bname = basename(box_name)
 
@@ -55,6 +56,14 @@ class S3Storage(object):
                 'last_update_utc': datetime.utcnow().strftime('%Y/%m/%d %H:%M:%S'),
                 'last_update': datetime.now(self.local_tz).strftime('%Y/%m/%d %H:%M:%S'),
                 'filename': upload_path
+            }
+        )
+
+        self.image_table.put_item(
+            Item={
+                's3key': upload_path,
+                'bucket': self.bucket_name,
+                'capture_time': capture_dt.strftime('%Y/%m/%d %H:%M:%S')
             }
         )
         log.info('Upload complete {}'.format(box_name))
