@@ -1,9 +1,7 @@
-from os.path import exists
 from datetime import datetime
+import logging
 
 import cv2
-
-import logging
 
 log = logging.getLogger(__name__)
 
@@ -50,9 +48,6 @@ class MotionDetect:
         movements = []
 
         contours = MotionDetect.find_contours(img1, img2)
-
-        if 0 == len(contours):
-            return False, []
 
         # we may not want some of these to count
         for size, rect in contours:
@@ -171,9 +166,7 @@ class MotionDetect:
             # get measurements we can use
             size = cv2.contourArea(c)
             rect = cv2.boundingRect(c)
-            ret.append((size, rect))
-
-        return ret
+            yield (size, rect)
 
     @staticmethod
     def make_gray(cv_image):

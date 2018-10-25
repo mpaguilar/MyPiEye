@@ -141,7 +141,7 @@ class MainApp(object):
 
                 capture_dt, movements = motion
 
-                # save processed images to temp files
+                # process and save temp images
                 files = self.save_images(current_img, capture_dt, movements)
 
                 # store the temp files in their permanent locations
