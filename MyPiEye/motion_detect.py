@@ -112,8 +112,6 @@ class MotionDetect:
 
         return True, movements
 
-
-
     def compare_files(self, file1, file2):
         """
         Compares two files.
@@ -150,6 +148,40 @@ class MotionDetect:
         cvimg = img[:, :, ::-1].copy()
         return cvimg
 
+    @staticmethod
+    def save_cv_image(cv_image, filename):
+        cv2.imwrite(filename, cv_image)
+
+    @staticmethod
+    def add_motion_boxes(cv_image, movements):
+        copied = cv_image.copy()
+        for b in movements:
+            (x, y, w, h) = b['rect']
+            cv2.rectangle(copied, (x, y), (x + w, y + h), (255, 255, 255), 2)
+
+        return copied
+
+    @staticmethod
+    def add_timestamp(cv_image, dtstamp):
+        """
+        Adds a timestamp to the image.
+
+        :param cv_image: The image to copy and modify
+        :param dtstamp: time as formatted string.
+        :return:
+        """
+        copied = cv_image.copy()
+
+        cv2.putText(copied, dtstamp,
+                    (20, 20), # start location
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    .7,  # font scale?
+                    (255, 255, 255), 2  # look these up again
+                    )
+
+        return copied
+
+
     def motions(self, current_img):
         """
         Compares passed in image with stored previous image.
@@ -162,7 +194,7 @@ class MotionDetect:
 
         """
 
-        ret = (False, '', '', '', '')
+        ret = None
 
         dtnow = datetime.utcnow()
         ymd = dtnow.strftime('%y%m%d')
@@ -174,11 +206,7 @@ class MotionDetect:
             # if the resolution changes, we'll blow up
             self.prev_filename = None
 
-            return self.false_return
-
-        # temporary files have hms filename
-        self.current_filename = '{}/{}.jpg'.format(self.workdir, hms)
-        # cv2.imwrite(self.current_filename, current_img)
+            return None
 
         if self.prev_image is not None:
 
@@ -186,6 +214,12 @@ class MotionDetect:
                 self.prev_image, current_img)
 
             if motion:
+                ret = (dtnow, movements)
+            else:
+                ret = None
+
+                """
+                
                 # motion files have ymd.hms filename
                 log.debug("Motion detected in {} places".format(len(movements)))
                 box_fname = '{}/{}.{}.box.jpg'.format(self.workdir, ymd, hms)
@@ -197,6 +231,7 @@ class MotionDetect:
                 cv2.imwrite(orig_fname, current_img)
 
                 ret = (True, dtnow, orig_fname, box_fname, movements)
+                """
 
             # self.del_filename = self.prev_filename
 
