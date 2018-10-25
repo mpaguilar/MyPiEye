@@ -59,11 +59,14 @@ class S3Storage(object):
             }
         )
 
+        local_capture_dt = capture_dt.astimezone(self.local_tz)
+
         self.image_table.put_item(
             Item={
                 's3key': upload_path,
                 'bucket': self.bucket_name,
-                'capture_time': capture_dt.strftime('%Y/%m/%d %H:%M:%S')
+                'capture_time': capture_dt.strftime('%Y/%m/%d %H:%M:%S'),
+                'local_capture_time': local_capture_dt.strftime('%Y/%m/%d %H:%M:%S')
             }
         )
         log.info('Upload complete {}'.format(box_name))
