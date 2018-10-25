@@ -2,7 +2,6 @@ from os.path import exists
 from datetime import datetime
 
 import cv2
-import numpy as np
 
 import logging
 
@@ -38,37 +37,6 @@ class MotionDetect:
 
         self.false_return = (False, None, None, None)
 
-    def make_gray(self, img):
-        """
-        Converts image to grayscale.
-
-        :param img: CV image
-        :return: gray CV image
-        """
-        g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        g = cv2.GaussianBlur(g, (21, 21), 0)
-        return g
-
-    def annotate_image(self, img, dtstamp, movements):
-        """
-        Adds timestamp, motion boxes
-
-        :param img: CV image
-        :param dtstamp: timestamp
-        :param movements: list of motion boxes
-        :return: a copy of the CV image, annotated
-        """
-        copied = img.copy()
-        for b in movements:
-            (x, y, w, h) = b['rect']
-            cv2.rectangle(copied, (x, y), (x + w, y + h), (255, 255, 255), 2)
-
-        cv2.putText(copied, dtstamp + ' UTC',
-                    (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
-                    .7, (255, 255, 255), 2
-                    )
-        return copied
-
     def compare_images(self, img1, img2):
         """
         Compares two CV images, looking for changes. If the box doesn't meet mininum
@@ -81,8 +49,8 @@ class MotionDetect:
         """
         movements = []
 
-        gray1 = self.make_gray(img1)
-        gray2 = self.make_gray(img2)
+        gray1 = MotionDetect.make_gray(img1)
+        gray2 = MotionDetect.make_gray(img2)
 
         frame_diff = cv2.absdiff(gray1, gray2)
         thresh = cv2.threshold(frame_diff, 25, 255, cv2.THRESH_BINARY)
@@ -132,21 +100,17 @@ class MotionDetect:
 
         return self.compare_images(img1, img2)
 
-    def convert_pil(self, img):
+    @staticmethod
+    def make_gray(img):
         """
-        Converts a PIL image (from webcam stream) to CV image
+        Converts image to grayscale.
 
-        :param img: PIL image
-        :return: CV image
+        :param img: CV image
+        :return: gray CV image
         """
-        if not img:
-            log.error("Bad image")
-            return []
-
-        img = img.convert('RGB')
-        img = np.array(img)
-        cvimg = img[:, :, ::-1].copy()
-        return cvimg
+        g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        g = cv2.GaussianBlur(g, (21, 21), 0)
+        return g
 
     @staticmethod
     def save_cv_image(cv_image, filename):
@@ -173,14 +137,13 @@ class MotionDetect:
         copied = cv_image.copy()
 
         cv2.putText(copied, dtstamp,
-                    (20, 20), # start location
+                    (20, 20),  # start location
                     cv2.FONT_HERSHEY_SIMPLEX,
                     .7,  # font scale?
                     (255, 255, 255), 2  # look these up again
                     )
 
         return copied
-
 
     def motions(self, current_img):
         """
