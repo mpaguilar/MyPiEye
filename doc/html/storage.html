@@ -81,6 +81,8 @@
               <p class="caption"><span class="caption-text">Installation:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">“Quick” Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running.html">Running</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API:</span></p>
 <ul class="current">
@@ -188,12 +190,12 @@
 
 <dl class="staticmethod">
 <dt id="MyPiEye.Storage.ImageStorage.save">
-<em class="property">static </em><code class="descname">save</code><span class="sig-paren">(</span><em>config</em>, <em>subdir</em>, <em>box_name</em>, <em>nobox_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/image_storage.html#ImageStorage.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.ImageStorage.save" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><code class="descname">save</code><span class="sig-paren">(</span><em>config</em>, <em>subdir</em>, <em>box_name</em>, <em>nobox_name</em>, <em>capture_dt</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/image_storage.html#ImageStorage.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.ImageStorage.save" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="MyPiEye.Storage.ImageStorage.save_files">
-<code class="descname">save_files</code><span class="sig-paren">(</span><em>subdir</em>, <em>box_name</em>, <em>nobox_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/image_storage.html#ImageStorage.save_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.ImageStorage.save_files" title="Permalink to this definition">¶</a></dt>
+<code class="descname">save_files</code><span class="sig-paren">(</span><em>subdir</em>, <em>box_name</em>, <em>nobox_name</em>, <em>capture_dt</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/image_storage.html#ImageStorage.save_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.ImageStorage.save_files" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -259,22 +261,6 @@ be used to initialize the app.</p>
 <em class="property">static </em><code class="descname">create_folder</code><span class="sig-paren">(</span><em>gauth</em>, <em>folder_name</em>, <em>parent_id='root'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveStorage.create_folder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage.create_folder" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="MyPiEye.Storage.GDriveStorage.create_subfolder">
-<code class="descname">create_subfolder</code><span class="sig-paren">(</span><em>folder_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveStorage.create_subfolder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage.create_subfolder" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a subfolder off of the main folder.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>folder_name</strong> – </td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 <dl class="staticmethod">
 <dt id="MyPiEye.Storage.GDriveStorage.delete_folder">
 <em class="property">static </em><code class="descname">delete_folder</code><span class="sig-paren">(</span><em>gauth</em>, <em>folder_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveStorage.delete_folder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage.delete_folder" title="Permalink to this definition">¶</a></dt>
@@ -283,6 +269,11 @@ be used to initialize the app.</p>
 <dl class="staticmethod">
 <dt id="MyPiEye.Storage.GDriveStorage.find_folders">
 <em class="property">static </em><code class="descname">find_folders</code><span class="sig-paren">(</span><em>gauth</em>, <em>parent_id</em>, <em>folder_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveStorage.find_folders"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage.find_folders" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="MyPiEye.Storage.GDriveStorage.folder_lock">
+<code class="descname">folder_lock</code><em class="property"> = &lt;Lock(owner=None)&gt;</em><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage.folder_lock" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -305,6 +296,22 @@ be used to initialize the app.</p>
 <dt id="MyPiEye.Storage.GDriveStorage.save">
 <em class="property">static </em><code class="descname">save</code><span class="sig-paren">(</span><em>filename</em>, <em>metadata</em>, <em>headers</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveStorage.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage.save" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="MyPiEye.Storage.GDriveStorage.subfolder">
+<code class="descname">subfolder</code><span class="sig-paren">(</span><em>folder_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/MyPiEye/Storage/google_drive.html#GDriveStorage.subfolder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#MyPiEye.Storage.GDriveStorage.subfolder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds or creates a subfolder off of the main folder.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>folder_name</strong> – </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the ID of the folder</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="MyPiEye.Storage.GDriveStorage.upload_file">
