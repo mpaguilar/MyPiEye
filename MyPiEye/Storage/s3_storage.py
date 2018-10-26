@@ -81,7 +81,11 @@ class S3Storage(object):
 
         log.info('Db updated for {}'.format(upload_path))
 
-    def upload(self, subdir, box_name, capture_dt):
+    def upload(self, img_capture):
+
+        subdir = img_capture.subdir
+        box_name = img_capture.full_fname
+        capture_dt = img_capture.capture_dt
 
         log.info('Uploading {} to S3 prefix {}'.format(box_name, self.prefix))
         bname = basename(box_name)

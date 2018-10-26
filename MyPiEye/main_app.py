@@ -5,7 +5,7 @@ from os.path import abspath
 from concurrent.futures import ProcessPoolExecutor
 
 from MyPiEye.Storage import ImageStorage
-from MyPiEye.motion_detect import MotionDetect
+from MyPiEye.motion_detect import MotionDetect, ImageCapture
 
 from MyPiEye.usbcamera import UsbCamera
 
@@ -82,37 +82,33 @@ class MainApp(object):
 
         return True
 
-    def save_images(self, cv_image, capture_dt, motions):
+    def save_images(self, motion: ImageCapture):
         """
         Saves CV2 image to various locations, with annotations.
 
-        :param cv_image: CV2 image
-        :param capture_dt: ``datetime``, UTC expected
-        :param motions: list of box lists.
-        :return:
+        :param motion: an ImageCapture object with at least capture_dt, clean_image, and motions populated.
+        :return: an ImageCapture object (the same one) with temp file names populated
         """
-        ymd = capture_dt.strftime('%y%m%d')
-        hms = capture_dt.strftime('%H%M%S.%f')
-        dtstamp = capture_dt.strftime('%y/%m/%d %H:%M:%S.%f')
 
         # unaltered
-        clean_fname = '{}/{}.{}.jpg'.format(self.workdir, ymd, hms)
-        MotionDetect.save_cv_image(cv_image, clean_fname)
-        log.info('Saved {}'.format(clean_fname))
+        motion.clean_fname = '{}/{}.jpg'.format(self.workdir, motion.base_filename)
+        MotionDetect.save_cv_image(motion.clean_image, motion.clean_fname)
+        log.info('Saved {}'.format(motion.clean_fname))
 
         # timestamp
-        ts_fname = '{}/{}.{}.ts.jpg'.format(self.workdir, ymd, hms)
-        ts_image = MotionDetect.add_timestamp(cv_image, dtstamp)
-        MotionDetect.save_cv_image(ts_image, ts_fname)
-        log.info('Saved {}'.format(ts_fname))
+        motion.ts_fname = '{}/{}.ts.jpg'.format(self.workdir, motion.base_filename)
+        motion.ts_image = MotionDetect.add_timestamp(motion.clean_image, motion.timestamp_utc)
+        MotionDetect.save_cv_image(motion.ts_image, motion.ts_fname)
+        log.info('Saved {}'.format(motion.ts_fname))
 
         # fully annotated
-        full_fname = '{}/{}.{}.box.jpg'.format(self.workdir, ymd, hms)
-        full_image = MotionDetect.add_motion_boxes(ts_image, motions)
-        MotionDetect.save_cv_image(full_image, full_fname)
-        log.info('Saved {}'.format(full_fname))
+        motion.full_fname = '{}/{}.box.jpg'.format(self.workdir, motion.base_filename)
+        motion.full_image = MotionDetect.add_motion_boxes(motion.ts_image, motion.motions)
+        MotionDetect.save_cv_image(motion.full_image, motion.full_fname)
+        log.info('Saved {}'.format(motion.full_fname))
 
-        return clean_fname, ts_fname, full_fname
+        return motion
+
 
     def watch_for_motions(self):
         """
@@ -139,14 +135,14 @@ class MainApp(object):
             if motion is not None:
                 log.debug('Motion detected.')
 
-                capture_dt, movements = motion
+                # the object only has motion object right now.
+                motion.clean_image = current_img
 
                 # process and save temp images
-                files = self.save_images(current_img, capture_dt, movements)
+                files = self.save_images(motion)
 
                 # store the temp files in their permanent locations
-                subdir = capture_dt.strftime('%y%m%d')
-                self.storage.save_files(subdir, files[2], files[1], capture_dt)
+                self.storage.save_files(motion)
 
             else:
                 # nothing to do, so goof off a fraction of a second

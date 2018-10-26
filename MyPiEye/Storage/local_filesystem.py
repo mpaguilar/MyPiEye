@@ -5,26 +5,26 @@ import logging
 
 import multiprocessing
 
+from MyPiEye.motion_detect import ImageCapture
+
 log = multiprocessing.get_logger()
 
 
-def local_save(savedir, box_name, nobox_name, subdirectory):
+def local_save(savedir, img_capture: ImageCapture):
     """
     Copies the files to the local filesystem.
     If the subdirectories don't exist, they will be created.
 
     :param savedir: The local base directory to save files
-    :param box_name: the filename of the image with boxes
-    :param nobox_name: the filename of a clean image
-    :param subdirectory: the subdirectory to store them in
+    :param img_capture: ``ImageCapture`` object
 
-    :return: tuple of resolved filenames. Raises if the base directory doesn't exist.
+    :return: ImageCapture object
     """
 
     if not exists(savedir):
         raise EnvironmentError('savedir {} does not exist'.format(savedir))
 
-    savedir = savedir + '/' + subdirectory
+    savedir = savedir + '/' + img_capture.subdir
 
     if not exists(savedir):
         makedirs(savedir)
@@ -37,6 +37,9 @@ def local_save(savedir, box_name, nobox_name, subdirectory):
 
     log.debug('Saving files to {}'.format(savedir))
 
+    box_name = img_capture.full_fname
+    nobox_name = img_capture.clean_fname
+
     box_path = '{}/box/{}'.format(savedir, basename(box_name))
     nobox_path = '{}/nobox/{}'.format(savedir, basename(nobox_name))
 
@@ -46,4 +49,4 @@ def local_save(savedir, box_name, nobox_name, subdirectory):
     log.debug('Copying {}'.format(nobox_name))
     copyfile('{}'.format(nobox_name), nobox_path)
 
-    return box_path, nobox_path
+    return img_capture
