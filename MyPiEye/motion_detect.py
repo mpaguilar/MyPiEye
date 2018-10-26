@@ -289,7 +289,7 @@ class MotionDetect:
         copied = cv_image.copy()
         for b in movements:
             (x, y, w, h) = b['rect']
-            cv2.rectangle(copied, (x, y), (x + w, y + h), (255, 255, 255), 2)
+            cv2.rectangle(copied, (x, y), (x + w, y + h), (192, 192, 192), 1)
 
         return copied
 
@@ -305,10 +305,11 @@ class MotionDetect:
         copied = cv_image.copy()
 
         cv2.putText(copied, dtstamp,
-                    (20, 20),  # start location
+                    (10, 20),  # start location
                     cv2.FONT_HERSHEY_SIMPLEX,
                     .7,  # font scale?
-                    (255, 255, 255), 2  # look these up again
+                    (192, 192, 192),  # the color
+                    2  # the width of the lines to draw the font
                     )
 
         return copied
