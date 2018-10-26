@@ -10,43 +10,48 @@ from MyPiEye.motion_detect import ImageCapture
 log = multiprocessing.get_logger()
 
 
-def local_save(savedir, img_capture: ImageCapture):
-    """
-    Copies the files to the local filesystem.
-    If the subdirectories don't exist, they will be created.
+class FileStorage(object):
 
-    :param savedir: The local base directory to save files
-    :param img_capture: ``ImageCapture`` object
+    def __init__(self, config: dict):
+        pass
+        self.config = config
+        self.local_config = config['local']
 
-    :return: ImageCapture object
-    """
+        self.savedir = self.local_config.get('savedir', '.')
 
-    if not exists(savedir):
-        raise EnvironmentError('savedir {} does not exist'.format(savedir))
+    def upload(self, img_capture):
+        """
+        Copies the files to the local filesystem.
+        If the subdirectories don't exist, they will be created.
 
-    savedir = savedir + '/' + img_capture.subdir
+        :param img_capture: ``ImageCapture`` object
+        :return: ImageCapture object
+        """
 
-    if not exists(savedir):
-        makedirs(savedir)
+        log.info('Uploading to file system {}'.format(img_capture.clean_fname))
 
-    if not exists(savedir + '/box'):
-        makedirs(savedir + '/box')
+        if not exists(self.savedir):
+            raise EnvironmentError('savedir {} does not exist'.format(self.savedir))
 
-    if not exists(savedir + '/nobox'):
-        makedirs(savedir + '/nobox')
+        savedir = self.savedir + '/' + img_capture.subdir
 
-    log.debug('Saving files to {}'.format(savedir))
+        if not exists(savedir):
+            makedirs(savedir)
 
-    box_name = img_capture.full_fname
-    nobox_name = img_capture.clean_fname
+        log.debug('Saving files to {}'.format(savedir))
 
-    box_path = '{}/box/{}'.format(savedir, basename(box_name))
-    nobox_path = '{}/nobox/{}'.format(savedir, basename(nobox_name))
+        box_name = img_capture.full_fname
+        nobox_name = img_capture.clean_fname
 
-    log.debug('Copying {}'.format(box_name))
-    copyfile('{}'.format(box_name), box_path)
+        box_path = '{}/box/{}'.format(savedir, basename(box_name))
+        nobox_path = '{}/nobox/{}'.format(savedir, basename(nobox_name))
 
-    log.debug('Copying {}'.format(nobox_name))
-    copyfile('{}'.format(nobox_name), nobox_path)
+        log.debug('Copying {}'.format(box_name))
+        copyfile('{}'.format(box_name), box_path)
 
-    return img_capture
+        log.debug('Copying {}'.format(nobox_name))
+        copyfile('{}'.format(nobox_name), nobox_path)
+
+        log.info('File system upload complete {}'.format(img_capture.clean_fname))
+
+        return img_capture

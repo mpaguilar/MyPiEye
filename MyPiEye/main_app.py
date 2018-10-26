@@ -93,19 +93,19 @@ class MainApp(object):
         # unaltered
         motion.clean_fname = '{}/{}.jpg'.format(self.workdir, motion.base_filename)
         MotionDetect.save_cv_image(motion.clean_image, motion.clean_fname)
-        log.info('Saved {}'.format(motion.clean_fname))
+        log.info('Saved tmpfile {}'.format(motion.clean_fname))
 
         # timestamp
         motion.ts_fname = '{}/{}.ts.jpg'.format(self.workdir, motion.base_filename)
         motion.ts_image = MotionDetect.add_timestamp(motion.clean_image, motion.timestamp_utc)
         MotionDetect.save_cv_image(motion.ts_image, motion.ts_fname)
-        log.info('Saved {}'.format(motion.ts_fname))
+        log.info('Saved tmpfile {}'.format(motion.ts_fname))
 
         # fully annotated
         motion.full_fname = '{}/{}.box.jpg'.format(self.workdir, motion.base_filename)
         motion.full_image = MotionDetect.add_motion_boxes(motion.ts_image, motion.motions)
         MotionDetect.save_cv_image(motion.full_image, motion.full_fname)
-        log.info('Saved {}'.format(motion.full_fname))
+        log.info('Saved tmpfile {}'.format(motion.full_fname))
 
         return motion
 
