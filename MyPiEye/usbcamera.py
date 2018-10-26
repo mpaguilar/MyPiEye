@@ -1,6 +1,7 @@
 import cv2
 import logging
 from time import sleep
+from ast import literal_eval
 
 log = logging.getLogger(__name__)
 
@@ -11,6 +12,8 @@ class UsbCamera(object):
         self.cam_config = config.get('camera', None)
 
         self.camera_id = self.cam_config.get('camera', None)
+        self.camera_id = literal_eval(self.camera_id)
+
         self.camera_instance = None
         self.is_open = False
 

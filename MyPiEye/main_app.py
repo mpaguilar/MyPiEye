@@ -26,11 +26,7 @@ class MainApp(object):
         self.config = config
 
         # instanciates, but doesn't initialize
-        camera_id = literal_eval(config['camera'])
-        self.camera = UsbCamera(
-            resolution=config['resolution'],
-            camera=camera_id
-        )
+        self.camera = UsbCamera(config)
 
         # the camera can only be set from the .ini
         camera_settings = config.get('iniconfig', {})

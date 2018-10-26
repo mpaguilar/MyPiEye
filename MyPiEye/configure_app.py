@@ -4,7 +4,6 @@ from os import makedirs
 from dateutil import tz
 from datetime import datetime
 
-from MyPiEye.Storage.google_drive import GDriveAuth, GDriveStorage
 from MyPiEye.Storage.local_filesystem import FileStorage
 from MyPiEye.Storage.s3_storage import S3Storage
 from MyPiEye.Storage.google_drive import GDriveStorage, GDriveAuth
@@ -25,11 +24,55 @@ class ConfigureApp(object):
             log.critical('Failed to configure working directories')
             ret = False
 
+        if not self.configure_local_filesystem():
+            log.critical('Failed to configure local filesystem')
+            ret = False
+
         if not self.configure_gdrive():
             log.critical('Failed to configure GDriveStorage')
             ret = False
 
+        if not self.configure_aws():
+            log.critical('Failed to configure AWS')
+            ret = False
+
         return ret
+
+    def configure_local_filesystem(self):
+        log.info('Configuring local filesystem')
+
+        local_config = self.config.get('local', None)
+        if local_config is None:
+            log.info('[local] section not found. Skipping.')
+            return True
+
+        fs = FileStorage(self.config)
+
+        ret = fs.configure()
+        if ret:
+            log.info('Local filesystem storage configuration complete')
+        else:
+            log.error('Local filesystem storage configuration failed')
+
+        return ret
+
+    def configure_aws(self):
+        log.info('Configuring AWS')
+
+        aws_config = self.config.get('S3', None)
+        if aws_config is None:
+            log.info('[S3] section not found. Skipping.')
+            return True
+
+        aws = S3Storage(self.config)
+        chk = aws.configure()
+
+        if chk:
+            log.info('AWS config complete')
+        else:
+            log.critical('AWS config failed')
+
+        return chk
 
     def configure_working_directories(self):
         """

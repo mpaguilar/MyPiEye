@@ -139,3 +139,8 @@ class S3Storage(object):
             log.warning('AWS: image_table is empty or missing')
 
         return ret
+
+    def configure(self):
+
+        log.warning('All AWS configuration is manual')
+        return True

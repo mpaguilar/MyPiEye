@@ -73,6 +73,8 @@ def check(ctx, **cli_flags):
         log.critical('App configuration failed')
         sys.exit(-1)
 
+    print('Configuration check passed')
+
     sys.exit(0)
 
 
@@ -106,20 +108,6 @@ def run(ctx, **cli_flags):
 
     # handle Ctrl+C, so it doesn't give a stack dump.
     signal.signal(signal.SIGINT, clean_exit)
-
-    settings.update(ctx.params['iniconfig'])
-    settings.update(cli_flags)
-    del settings['iniconfig']
-
-    # let's just assume these are okay
-    loglevel = settings['loglevel']
-    color = settings['color']
-    logfile = settings['logfile']
-
-    CLI.set_loglevel(loglevel)
-    if not CLI.enable_log(filename=logfile, enable_color=color):
-        log.critical('Error opening logger')
-        sys.exit(-2)
 
     log.info('Starting...')
 
