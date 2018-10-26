@@ -59,7 +59,7 @@ class ImageCapture(object):
         ymd = self.capture_dt.strftime('%y%m%d')
         hms = self.capture_dt.strftime('%H%M%S.%f')
 
-        return f'{ymd}.{hms}'
+        return '{}.{}'.format(ymd, hms)
 
     @property
     def timestamp_utc(self):
