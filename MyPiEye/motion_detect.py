@@ -1,6 +1,7 @@
 from datetime import datetime
-from os.path import exists
+from os.path import exists, abspath
 from os import remove
+from ast import literal_eval
 import logging
 
 import cv2
@@ -78,7 +79,7 @@ class MotionDetect:
 
     """
 
-    def __init__(self, workdir, minsize, ignore_boxes):
+    def __init__(self, config):
         """
         Constructor
 
@@ -87,10 +88,27 @@ class MotionDetect:
         :param ignore_boxes: a list of boxes to ignore
         """
 
-        self.workdir = workdir
-        self.minsize = minsize
-        self.min_width = 0
-        self.min_height = 0
+        self.config = config
+
+        self.workdir = abspath(config['workdir'])
+
+        minsizes = config.get('minsizes', {})
+
+        self.minsize = minsizes.get('minsize', 0)
+        # this is read as a string from the config
+        if isinstance(self.minsize, str):
+            self.minsize = literal_eval(self.minsize)
+
+        self.min_width = literal_eval(minsizes.get('min_width', 0))
+        self.min_height = literal_eval(minsizes.get('min_height', 0))
+
+        ignore_dict = self.config.get('ignore', {})
+        ignore_boxes = []
+
+        for _, v in ignore_dict.items():
+            val = literal_eval(v)
+            ignore_boxes.append(val)
+
         self.ignore_boxes = ignore_boxes
 
         self.prev_filename = None
@@ -116,7 +134,7 @@ class MotionDetect:
         contours = MotionDetect.find_contours(img1, img2)
 
         # we may not want some of these to count
-        for size, rect in contours:
+        for size, rect in list(contours):
 
             # is this one being ignored?
             if self.ignore(rect, size):

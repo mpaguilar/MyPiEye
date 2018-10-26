@@ -28,28 +28,10 @@ class MainApp(object):
         # instanciates, but doesn't initialize
         self.camera = UsbCamera(config)
 
-        # the camera can only be set from the .ini
-        camera_settings = config.get('iniconfig', {})
-
-        # convert the ini string key/val entries into a list of tuples
-        ignore_dict = camera_settings.get('ignore', {})
-        ignore_boxes = []
-
-        for _, v in ignore_dict.items():
-            val = literal_eval(v)
-            ignore_boxes.append(val)
-
-        # get the minimum sizes
-        minsizes = camera_settings.get('minsizes', {})
-
-        self.workdir = config['workdir']
-        self.workdir = abspath(self.workdir)
+        self.workdir = abspath(config['workdir'])
 
         self.motiondetect = MotionDetect(
-            workdir=self.workdir,
-            # ini entries are always read as strings
-            minsize=literal_eval(minsizes.get('minsize', '0')),
-            ignore_boxes=ignore_boxes
+            config
         )
 
         # self.check should have ensured it exists

@@ -30,26 +30,27 @@ class FileStorage(object):
 
         log.info('Uploading to file system {}'.format(img_capture.clean_fname))
 
-        if not exists(self.savedir):
-            raise EnvironmentError('savedir {} does not exist'.format(self.savedir))
-
-        savedir = self.savedir + '/' + img_capture.subdir
-
-        if not exists(savedir):
-            makedirs(savedir)
-
-        log.debug('Saving files to {}'.format(savedir))
-
         box_name = img_capture.full_fname
         nobox_name = img_capture.clean_fname
 
-        box_path = '{}/box/{}'.format(savedir, basename(box_name))
-        nobox_path = '{}/nobox/{}'.format(savedir, basename(nobox_name))
+        box_dir = '{}/box/{}'.format(self.savedir, img_capture.subdir)
+        if not exists(box_dir):
+            log.warning('Creating subdirectory {}'.format(box_dir))
+            makedirs(box_dir)
 
-        log.debug('Copying {}'.format(box_name))
+        box_path = '{}/{}'.format(box_dir, basename(box_name))
+
+        nobox_dir = '{}/nobox/{}'.format(self.savedir, img_capture.subdir)
+        if not exists(nobox_dir):
+            log.warning('Creating subdirectory {}'.format(nobox_dir))
+            makedirs(nobox_dir)
+
+        nobox_path = '{}/{}'.format(nobox_dir, basename(nobox_name))
+
+        log.debug('Copying {}'.format(box_path))
         copyfile('{}'.format(box_name), box_path)
 
-        log.debug('Copying {}'.format(nobox_name))
+        log.debug('Copying {}'.format(nobox_path))
         copyfile('{}'.format(nobox_name), nobox_path)
 
         log.info('File system upload complete {}'.format(img_capture.clean_fname))
