@@ -19,6 +19,24 @@ class S3Storage(object):
         # shortcut
         self.s3_config = config['s3']
 
+        self.aws_access_key_id = None
+        self.aws_secret_access_key = None
+        self.local_tz = None
+        self.bucket_name = None
+        self.region = None
+
+        self.prefix = None
+        self.camera_table = None
+        self.image_table = None
+
+        self.session = None
+        self.s3 = None
+        self.bucket = None
+
+    def connect(self):
+
+        log.info('Connecting to AWS')
+
         # get settings
         self.aws_access_key_id = self.s3_config['aws_access_key_id']
         self.aws_secret_access_key = self.s3_config['aws_secret_access_key']
@@ -59,8 +77,16 @@ class S3Storage(object):
         self.camera_table = db.Table(self.camera_table)
         self.image_table = db.Table(self.image_table)
 
+        log.info('Connection to AWS complete')
+
+        return True
+
     def update_db(self, upload_path, capture_dt):
         log.info('Updating db for {}'.format(upload_path))
+
+        if self.session is None and not self.connect():
+            log.error('Unable to connect to AWS')
+            return None
 
         self.camera_table.put_item(
             Item={
@@ -84,11 +110,16 @@ class S3Storage(object):
 
     def upload(self, img_capture):
 
+        log.info('Uploading {} to S3 prefix {}'.format(box_name, self.prefix))
+
+        if self.session is None and not self.connect():
+            log.error('Unable to connect to AWS')
+            return None
+
         subdir = img_capture.subdir
         box_name = img_capture.full_fname
         capture_dt = img_capture.capture_dt
 
-        log.info('Uploading {} to S3 prefix {}'.format(box_name, self.prefix))
         bname = basename(box_name)
 
         upload_path = '{}/{}'.format(subdir, bname)
