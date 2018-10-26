@@ -103,6 +103,10 @@ class GDriveStorage(object):
 
             retval = GDriveStorage.find_folders(self.gauth, parent_id, name)
 
+            if retval is None:
+                log.error('Cannot find main folder.')
+                return None
+
             files = retval.get('files', [])
 
             assert len(files) <= 1, 'More than one folder named {}'.format(name)
@@ -234,9 +238,15 @@ class GDriveStorage(object):
               "and '{}' in parents and trashed = false and name = '{}'".format(parent_id, folder_name)
 
         folder_res = requests.get(url, headers=headers, params={'q': qry})
-        folder_res.raise_for_status()
-        retval = folder_res.json()
-        return retval
+
+        if folder_res.ok:
+            return folder_res.json()
+        else:
+            content = folder_res.json()
+            log.error('Find folder returned: {} {}'.format(
+                folder_res.status_code, content['error']['message']))
+
+            return None
 
     @staticmethod
     def create_folder(gauth, folder_name, parent_id='root'):

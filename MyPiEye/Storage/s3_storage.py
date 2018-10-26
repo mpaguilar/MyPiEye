@@ -33,8 +33,9 @@ class S3Storage(object):
         # if this camera has a different prefix, use it
         self.prefix = self.s3_config.get('prefix', None)
         if self.prefix is None:
-            log.info('prefix is not found. Using camera_id {}'.format(self.config['camera_id']))
-            self.prefix = self.config['camera_id']
+            camera_id = self.config['camera']['camera_id']
+            log.info('prefix is not found. Using camera_id {}'.format(camera_id))
+            self.prefix = camera_id
 
         # dynamodb settings
         self.camera_table = self.s3_config.get('camera_table', None)
