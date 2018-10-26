@@ -81,7 +81,7 @@ class MainApp(object):
         log.info('Saving timestamp image')
         start_time = datetime.now()
         motion.ts_fname = '{}/{}.ts.jpg'.format(self.workdir, motion.base_filename)
-        motion.ts_image = MotionDetect.add_timestamp(motion.clean_image, motion.timestamp_utc)
+        motion.ts_image = MotionDetect.add_timestamp(motion.clean_image, motion.timestamp_local)
         MotionDetect.save_cv_image(motion.ts_image, motion.ts_fname)
         end_time = datetime.now()
         tot_time = end_time - start_time

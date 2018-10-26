@@ -4,6 +4,8 @@ from os import remove
 from ast import literal_eval
 import logging
 
+from dateutil import tz
+
 import cv2
 
 log = logging.getLogger(__name__)
@@ -11,7 +13,9 @@ log = logging.getLogger(__name__)
 
 class ImageCapture(object):
 
-    def __init__(self):
+    def __init__(self, config):
+
+        self.tz = config.get('timezone', None)
 
         self.cam_id = None
 
@@ -71,6 +75,25 @@ class ImageCapture(object):
         """
 
         return self.capture_dt.strftime('%y/%m/%d %H:%M:%S.%f')
+
+    @property
+    def timestamp_local(self):
+        """
+        Capture timestamp, converted to whatever is specified in config.
+
+        :return:
+        """
+
+        if self.tz is None:
+            return ''
+
+        from_tz = tz.gettz('UTC')
+        local_tz = tz.gettz(self.tz)
+
+        local = self.capture_dt.replace(tzinfo=from_tz)
+        local_dt = local.astimezone(local_tz)
+
+        return local_dt.strftime('%y/%m/%d %H:%M:%S.%f')
 
 
 class MotionDetect:
@@ -208,7 +231,7 @@ class MotionDetect:
                 self.prev_image, current_img)
 
             if motion:
-                ret_img = ImageCapture()  # (dtnow, movements)
+                ret_img = ImageCapture(self.config)  # (dtnow, movements)
                 ret_img.capture_dt = dtnow
                 ret_img.motions = movements
             else:
@@ -299,7 +322,7 @@ class MotionDetect:
         Adds a timestamp to the image.
 
         :param cv_image: The image to copy and modify
-        :param dtstamp: time as formatted string.
+        :param utc_capture_dt: A UTC datetime
         :return:
         """
         copied = cv_image.copy()
