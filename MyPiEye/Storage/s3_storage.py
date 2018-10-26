@@ -1,4 +1,4 @@
-from os.path import basename
+from os.path import basename, dirname
 from datetime import datetime
 from dateutil import tz
 
@@ -73,6 +73,7 @@ class S3Storage(object):
         self.image_table.put_item(
             Item={
                 's3key': upload_path,
+                'path': dirname(upload_path),
                 'bucket': self.bucket_name,
                 'capture_time': capture_dt.strftime('%Y/%m/%d %H:%M:%S')
             }
@@ -80,7 +81,11 @@ class S3Storage(object):
 
         log.info('Db updated for {}'.format(upload_path))
 
-    def upload(self, subdir, box_name, capture_dt):
+    def upload(self, img_capture):
+
+        subdir = img_capture.subdir
+        box_name = img_capture.full_fname
+        capture_dt = img_capture.capture_dt
 
         log.info('Uploading {} to S3 prefix {}'.format(box_name, self.prefix))
         bname = basename(box_name)

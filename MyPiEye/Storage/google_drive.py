@@ -138,8 +138,11 @@ class GDriveStorage(object):
                 log.error(content['error']['message'])
                 return False
 
-    def upload_file(self, subdir, filename):
+    def upload_file(self, img_capture):
         assert self.folder_id is not None, 'GDrive folder is not found'
+
+        filename = img_capture.full_fname
+        subdir = img_capture.subdir
 
         log.debug('Uploading {}'.format(filename))
 

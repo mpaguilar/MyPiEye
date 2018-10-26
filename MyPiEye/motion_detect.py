@@ -1,9 +1,75 @@
 from datetime import datetime
+from os.path import exists
+from os import remove
 import logging
 
 import cv2
 
 log = logging.getLogger(__name__)
+
+
+class ImageCapture(object):
+
+    def __init__(self):
+
+        self.cam_id = None
+
+        self.capture_dt = None
+
+        # images, ie numpy arrays
+        self.clean_image = None
+        self.ts_image = None
+        self.full_image = None
+
+        # filenames
+        self.clean_fname = None
+        self.ts_fname = None
+        self.full_fname = None
+
+        # list of co-ordinate lists
+        self.motions = None
+
+    def __del__(self):
+
+        log.info('Removing temp files')
+
+        if self.clean_fname is not None and exists(self.clean_fname):
+            log.debug('Removing {}'.format(self.clean_fname))
+            remove(self.clean_fname)
+
+        if self.ts_fname is not None and exists(self.ts_fname):
+            log.debug('Removing {}'.format(self.ts_fname))
+            remove(self.ts_fname)
+
+        if self.full_fname is not None and exists(self.full_fname):
+            log.debug('Removing {}'.format(self.full_fname))
+            remove(self.full_fname)
+
+    @property
+    def subdir(self):
+        return self.capture_dt.strftime('%y%m%d')
+
+    @property
+    def base_filename(self):
+        """
+        Builds filename from properties. Does not include extension.
+
+        :return:
+        """
+        ymd = self.capture_dt.strftime('%y%m%d')
+        hms = self.capture_dt.strftime('%H%M%S.%f')
+
+        return '{}.{}'.format(ymd, hms)
+
+    @property
+    def timestamp_utc(self):
+        """
+        Capture timestamp, as string
+
+        :return:
+        """
+
+        return self.capture_dt.strftime('%y/%m/%d %H:%M:%S.%f')
 
 
 class MotionDetect:
@@ -100,14 +166,14 @@ class MotionDetect:
         Compares passed in image with stored previous image.
         If previous image does not exist, then a negative result (no changes) is returned.
 
-        when motion is detected, returns a tuple containing a datetime and a list of motions detected as boxes.
+        when motion is detected, returns an ImageCapture object with capture_dt and motions set.
 
         :param current_img: CV image
-        :return: None if no motion
+        :return: None if no motion, ImageCapture if there is.
 
         """
 
-        ret = None
+        ret_img = None
 
         dtnow = datetime.utcnow()
 
@@ -124,13 +190,15 @@ class MotionDetect:
                 self.prev_image, current_img)
 
             if motion:
-                ret = (dtnow, movements)
+                ret_img = ImageCapture()  # (dtnow, movements)
+                ret_img.capture_dt = dtnow
+                ret_img.motions = movements
             else:
-                ret = None
+                ret_img = None
 
         self.prev_image = current_img.copy()
 
-        return ret
+        return ret_img
 
     @staticmethod
     def find_contours(img1, img2):
@@ -161,7 +229,7 @@ class MotionDetect:
         contours = cv2.findContours(
             thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
 
-        ret = []
+        ret_ = []
         for c in contours:
             # get measurements we can use
             size = cv2.contourArea(c)

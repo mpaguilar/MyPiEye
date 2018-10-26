@@ -10,6 +10,8 @@ from .google_drive import GDriveAuth, GDriveStorage
 from .s3_storage import S3Storage
 from .local_filesystem import local_save
 
+from MyPiEye.motion_detect import ImageCapture
+
 log = multiprocessing.get_logger()
 
 
@@ -35,18 +37,25 @@ class ImageStorage(object):
         log.debug('ImageStorage initialized')
 
     @staticmethod
-    def save(config, subdir, box_name, nobox_name, capture_dt):
-        futures = []
+    def save(config, img_capture: ImageCapture):
+        """
+        Entry point for Executor. Deletes the ImageCapture on completion.
+
+        :param config: main config dictionary
+        :param img_capture: ``ImageCapture`` object.
+        :return:
+        """
+
         fs_path = config.get('savedir', None)
         if fs_path is not None:
             log.info('Saving to local filesystem {}'.format(fs_path))
             # local_save(self.fs_path, box_name, nobox_name, subdir)
-            local_save(fs_path, box_name, nobox_name, subdir)
+            local_save(fs_path, img_capture)
 
         s3_config = config.get('s3', None)
         if s3_config is not None:
             s3 = S3Storage(config)
-            s3.upload(subdir, nobox_name, capture_dt)
+            s3.upload(img_capture)
 
         gdrive_settings = config.get('gdrive', None)
         creds_folder = config.get('credential_folder', '.')
@@ -60,19 +69,21 @@ class ImageStorage(object):
             log.info('Saving to Google Drive {}'.format(folder_name))
             gauth = GDriveAuth.init_gauth(client_id, client_secret, creds_file)
             gstorage = GDriveStorage(gauth, folder_name)
-            gstorage.upload_file(subdir, box_name)
+            gstorage.upload_file(img_capture)
 
-        log.info('Removing temp files.')
-        log.debug('Removing {}'.format(box_name))
-        remove(box_name)
-        log.debug('Removing {}'.format(nobox_name))
-        remove(nobox_name)
+        del img_capture
 
         return True
 
-    def save_files(self, subdir, box_name, nobox_name, capture_dt):
+    def save_files(self, img_capture: ImageCapture):
+        """
+        Launches the processes to save files.
 
-        fut = ImageStorage.executor.submit(ImageStorage.save, self.config, subdir, box_name, nobox_name, capture_dt)
+        :param img_capture: ``ImageCapture`` object.
+        :return:
+        """
+
+        fut = ImageStorage.executor.submit(ImageStorage.save, self.config, img_capture)
         self.futures.append(fut)
         _, waiting = wait(self.futures, .1)
         self.futures = list(waiting)
