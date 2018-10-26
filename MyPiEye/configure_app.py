@@ -5,6 +5,9 @@ from dateutil import tz
 from datetime import datetime
 
 from MyPiEye.Storage.google_drive import GDriveAuth, GDriveStorage
+from MyPiEye.Storage.local_filesystem import FileStorage
+from MyPiEye.Storage.s3_storage import S3Storage
+from MyPiEye.Storage.google_drive import GDriveStorage, GDriveAuth
 
 log = logging.getLogger(__name__)
 
@@ -53,25 +56,6 @@ class ConfigureApp(object):
         if res != 'small' and res != '720p' and res != '1080p':
             log.error('Invalid resolution: {}'.format(res))
             return False
-
-        return True
-
-    def prepare_local_storage(self):
-        """
-        Creates directory `savedir` for local filesystem save.
-        :return:  True on success.
-        """
-
-        log.info('Preparing local storage')
-        # check savedir, may be None
-        if self.config.get('savedir', None) is None:
-            log.info('savedir not set. Skipping.')
-            return True
-
-        savedir = abspath(self.config['savedir'])
-        if not exists(savedir):
-            log.warning('Save directory does not exist: {}. Creating'.format(savedir))
-            makedirs(savedir)
 
         return True
 
@@ -181,12 +165,6 @@ class ConfigureApp(object):
             log.error('Working directory does not exist: {}'.format(workdir))
             ret = False
 
-        # check savedir, may be None
-        savedir = self.config.get('savedir', None)
-        if savedir is not None and not exists(savedir):
-            log.error('Save directory does not exist: {}'.format(savedir))
-            ret = False
-
         camera = self.config.get('camera', None)
         if camera is None:
             log.error('camera is required')
@@ -213,6 +191,9 @@ class ConfigureApp(object):
             log.error('Invalid resolution: {}'.format(res))
             ret = False
 
+        if not self.check_filestorage():
+            ret = False
+
         if not self.check_gdrive():
             ret = False
 
@@ -221,6 +202,19 @@ class ConfigureApp(object):
 
         return ret
 
+    def check_filestorage(self):
+        localconfig = self.config.get('local', None)
+        if localconfig is None:
+            log.info('No [local] section found. Skipping.')
+            return True
+
+        fs = FileStorage(self.config)
+        if not fs.check():
+            log.error('Local filesystem check failed')
+            return False
+
+        return True
+
     def check_s3(self):
 
         s3_config = self.config.get('s3', None)
@@ -228,34 +222,12 @@ class ConfigureApp(object):
             log.info('No [s3] section found')
             return True
 
-        ret = True
+        s3 = S3Storage(self.config)
+        if not s3.check():
+            log.error('AWS check failed')
+            return False
 
-        if s3_config.get('aws_access_key_id', None) is None:
-            log.error('S3: aws_access_key_id is required')
-            ret = False
-
-        if s3_config.get('aws_secret_access_key', None) is None:
-            log.error('S3: aws_secret_access_key is required')
-            ret = False
-
-        if s3_config.get('bucket_name', None) is None:
-            log.error('S3: bucket_name is required')
-            ret = False
-
-        if s3_config.get('aws_region', None) is None:
-            log.error('S3: aws_region is required')
-            ret = False
-
-        if s3_config.get('prefix', None) is None:
-            log.warning('S3: prefix is empty or missing')
-
-        if s3_config.get('camera_table', None) is None:
-            log.warning('AWS: camera_table is empty or missing')
-
-        if s3_config.get('image_table', None) is None:
-            log.warning('AWS: image_table is empty or missing')
-
-        return ret
+        return True
 
     def check_gdrive(self):
 
@@ -267,38 +239,16 @@ class ConfigureApp(object):
 
         ret = True
 
-        if self.config.get('credential_folder') is None:
-            log.error('credential_folder must be set.')
-            ret = False
-
-        folder_name = gconfig.get('folder_name', None)
-        if folder_name is None:
-            log.error('folder_name must be set')
-            ret = False
-
-        client_id = gconfig.get('client_id', None)
-        if client_id is None:
-            log.error('GDrive requires client_id')
-            ret = False
-
-        client_secret = gconfig.get('client_secret', None)
-        if client_secret is None:
-            log.error('GDrive requires client_secret')
+        gauth = GDriveAuth(self.config)
+        if not gauth.check():
+            log.error('GDriveAuth check failed')
             ret = False
 
         if ret:
-            creds_folder = abspath(self.config['credential_folder'])
-            creds_file = abspath(join(creds_folder, 'google_auth.json'))
-
-            log.info('Attempting authentication to GDrive')
-            gauth = GDriveAuth.init_gauth(client_id, gconfig['client_secret'], creds_file)
-
-            log.info('Searching for main folder {} on GDrive'.format(folder_name))
-
-            gstorage = GDriveStorage(gauth, folder_name)
-
-            if gstorage.main_folder(create=False) is None:
-                log.error('Failed to find google folder.')
+            gdrive = GDriveStorage(gauth, self.config)
+            if not gdrive.check():
                 ret = False
+        else:
+            log.warning('Failed authorization, skipping GDrive storage check.')
 
         return ret

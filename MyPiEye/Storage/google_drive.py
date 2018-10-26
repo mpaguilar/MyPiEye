@@ -2,8 +2,7 @@ import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 import json
 import logging
-from time import sleep
-from os.path import exists, basename, abspath
+from os.path import exists, basename, abspath, join
 from time import sleep
 
 import multiprocessing
@@ -18,7 +17,7 @@ GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
 class GDriveStorage(object):
     folder_lock = multiprocessing.Lock()
 
-    def __init__(self, gauth, gdrive_folder):
+    def __init__(self, gauth, config):
         """
         Represents a folder on GDrive. Only folders off the root are supported.
 
@@ -26,15 +25,66 @@ class GDriveStorage(object):
         be used to initialize the app.
 
         :param gauth: an initialized :class:`GDriveAuth` object.
-        :param gdrive_folder: the name of the folder.
+        :param config: global config
         """
+
+        self.config = config
+        self.gconfig = config['gdrive']
+
         self.gauth = gauth
+
         self.headers = {
             'Authorization': 'Bearer {}'.format(self.gauth.access_token)
         }
 
-        self.folder_name = gdrive_folder
-        self.folder_id = self.main_folder(create=False)
+    @property
+    def folder_id(self):
+        return self.main_folder(create=False)
+
+    def check(self):
+        gconfig = self.gconfig
+
+        ret = True
+
+        if self.config.get('credential_folder') is None:
+            log.error('credential_folder must be set.')
+            ret = False
+
+        folder_name = gconfig.get('folder_name', None)
+        if folder_name is None:
+            log.error('folder_name must be set')
+            ret = False
+
+        client_id = gconfig.get('client_id', None)
+        if client_id is None:
+            log.error('GDrive requires client_id')
+            ret = False
+
+        client_secret = gconfig.get('client_secret', None)
+        if client_secret is None:
+            log.error('GDrive requires client_secret')
+            ret = False
+
+        log.info('Searching for main folder {} on GDrive'.format(folder_name))
+
+        if self.main_folder(create=False) is None:
+            log.error('Failed to find google folder.')
+            ret = False
+
+        return ret
+
+    def configure(self):
+        gconfig = self.config['gdrive']
+
+        folder_name = gconfig['folder_name']
+
+        log.info('Searching for main folder {} on GDrive'.format(folder_name))
+
+        if self.main_folder(create=True) is None:
+            log.error('Failed to create google folder.')
+            return False
+
+        return True
 
     def main_folder(self, create=False):
         """
@@ -48,9 +98,7 @@ class GDriveStorage(object):
         GDriveStorage.folder_lock.acquire()
 
         try:
-            self.folder_id = None
-
-            name = self.folder_name
+            name = self.gconfig['folder_name']
             parent_id = 'root'
 
             retval = GDriveStorage.find_folders(self.gauth, parent_id, name)
@@ -66,14 +114,11 @@ class GDriveStorage(object):
                 if create:
                     log.warning('Main folder {} does not exist. Creating.'.format(name))
 
-                    self.folder_id = GDriveStorage.create_folder(self.gauth, name, parent_id='root')
-                    return self.folder_id
+                    folder_id = GDriveStorage.create_folder(self.gauth, name, parent_id='root')
+                    return folder_id
                 else:
                     log.error('main folder not found')
                     return None
-            else:
-                self.folder_id = files[0]['id']
-                return self.folder_id
 
         finally:
             GDriveStorage.folder_lock.release()
@@ -253,7 +298,7 @@ class GDriveAuth(object):
 
     """
 
-    def __init__(self, client_id, client_secret, credential_filename):
+    def __init__(self, config):
 
         """
         Google-provided items, and a filename to store the cookie.
@@ -262,10 +307,14 @@ class GDriveAuth(object):
         :param client_secret: From Google
         :param credential_filename: a filename
         """
+        self.config = config
+        self.gconfig = config['gdrive']
 
-        assert isinstance(client_id, str)
-        assert isinstance(client_secret, str)
-        assert isinstance(credential_filename, str)
+        client_id = self.gconfig['client_id']
+        client_secret = self.gconfig['client_secret']
+        creds_folder = abspath(self.config['credential_folder'])
+
+        credential_filename = abspath(join(creds_folder, 'google_auth.json'))
 
         self.client_id = client_id
         self.client_secret = client_secret
@@ -273,6 +322,56 @@ class GDriveAuth(object):
         self.access_token = None
         self.refresh_token = None
         self.token_expires = None
+
+    def check(self):
+        ret = True
+
+        if self.config.get('credential_folder') is None:
+            log.error('credential_folder must be set.')
+            ret = False
+
+        client_id = self.gconfig.get('client_id', None)
+        if client_id is None:
+            log.error('GDriveAuth requires client_id')
+            ret = False
+
+        client_secret = self.gconfig.get('client_secret', None)
+        if client_secret is None:
+            log.error('GDriveAuth requires client_secret')
+            ret = False
+
+        if not exists(self.credential_filename):
+            log.error('Credential file does not exist: {}'.format(self.credential_filename))
+            ret = False
+
+        return ret
+
+    def configure(self):
+
+        if self.init_auth():
+            return True
+
+        log.warning('Auth failed, attempting initial validation')
+        url, ucode, dcode = self.init_token()
+
+        while True:
+            print('please visit {} and input this code: {}'.format(url, ucode))
+            input('Press Enter key when ready...')
+
+            validate_ret = self.validate_token(dcode)
+
+            if validate_ret is None:
+                log.info('Validation incomplete. Retrying.')
+                sleep(1)
+                continue
+
+            if validate_ret is False:
+                log.critical('validation failed')
+                return None
+
+            if validate_ret is True:
+                log.info('Application validated')
+                return True
 
     def init_auth(self):
         """

@@ -103,3 +103,38 @@ class S3Storage(object):
 
         log.info('Upload complete {}'.format(box_name))
         return True
+
+    def check(self):
+        s3_config = self.config.get('s3', None)
+        if s3_config is None:
+            log.info('No [s3] section found')
+            return True
+
+        ret = True
+
+        if s3_config.get('aws_access_key_id', None) is None:
+            log.error('S3: aws_access_key_id is required')
+            ret = False
+
+        if s3_config.get('aws_secret_access_key', None) is None:
+            log.error('S3: aws_secret_access_key is required')
+            ret = False
+
+        if s3_config.get('bucket_name', None) is None:
+            log.error('S3: bucket_name is required')
+            ret = False
+
+        if s3_config.get('aws_region', None) is None:
+            log.error('S3: aws_region is required')
+            ret = False
+
+        if s3_config.get('prefix', None) is None:
+            log.warning('S3: prefix is empty or missing')
+
+        if s3_config.get('camera_table', None) is None:
+            log.warning('AWS: camera_table is empty or missing')
+
+        if s3_config.get('image_table', None) is None:
+            log.warning('AWS: image_table is empty or missing')
+
+        return ret
