@@ -1,23 +1,50 @@
 import cv2
-import numpy as np
 import logging
 from time import sleep
+from ast import literal_eval
 
 log = logging.getLogger(__name__)
 
 
 class UsbCamera(object):
-    def __init__(self, resolution, camera=None):
-        self.camera_id = camera
-        self.camera = None
+    def __init__(self, config):
+        self.config = config
+        self.cam_config = config.get('camera', None)
+
+        self.camera_id = self.cam_config.get('camera', None)
+        self.camera_id = literal_eval(self.camera_id)
+
+        self.camera_instance = None
         self.is_open = False
 
-        self.resolution = (640, 480, 26)
+        resolution = self.cam_config['resolution']
 
         if resolution == '1080p':
             self.resolution = (1920, 1080, 26)
         elif resolution == '720p':
             self.resolution = (1280, 720, 26)
+        elif resolution == 'small':
+            self.resolution = (640, 480, 26)
+        else:
+            self.resolution = None
+
+    def check(self):
+        ret = True
+
+        if self.cam_config is None:
+            log.error('[camera] section is required is required')
+            # we won't have keys if there's no section
+            return False
+
+        if self.camera_id is None:
+            log.error('camera_id is required')
+            ret = False
+
+        if self.resolution is None:
+            log.error('resolution is required')
+            ret = False
+
+        return ret
 
     def init_camera(self):
         """
@@ -54,21 +81,21 @@ class UsbCamera(object):
 
             if self.camera_id is not None:
                 log.info('Using camera {}'.format(self.camera_id))
-                self.camera = cv2.VideoCapture(self.camera_id)
+                self.camera_instance = cv2.VideoCapture(self.camera_id)
 
                 x, y, fps = self.resolution
-                self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, x)
-                self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, y)
-                self.camera.set(cv2.CAP_PROP_FPS, fps)
+                self.camera_instance.set(cv2.CAP_PROP_FRAME_WIDTH, x)
+                self.camera_instance.set(cv2.CAP_PROP_FRAME_HEIGHT, y)
+                self.camera_instance.set(cv2.CAP_PROP_FPS, fps)
 
-                if not self.camera.isOpened():
+                if not self.camera_instance.isOpened():
                     log.error('Failed to open camera')
                     return False
 
                 self.is_open = True
-                x = self.camera.get(cv2.CAP_PROP_FRAME_WIDTH)
-                y = self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT)
-                fps = self.camera.get(cv2.CAP_PROP_FPS)
+                x = self.camera_instance.get(cv2.CAP_PROP_FRAME_WIDTH)
+                y = self.camera_instance.get(cv2.CAP_PROP_FRAME_HEIGHT)
+                fps = self.camera_instance.get(cv2.CAP_PROP_FPS)
                 log.warning('x: {}, y: {}, fps: {}'.format(x, y, fps))
 
             return True
@@ -76,17 +103,17 @@ class UsbCamera(object):
     def close_camera(self):
         if not hasattr(self, 'camera'):
             return
-        
-        if self.camera_id is not None and self.camera is not None:
+
+        if self.camera_id is not None and self.camera_instance is not None:
             log.warning('Shutting down video capture')
-            self.camera.release()
-            del self.camera
+            self.camera_instance.release()
+            del self.camera_instance
 
     def get_image(self):
 
-        if self.camera is not None:
+        if self.camera_instance is not None:
             # log.debug('Reading from camera {}'.format(self.camera.isOpened()))
-            ret, img = self.camera.read()
+            ret, img = self.camera_instance.read()
             if not ret:
                 log.error('Failed to get camera image')
             return img

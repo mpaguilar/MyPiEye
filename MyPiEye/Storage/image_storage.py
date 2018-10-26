@@ -8,7 +8,7 @@ from os import remove
 
 from .google_drive import GDriveAuth, GDriveStorage
 from .s3_storage import S3Storage
-from .local_filesystem import local_save
+from .local_filesystem import FileStorage
 
 from MyPiEye.motion_detect import ImageCapture
 
@@ -46,11 +46,12 @@ class ImageStorage(object):
         :return:
         """
 
-        fs_path = config.get('savedir', None)
-        if fs_path is not None:
-            log.info('Saving to local filesystem {}'.format(fs_path))
-            # local_save(self.fs_path, box_name, nobox_name, subdir)
-            local_save(fs_path, img_capture)
+        localstorage = config.get('local', None)
+        if localstorage is not None:
+            log.info('Saving to local filesystem {}'.format(img_capture.base_filename))
+            # local_save(fs_path, img_capture)
+            fs = FileStorage(config)
+            fs.upload(img_capture)
 
         s3_config = config.get('s3', None)
         if s3_config is not None:
@@ -82,6 +83,10 @@ class ImageStorage(object):
         :param img_capture: ``ImageCapture`` object.
         :return:
         """
+
+        # img_capture.full_image = None
+        # img_capture.clean_image = None
+        # img_capture.ts_image = None
 
         fut = ImageStorage.executor.submit(ImageStorage.save, self.config, img_capture)
         self.futures.append(fut)

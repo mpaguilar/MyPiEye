@@ -26,34 +26,12 @@ class MainApp(object):
         self.config = config
 
         # instanciates, but doesn't initialize
-        camera_id = literal_eval(config['camera'])
-        self.camera = UsbCamera(
-            resolution=config['resolution'],
-            camera=camera_id
-        )
+        self.camera = UsbCamera(config)
 
-        # the camera can only be set from the .ini
-        camera_settings = config.get('iniconfig', {})
-
-        # convert the ini string key/val entries into a list of tuples
-        ignore_dict = camera_settings.get('ignore', {})
-        ignore_boxes = []
-
-        for _, v in ignore_dict.items():
-            val = literal_eval(v)
-            ignore_boxes.append(val)
-
-        # get the minimum sizes
-        minsizes = camera_settings.get('minsizes', {})
-
-        self.workdir = config['workdir']
-        self.workdir = abspath(self.workdir)
+        self.workdir = abspath(config['workdir'])
 
         self.motiondetect = MotionDetect(
-            workdir=self.workdir,
-            # ini entries are always read as strings
-            minsize=literal_eval(minsizes.get('minsize', '0')),
-            ignore_boxes=ignore_boxes
+            config
         )
 
         # self.check should have ensured it exists
@@ -93,19 +71,19 @@ class MainApp(object):
         # unaltered
         motion.clean_fname = '{}/{}.jpg'.format(self.workdir, motion.base_filename)
         MotionDetect.save_cv_image(motion.clean_image, motion.clean_fname)
-        log.info('Saved {}'.format(motion.clean_fname))
+        log.info('Saved tmpfile {}'.format(motion.clean_fname))
 
         # timestamp
         motion.ts_fname = '{}/{}.ts.jpg'.format(self.workdir, motion.base_filename)
         motion.ts_image = MotionDetect.add_timestamp(motion.clean_image, motion.timestamp_utc)
         MotionDetect.save_cv_image(motion.ts_image, motion.ts_fname)
-        log.info('Saved {}'.format(motion.ts_fname))
+        log.info('Saved tmpfile {}'.format(motion.ts_fname))
 
         # fully annotated
         motion.full_fname = '{}/{}.box.jpg'.format(self.workdir, motion.base_filename)
         motion.full_image = MotionDetect.add_motion_boxes(motion.ts_image, motion.motions)
         MotionDetect.save_cv_image(motion.full_image, motion.full_fname)
-        log.info('Saved {}'.format(motion.full_fname))
+        log.info('Saved tmpfile {}'.format(motion.full_fname))
 
         return motion
 

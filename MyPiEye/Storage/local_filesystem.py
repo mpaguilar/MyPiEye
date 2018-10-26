@@ -10,43 +10,85 @@ from MyPiEye.motion_detect import ImageCapture
 log = multiprocessing.get_logger()
 
 
-def local_save(savedir, img_capture: ImageCapture):
-    """
-    Copies the files to the local filesystem.
-    If the subdirectories don't exist, they will be created.
+class FileStorage(object):
 
-    :param savedir: The local base directory to save files
-    :param img_capture: ``ImageCapture`` object
+    def __init__(self, config: dict):
+        pass
+        self.config = config
+        self.local_config = config['local']
 
-    :return: ImageCapture object
-    """
+        self.savedir = self.local_config.get('savedir', '.')
 
-    if not exists(savedir):
-        raise EnvironmentError('savedir {} does not exist'.format(savedir))
+    def upload(self, img_capture):
+        """
+        Copies the files to the local filesystem.
+        If the subdirectories don't exist, they will be created.
 
-    savedir = savedir + '/' + img_capture.subdir
+        :param img_capture: ``ImageCapture`` object
+        :return: ImageCapture object
+        """
 
-    if not exists(savedir):
-        makedirs(savedir)
+        log.info('Uploading to file system {}'.format(img_capture.clean_fname))
 
-    if not exists(savedir + '/box'):
-        makedirs(savedir + '/box')
+        box_name = img_capture.full_fname
+        nobox_name = img_capture.clean_fname
 
-    if not exists(savedir + '/nobox'):
-        makedirs(savedir + '/nobox')
+        box_dir = '{}/box/{}'.format(self.savedir, img_capture.subdir)
+        if not exists(box_dir):
+            log.warning('Creating subdirectory {}'.format(box_dir))
+            makedirs(box_dir)
 
-    log.debug('Saving files to {}'.format(savedir))
+        box_path = '{}/{}'.format(box_dir, basename(box_name))
 
-    box_name = img_capture.full_fname
-    nobox_name = img_capture.clean_fname
+        nobox_dir = '{}/nobox/{}'.format(self.savedir, img_capture.subdir)
+        if not exists(nobox_dir):
+            log.warning('Creating subdirectory {}'.format(nobox_dir))
+            makedirs(nobox_dir)
 
-    box_path = '{}/box/{}'.format(savedir, basename(box_name))
-    nobox_path = '{}/nobox/{}'.format(savedir, basename(nobox_name))
+        nobox_path = '{}/{}'.format(nobox_dir, basename(nobox_name))
 
-    log.debug('Copying {}'.format(box_name))
-    copyfile('{}'.format(box_name), box_path)
+        log.debug('Copying {}'.format(box_path))
+        copyfile('{}'.format(box_name), box_path)
 
-    log.debug('Copying {}'.format(nobox_name))
-    copyfile('{}'.format(nobox_name), nobox_path)
+        log.debug('Copying {}'.format(nobox_path))
+        copyfile('{}'.format(nobox_name), nobox_path)
 
-    return img_capture
+        log.info('File system upload complete {}'.format(img_capture.clean_fname))
+
+        return img_capture
+
+    def configure(self):
+        if not exists(self.savedir):
+            log.warning('Creating save directory {}'.format(self.savedir))
+            makedirs(self.savedir)
+
+        box_dir = '{}/box'.format(self.savedir)
+        if not exists(box_dir):
+            log.warning('Creating box save directory: {}'.format(box_dir))
+            makedirs(box_dir)
+
+        nobox_dir = '{}/nobox'.format(self.savedir)
+        if not exists(nobox_dir):
+            log.warning('Creating nobox save directory: {}'.format(nobox_dir))
+            makedirs(nobox_dir)
+
+        return True
+
+    def check(self):
+
+        ok = True
+        if not exists(self.savedir):
+            log.error('Save directory does not exist: {}'.format(self.savedir))
+            ok = False
+
+        box_dir = '{}/box'.format(self.savedir)
+        if not exists(box_dir):
+            log.error('box save directory does not exist: {}'.format(box_dir))
+            ok = False
+
+        nobox_dir = '{}/nobox'.format(self.savedir)
+        if not exists(nobox_dir):
+            log.error('nobox save directory does not exist: {}'.format(nobox_dir))
+            ok = False
+
+        return ok

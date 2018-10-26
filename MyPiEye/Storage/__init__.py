@@ -1,6 +1,6 @@
 from .image_storage import ImageStorage
 from .google_drive import GDriveStorage, GDriveAuth
-from .local_filesystem import local_save
+from .local_filesystem import FileStorage
 from .s3_storage import S3Storage
 
 from MyPiEye.CLI import ColorLogFormatter

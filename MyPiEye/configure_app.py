@@ -4,7 +4,10 @@ from os import makedirs
 from dateutil import tz
 from datetime import datetime
 
-from MyPiEye.Storage.google_drive import GDriveAuth, GDriveStorage
+from MyPiEye.Storage.local_filesystem import FileStorage
+from MyPiEye.Storage.s3_storage import S3Storage
+from MyPiEye.Storage.google_drive import GDriveStorage, GDriveAuth
+from MyPiEye.usbcamera import UsbCamera
 
 log = logging.getLogger(__name__)
 
@@ -14,80 +17,76 @@ class ConfigureApp(object):
     def __init__(self, config):
         self.config = config
 
-    def initialize(self):
-        """
-        Runs through config settings, creating resources if necessary
-        :return: True on success, False on error
-        """
+    def configure(self):
+        ret = True
 
-        print('initializing')
+        if not self.configure_working_directories():
+            log.critical('Failed to configure working directories')
+            ret = False
 
-        success = True
+        if not self.configure_local_filesystem():
+            log.critical('Failed to configure local filesystem')
+            ret = False
 
-        success = (success and self.prepare_camera())
-        success = (success and self.prepare_working_directories())
-        success = (success and self.prepare_local_storage())
-        success = (success and self.prepare_gdrive())
+        if not self.configure_gdrive():
+            log.critical('Failed to configure GDriveStorage')
+            ret = False
 
-        return success
+        if not self.configure_aws():
+            log.critical('Failed to configure AWS')
+            ret = False
 
-    def prepare_camera(self):
-        """
-        Checks to see if settings exist. Does not use camera.
-        :return: True on success
-        """
+        return ret
 
-        log.info('Checking camera settings')
+    def configure_local_filesystem(self):
+        log.info('Configuring local filesystem')
 
-        camera = self.config.get('camera', None)
-        if camera is None:
-            log.error('Camera is required')
-            return False
-
-        # click forces a choice, but check it anyway
-        res = self.config.get('resolution', None)
-        if res is None:
-            log.error('resolution must be set')
-            return False
-
-        if res != 'small' and res != '720p' and res != '1080p':
-            log.error('Invalid resolution: {}'.format(res))
-            return False
-
-        return True
-
-    def prepare_local_storage(self):
-        """
-        Creates directory `savedir` for local filesystem save.
-        :return:  True on success.
-        """
-
-        log.info('Preparing local storage')
-        # check savedir, may be None
-        if self.config.get('savedir', None) is None:
-            log.info('savedir not set. Skipping.')
+        local_config = self.config.get('local', None)
+        if local_config is None:
+            log.info('[local] section not found. Skipping.')
             return True
 
-        savedir = abspath(self.config['savedir'])
-        if not exists(savedir):
-            log.warning('Save directory does not exist: {}. Creating'.format(savedir))
-            makedirs(savedir)
+        fs = FileStorage(self.config)
 
-        return True
+        ret = fs.configure()
+        if ret:
+            log.info('Local filesystem storage configuration complete')
+        else:
+            log.error('Local filesystem storage configuration failed')
 
-    def prepare_working_directories(self):
+        return ret
+
+    def configure_aws(self):
+        log.info('Configuring AWS')
+
+        aws_config = self.config.get('S3', None)
+        if aws_config is None:
+            log.info('[S3] section not found. Skipping.')
+            return True
+
+        aws = S3Storage(self.config)
+        chk = aws.configure()
+
+        if chk:
+            log.info('AWS config complete')
+        else:
+            log.critical('AWS config failed')
+
+        return chk
+
+    def configure_working_directories(self):
         """
-        Creates `workdir`, for staging file uploads. Must be set.
+        Creates ``workdir``, for staging file uploads. Must be set.
         :return: True on success.
         """
 
         log.info('Preparing working directories')
-        # create workdir
-        if self.config.get('workdir', None) is None:
-            log.error('workdir must be set')
+
+        workdir = self.config.get('workdir', None)
+        if workdir is None:
+            log.error('workdir must be set.')
             return False
 
-        workdir = self.config['workdir']
         workdir = abspath(workdir)
 
         if not exists(workdir):
@@ -96,70 +95,31 @@ class ConfigureApp(object):
 
         return True
 
-    def prepare_gdrive(self, credential_filename='google_auth.json'):
-        """
-         Checks `gdrive` setting, and if set to anything, will attempt to create `credential_folder`.
-
-         Creates `gdrive` folder at root of user's Google Drive. If `google_auth.json` is not found in
-         the `credential_folder`, then the user will prompted with a URL and a challenge to code to authorize
-         the application with Google.
-
-         This app must create the folder in order to find and use it. The scope is limited to prevent access to
-         other files and folders on the user's drive. By default, it won't be able to find anything.
-
-        :param credential_filename: Used for testing.
-        :return: True on success.
-        """
-
-        log.info('Preparing Google Drive')
-        ok = True
-
+    def configure_gdrive(self):
         gconfig = self.config.get('gdrive', None)
+
         if gconfig is None:
-            log.info('gdrive section not found. Skipping.')
+            log.info('No [gdrive] section found')
             return True
 
-        if self.config.get('credential_folder') is None:
-            log.error('credential_folder must be set.')
-            ok = False
+        ret = True
 
-        folder_name = gconfig.get('folder_name', None)
-        if folder_name is None:
-            log.error('folder_name must be set')
-            ok = False
+        gauth = GDriveAuth(self.config)
+        if not gauth.configure():
+            log.error('GDriveAuth check failed')
+            ret = False
 
-        client_id = None
-        client_secret = None
-        creds_file = None
+        if ret:
+            gdrive = GDriveStorage(gauth, self.config)
+            if not gdrive.configure():
+                log.error('Failed to configure GDrive')
+                ret = False
+        else:
+            log.error('Failed authorization, skipping GDrive storage check.')
 
-        if ok:
-            creds_folder = abspath(self.config['credential_folder'])
-            creds_file = abspath(join(creds_folder, credential_filename))
+        return ret
 
-            client_id = gconfig.get('client_id', None)
-            if client_id is None:
-                log.error('GDrive requires client_id')
-                ok = False
-
-            client_secret = gconfig.get('client_secret', None)
-            if client_secret is None:
-                log.error('GDrive requires client_secret')
-                ok = False
-
-        if ok:
-
-            log.info('Attempting authentication to GDrive')
-            gauth = GDriveAuth.init_gauth(client_id, gconfig['client_secret'], creds_file)
-
-            log.info('Searching for main folder {} on GDrive'.format(folder_name))
-
-            gstorage = GDriveStorage(gauth, folder_name)
-
-            if gstorage.main_folder(create=True) is None:
-                log.error('Failed to create google folder.')
-                ok = False
-
-        return ok
+    ## Checks
 
     def check(self):
         """
@@ -171,46 +131,13 @@ class ConfigureApp(object):
 
         # Check all of the settings, report all failures
 
-        # check workdir
-        workdir = self.config['workdir']
-        if workdir is None:
-            log.error('workdir must be set')
+        if not self.check_global():
             ret = False
 
-        if workdir is not None and not exists(workdir):
-            log.error('Working directory does not exist: {}'.format(workdir))
+        if not self.check_camera():
             ret = False
 
-        # check savedir, may be None
-        savedir = self.config.get('savedir', None)
-        if savedir is not None and not exists(savedir):
-            log.error('Save directory does not exist: {}'.format(savedir))
-            ret = False
-
-        camera = self.config.get('camera', None)
-        if camera is None:
-            log.error('camera is required')
-            ret = False
-
-        camera_id = self.config.get('camera_id', None)
-        if camera_id is None:
-            log.error('camera_id is required')
-            ret = False
-
-        timezone = self.config.get('timezone', None)
-        if tz is None:
-            log.warning('timezone is not set')
-        else:
-            tzstr = tz.gettz(timezone)
-            log.info('Timezone set to {}'.format(tzstr))
-            now = datetime.now(tzstr).strftime('%Y/%m/%d %H:%M:%S')
-            log.info('Local time: {}'.format(now))
-
-        # click forces a choice, but check it anyway
-        res = self.config['resolution']
-
-        if res != 'small' and res != '720p' and res != '1080p':
-            log.error('Invalid resolution: {}'.format(res))
+        if not self.check_filestorage():
             ret = False
 
         if not self.check_gdrive():
@@ -221,43 +148,94 @@ class ConfigureApp(object):
 
         return ret
 
+    def check_camera(self):
+
+        log.info('Checking camera config')
+        config = self.config.get('camera', None)
+        if config is None:
+            log.error('[camera] section is required')
+            return False
+
+        cam = UsbCamera(self.config)
+
+        chk = cam.check()
+
+        if not chk:
+            log.critical('Camera config checks failed')
+        else:
+            log.info('Camera config checks passed')
+
+        return chk
+
+    def check_global(self):
+        ret = True
+
+        log.info('Checking global config')
+
+        # check workdir
+        workdir = self.config.get('workdir', None)
+
+        if workdir is None:
+            log.error('workdir must be set')
+            ret = False
+        else:
+            if not exists(workdir):
+                log.error('Working directory does not exist: {}'.format(workdir))
+                ret = False
+
+        timezone = self.config.get('timezone', None)
+        if tz is None:
+            log.warning('timezone is not set')
+        else:
+            tzstr = tz.gettz(timezone)
+            log.info('Timezone set to {}'.format(tzstr))
+            now = datetime.now(tzstr).strftime('%Y/%m/%d %H:%M:%S')
+            log.info('Local time: {}'.format(now))
+
+        if not ret:
+            log.critical('Global checks failed')
+        else:
+            log.info('Global checks passed')
+
+        return ret
+
+    def check_filestorage(self):
+
+        log.info('Checking FileStorage')
+
+        localconfig = self.config.get('local', None)
+        if localconfig is None:
+            log.info('No [local] section found. Skipping.')
+            return True
+
+        fs = FileStorage(self.config)
+        if not fs.check():
+            log.critical('Local filesystem check failed')
+            return False
+
+        log.info('Local filesystem checks passed')
+        return True
+
     def check_s3(self):
+
+        log.info('Checking AWS config')
 
         s3_config = self.config.get('s3', None)
         if s3_config is None:
             log.info('No [s3] section found')
             return True
 
-        ret = True
+        s3 = S3Storage(self.config)
+        if not s3.check():
+            log.critical('AWS check failed')
+            return False
 
-        if s3_config.get('aws_access_key_id', None) is None:
-            log.error('S3: aws_access_key_id is required')
-            ret = False
-
-        if s3_config.get('aws_secret_access_key', None) is None:
-            log.error('S3: aws_secret_access_key is required')
-            ret = False
-
-        if s3_config.get('bucket_name', None) is None:
-            log.error('S3: bucket_name is required')
-            ret = False
-
-        if s3_config.get('aws_region', None) is None:
-            log.error('S3: aws_region is required')
-            ret = False
-
-        if s3_config.get('prefix', None) is None:
-            log.warning('S3: prefix is empty or missing')
-
-        if s3_config.get('camera_table', None) is None:
-            log.warning('AWS: camera_table is empty or missing')
-
-        if s3_config.get('image_table', None) is None:
-            log.warning('AWS: image_table is empty or missing')
-
-        return ret
+        log.info('AWS config checks passed')
+        return True
 
     def check_gdrive(self):
+
+        log.info('Checking GDrive')
 
         gconfig = self.config.get('gdrive', None)
 
@@ -267,38 +245,24 @@ class ConfigureApp(object):
 
         ret = True
 
-        if self.config.get('credential_folder') is None:
-            log.error('credential_folder must be set.')
+        gauth = GDriveAuth(self.config)
+        if not gauth.check():
+            log.error('GDriveAuth check failed')
             ret = False
-
-        folder_name = gconfig.get('folder_name', None)
-        if folder_name is None:
-            log.error('folder_name must be set')
-            ret = False
-
-        client_id = gconfig.get('client_id', None)
-        if client_id is None:
-            log.error('GDrive requires client_id')
-            ret = False
-
-        client_secret = gconfig.get('client_secret', None)
-        if client_secret is None:
-            log.error('GDrive requires client_secret')
-            ret = False
+        else:
+            log.info('GDriveAuth check passed')
 
         if ret:
-            creds_folder = abspath(self.config['credential_folder'])
-            creds_file = abspath(join(creds_folder, 'google_auth.json'))
-
-            log.info('Attempting authentication to GDrive')
-            gauth = GDriveAuth.init_gauth(client_id, gconfig['client_secret'], creds_file)
-
-            log.info('Searching for main folder {} on GDrive'.format(folder_name))
-
-            gstorage = GDriveStorage(gauth, folder_name)
-
-            if gstorage.main_folder(create=False) is None:
-                log.error('Failed to find google folder.')
+            gdrive = GDriveStorage(gauth, self.config)
+            if not gdrive.check():
+                log.error('GDrive checks failed')
                 ret = False
+        else:
+            log.warning('Failed authorization, skipping GDrive storage check.')
+
+        if ret:
+            log.info("GDrive config checks passed")
+        else:
+            log.critical('GDrive checks failed.')
 
         return ret

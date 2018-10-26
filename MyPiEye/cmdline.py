@@ -18,7 +18,7 @@ linux_settings = {
     'savedir': None
 }
 
-global_settings = {
+settings = {
     'camera': '0',
     'resolution': '720p',
     'show_timings': False,
@@ -29,11 +29,10 @@ global_settings = {
     'credential_folder': '.'
 }
 
-settings = windows_settings
 if platform.system() == 'Linux':
-    defaults = linux_settings
-
-settings.update(global_settings)
+    settings.update(linux_settings)
+else:
+    settings.update(windows_settings)
 
 
 def clean_exit(sig, _):
@@ -42,30 +41,50 @@ def clean_exit(sig, _):
 
 
 @click.group()
-def mypieye():
-    pass
-
-
-@mypieye.command()
+@click.option('--loglevel', default='INFO',
+              type=click.Choice(CLI.LOG_LEVELS),
+              help='python log levels')
+@click.option('--logfile', default=settings['logfile'], help="output log file")
+@click.option('--color/--no-color', default=settings['color'], help='Pretty color output')
 @click.option('--iniconfig',
               default=settings['config'], help='key/val (.ini) config file', callback=CLI.load_config)
 @click.pass_context
-def configure(ctx, **cli_flags):
-    print('Configuring...you may be prompted')
+def mypieye(ctx, **cli_flags):
     settings.update(ctx.params['iniconfig'])
     settings.update(cli_flags)
     del settings['iniconfig']
 
-    color = settings['color']
+    ctx.params = dict(settings)
 
     CLI.set_loglevel('INFO')
-    if not CLI.enable_log(enable_color=color):
+    if not CLI.enable_log(enable_color=settings['color']):
         log.critical('Error opening logger')
         sys.exit(-2)
 
-    config = ConfigureApp(settings)
-    if not config.initialize():
 
+@mypieye.command()
+@click.pass_context
+def check(ctx, **cli_flags):
+    print('Checking configuration.')
+
+    config = ConfigureApp(settings)
+
+    if not config.check():
+        log.critical('App configuration failed')
+        sys.exit(-1)
+
+    print('Configuration check passed')
+
+    sys.exit(0)
+
+
+@mypieye.command()
+@click.pass_context
+def configure(ctx, **cli_flags):
+    print('Configuring...you may be prompted')
+
+    config = ConfigureApp(settings)
+    if not config.configure():
         log.critical('Failed to configure app')
         sys.exit(-1)
 
@@ -79,13 +98,6 @@ def configure(ctx, **cli_flags):
 
 
 @mypieye.command()
-@click.option('--loglevel', default='INFO',
-              type=click.Choice(CLI.LOG_LEVELS),
-              help='python log levels')
-@click.option('--logfile', default=settings['logfile'], help="output log file")
-@click.option('--color/--no-color', default=settings['color'], help='Pretty color output')
-@click.option('--iniconfig',
-              default=settings['config'], help='key/val (.ini) config file', callback=CLI.load_config)
 @click.pass_context
 def run(ctx, **cli_flags):
     """
@@ -96,20 +108,6 @@ def run(ctx, **cli_flags):
 
     # handle Ctrl+C, so it doesn't give a stack dump.
     signal.signal(signal.SIGINT, clean_exit)
-
-    settings.update(ctx.params['iniconfig'])
-    settings.update(cli_flags)
-    del settings['iniconfig']
-
-    # let's just assume these are okay
-    loglevel = settings['loglevel']
-    color = settings['color']
-    logfile = settings['logfile']
-
-    CLI.set_loglevel(loglevel)
-    if not CLI.enable_log(filename=logfile, enable_color=color):
-        log.critical('Error opening logger')
-        sys.exit(-2)
 
     log.info('Starting...')
 
