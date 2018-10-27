@@ -56,7 +56,7 @@ def mypieye(ctx, **cli_flags):
 
     ctx.params = dict(settings)
 
-    CLI.set_loglevel('INFO')
+    CLI.set_loglevel(settings['loglevel'])
     if not CLI.enable_log(enable_color=settings['color']):
         log.critical('Error opening logger')
         sys.exit(-2)

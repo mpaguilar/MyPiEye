@@ -1,5 +1,5 @@
 import logging
-from ast import literal_eval
+from datetime import datetime
 from time import sleep
 from os.path import abspath
 from concurrent.futures import ProcessPoolExecutor
@@ -69,24 +69,35 @@ class MainApp(object):
         """
 
         # unaltered
+        log.info('Saving clean image')
+        start_time = datetime.now()
         motion.clean_fname = '{}/{}.jpg'.format(self.workdir, motion.base_filename)
         MotionDetect.save_cv_image(motion.clean_image, motion.clean_fname)
-        log.info('Saved tmpfile {}'.format(motion.clean_fname))
+        end_time = datetime.now()
+        tot_time = end_time - start_time
+        log.info('Saved tmpfile ({}) {}'.format(tot_time, motion.clean_fname))
 
         # timestamp
+        log.info('Saving timestamp image')
+        start_time = datetime.now()
         motion.ts_fname = '{}/{}.ts.jpg'.format(self.workdir, motion.base_filename)
-        motion.ts_image = MotionDetect.add_timestamp(motion.clean_image, motion.timestamp_utc)
+        motion.ts_image = MotionDetect.add_timestamp(motion.clean_image, motion.timestamp_local)
         MotionDetect.save_cv_image(motion.ts_image, motion.ts_fname)
-        log.info('Saved tmpfile {}'.format(motion.ts_fname))
+        end_time = datetime.now()
+        tot_time = end_time - start_time
+        log.info('Saved tmpfile ({}) {}'.format(tot_time, motion.ts_fname))
 
         # fully annotated
+        log.info('Saving full annotated image')
+        start_time = datetime.now()
         motion.full_fname = '{}/{}.box.jpg'.format(self.workdir, motion.base_filename)
         motion.full_image = MotionDetect.add_motion_boxes(motion.ts_image, motion.motions)
         MotionDetect.save_cv_image(motion.full_image, motion.full_fname)
-        log.info('Saved tmpfile {}'.format(motion.full_fname))
+        end_time = datetime.now()
+        tot_time = end_time - start_time
+        log.info('Saved tmpfile ({}) {}'.format(tot_time, motion.full_fname))
 
         return motion
-
 
     def watch_for_motions(self):
         """

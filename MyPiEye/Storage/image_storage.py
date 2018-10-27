@@ -56,7 +56,8 @@ class ImageStorage(object):
         s3_config = config.get('s3', None)
         if s3_config is not None:
             s3 = S3Storage(config)
-            s3.upload(img_capture)
+            if not s3.upload(img_capture):
+                log.error('Error uploading to AWS')
 
         gdrive_settings = config.get('gdrive', None)
         creds_folder = config.get('credential_folder', '.')
