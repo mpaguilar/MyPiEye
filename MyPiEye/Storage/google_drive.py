@@ -37,31 +37,33 @@ class GDriveStorage(object):
             'Authorization': 'Bearer {}'.format(self.gauth.access_token)
         }
 
+        self.credentiall_folder = self.config.get('credential_folder')
+
+        self.folder_name = self.gconfig.get('folder_name', None)
+        self.client_id = self.gconfig.get('client_id', None)
+        self.client_secret = self.gconfig.get('client_secret', None)
+
     @property
     def folder_id(self):
         return self.main_folder(create=False)
 
     def check(self):
-        gconfig = self.gconfig
 
         ret = True
 
-        if self.config.get('credential_folder') is None:
+        if self.credential_folder is None:
             log.error('credential_folder must be set.')
             ret = False
 
-        folder_name = gconfig.get('folder_name', None)
-        if folder_name is None:
+        if self.folder_name is None:
             log.error('folder_name must be set')
             ret = False
 
-        client_id = gconfig.get('client_id', None)
-        if client_id is None:
+        if self.client_id is None:
             log.error('GDrive requires client_id')
             ret = False
 
-        client_secret = gconfig.get('client_secret', None)
-        if client_secret is None:
+        if self.client_secret is None:
             log.error('GDrive requires client_secret')
             ret = False
 
@@ -98,7 +100,7 @@ class GDriveStorage(object):
         GDriveStorage.folder_lock.acquire()
 
         try:
-            name = self.gconfig['folder_name']
+            name = self.folder_name
             parent_id = 'root'
 
             retval = GDriveStorage.find_folders(self.gauth, parent_id, name)
@@ -313,21 +315,16 @@ class GDriveAuth(object):
         """
         Google-provided items, and a filename to store the cookie.
 
-        :param client_id: From Google
-        :param client_secret: From Google
-        :param credential_filename: a filename
+        :param config: global config dictionary
         """
         self.config = config
         self.gconfig = config['gdrive']
 
-        client_id = self.gconfig['client_id']
-        client_secret = self.gconfig['client_secret']
         creds_folder = abspath(self.config['credential_folder'])
-
         credential_filename = abspath(join(creds_folder, 'google_auth.json'))
 
-        self.client_id = client_id
-        self.client_secret = client_secret
+        self.client_id = self.gconfig.get('client_id', None)
+        self.client_secret = self.gconfig['client_secret']
         self.credential_filename = credential_filename
         self.access_token = None
         self.refresh_token = None
@@ -336,17 +333,15 @@ class GDriveAuth(object):
     def check(self):
         ret = True
 
-        if self.config.get('credential_folder') is None:
+        if self.credential_filename is None:
             log.error('credential_folder must be set.')
             ret = False
 
-        client_id = self.gconfig.get('client_id', None)
-        if client_id is None:
+        if self.client_id is None:
             log.error('GDriveAuth requires client_id')
             ret = False
 
-        client_secret = self.gconfig.get('client_secret', None)
-        if client_secret is None:
+        if self.client_secret is None:
             log.error('GDriveAuth requires client_secret')
             ret = False
 
