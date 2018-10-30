@@ -28,7 +28,7 @@ setup(
         'numpy==1.15.2',
         'pyasn1==0.4.4',
         'pyasn1-modules==0.2.2',
-        'requests==2.19.1',
+        'requests==2.20.0',
         'requests-toolbelt==0.8.0',
         'rsa==4.0',
         'six==1.11.0',
