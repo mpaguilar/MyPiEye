@@ -16,7 +16,7 @@ log = multiprocessing.get_logger()
 
 
 class ImageStorage(object):
-    executor = ProcessPoolExecutor(max_workers=4)
+    executor = ProcessPoolExecutor(max_workers=10)
 
     def __init__(self, config, creds_folder='.'):
         """
@@ -33,6 +33,9 @@ class ImageStorage(object):
         self.gdrive_settings = self.config.get('gdrive', None)
         self.s3_config = self.config.get('s3', None)
         self.futures = []
+
+        # how many items to have queued and processing.
+        self.process_limit = multiprocessing.Semaphore(30)
 
         log.debug('ImageStorage initialized')
 
@@ -89,9 +92,16 @@ class ImageStorage(object):
         # img_capture.clean_image = None
         # img_capture.ts_image = None
 
-        fut = ImageStorage.executor.submit(ImageStorage.save, self.config, img_capture)
-        self.futures.append(fut)
-        _, waiting = wait(self.futures, .1)
-        self.futures = list(waiting)
+        lock = self.process_limit.acquire(False)
+        if lock:
+
+            fut = ImageStorage.executor.submit(ImageStorage.save, self.config, img_capture)
+            self.futures.append(fut)
+            _, waiting = wait(self.futures, .1)
+            self.futures = list(waiting)
+
+            self.process_limit.release()
+        else:
+            log.warning('Too many images queued, skipping {}'.format(img_capture.base_filename))
 
         return
