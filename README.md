@@ -27,6 +27,8 @@ you should be good to go by running `mypieye`. A virtual environment is recommen
 
 Installation on an RPi is a bit more involved.
 
+The running user should be added to the ``video`` group.
+
 Configuration is mostly handled within an .ini file. 
 By default it will look for `mypieye.ini` in the current directory. It can also be specified at the command line with
 the `--iniconfig` switch.
