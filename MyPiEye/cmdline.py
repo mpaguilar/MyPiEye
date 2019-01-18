@@ -96,6 +96,19 @@ def configure(ctx, **cli_flags):
 
     print('Start checks passed')
 
+@mypieye.command()
+@click.pass_context
+def s3_archive(ctx, **cli_flags):
+    log.info('Archiving S3 objects')
+
+    config = ConfigureApp(settings)
+
+    # don't check the config, this may be run on a completely different machine
+    mainapp = MainApp(settings)
+    mainapp.s3_archive()
+
+    log.info('Archive complete')
+
 
 @mypieye.command()
 @click.pass_context

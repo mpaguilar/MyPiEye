@@ -35,6 +35,7 @@ setup(
         'uritemplate==3.0.0',
         'urllib3==1.23',
         'opencv-python-headless==3.4.4.19',
-        'boto3==1.9.30'
+        'boto3==1.9.30',
+        'minio'
     ]
 )

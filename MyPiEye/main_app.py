@@ -139,3 +139,6 @@ class MainApp(object):
 
         if retries >= 2:
             log.error('Failed to get image after {} attempts'.format(retries + 1))
+
+    def s3_archive(self):
+
