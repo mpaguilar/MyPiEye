@@ -4,7 +4,7 @@ from time import sleep
 from os.path import abspath
 from concurrent.futures import ProcessPoolExecutor
 
-from MyPiEye.Storage import ImageStorage
+from MyPiEye.Storage import ImageStorage, S3Archive
 from MyPiEye.motion_detect import MotionDetect, ImageCapture
 
 from MyPiEye.usbcamera import UsbCamera
@@ -141,4 +141,7 @@ class MainApp(object):
             log.error('Failed to get image after {} attempts'.format(retries + 1))
 
     def s3_archive(self):
+        archive = S3Archive(self.config)
+        archive.start()
+        return True
 
