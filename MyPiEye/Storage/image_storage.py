@@ -16,7 +16,7 @@ log = multiprocessing.get_logger()
 
 
 class ImageStorage(object):
-    executor = ProcessPoolExecutor(max_workers=10)
+    executor = ProcessPoolExecutor(max_workers=4)
 
     def __init__(self, config, creds_folder='.'):
         """
@@ -36,6 +36,7 @@ class ImageStorage(object):
 
         # how many items to have queued and processing.
         self.process_limit = multiprocessing.Semaphore(30)
+        self._pcount = 0
 
         log.debug('ImageStorage initialized')
 
@@ -95,12 +96,16 @@ class ImageStorage(object):
         lock = self.process_limit.acquire(False)
         if lock:
 
+            self._pcount = self._pcount + 1
+            log.info('pcount: {}'.pcount)
+
             fut = ImageStorage.executor.submit(ImageStorage.save, self.config, img_capture)
             self.futures.append(fut)
             _, waiting = wait(self.futures, .1)
             self.futures = list(waiting)
 
             self.process_limit.release()
+            self._pcount = self._pcount - 1
         else:
             log.warning('Too many images queued, skipping {}'.format(img_capture.base_filename))
 
