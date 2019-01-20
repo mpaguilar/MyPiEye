@@ -97,7 +97,7 @@ class ImageStorage(object):
         if lock:
 
             self._pcount = self._pcount + 1
-            log.info('pcount: {}'.pcount)
+            log.info('pcount: {}'.format(self._pcount))
 
             fut = ImageStorage.executor.submit(ImageStorage.save, self.config, img_capture)
             self.futures.append(fut)
@@ -106,6 +106,7 @@ class ImageStorage(object):
 
             self.process_limit.release()
             self._pcount = self._pcount - 1
+            log.info('pcount: {}'.format(self._pcount))
         else:
             log.warning('Too many images queued, skipping {}'.format(img_capture.base_filename))
 

@@ -2,13 +2,13 @@ from datetime import datetime
 from os.path import exists, abspath
 from os import remove
 from ast import literal_eval
-import logging
+import multiprocessing
 
 from dateutil import tz
 
 import cv2
 
-log = logging.getLogger(__name__)
+log = multiprocessing.get_logger()
 
 
 class ImageCapture(object):
