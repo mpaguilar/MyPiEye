@@ -19,6 +19,9 @@ class UsbCamera(object):
 
         resolution = self.cam_config['resolution']
 
+        # the size of the raw image array
+        self.img_size = 0
+
         if resolution == '1080p':
             self.resolution = (1920, 1080, 26)
         elif resolution == '720p':
@@ -27,6 +30,9 @@ class UsbCamera(object):
             self.resolution = (640, 480, 26)
         else:
             self.resolution = None
+
+        if self.resolution is not None:
+            self.img_size = self.resolution[0] * self.resolution[1]
 
     def check(self):
         ret = True
@@ -110,10 +116,29 @@ class UsbCamera(object):
             del self.camera_instance
 
     def get_image(self):
+        """
+        Get the current OpenCV image off the camera
+        :return:
+        """
 
         if self.camera_instance is not None:
             # log.debug('Reading from camera {}'.format(self.camera.isOpened()))
             ret, img = self.camera_instance.read()
             if not ret:
                 log.error('Failed to get camera image')
+                return None
             return img
+        else:
+            log.error('Camera not initialized')
+            return None
+
+    @staticmethod
+    def save_image(cv_image, filename):
+        """
+        Write the OpenCV image as a file.
+
+        :param cv_image: an OpenCV image array
+        :param filename:
+        :return:
+        """
+        cv2.imwrite(filename, cv_image)

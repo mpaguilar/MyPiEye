@@ -69,7 +69,8 @@ def enable_log(fmt='[%(asctime)s] [%(process)5s] %(levelname)s %(module)s %(name
     :return: Logger object
     """
 
-    lgr = logging.getLogger()
+    # lgr = logging.getLogger()
+    lgr = multiprocessing.get_logger()
     lgr.handlers.clear()
 
     # if there's no special requirements for logging

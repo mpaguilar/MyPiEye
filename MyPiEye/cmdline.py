@@ -4,11 +4,16 @@ import sys
 import signal
 import platform
 
+import multiprocessing
+
 import MyPiEye.CLI as CLI
 from MyPiEye.main_app import MainApp
 from MyPiEye.configure_app import ConfigureApp
 
-log = logging.getLogger('mypieye')
+from MyPiEye.supervisor import Supervisor
+
+# log = logging.getLogger('mypieye')
+log = multiprocessing.get_logger()
 
 windows_settings = {
     'savedir': 'c:/temp'
@@ -96,6 +101,7 @@ def configure(ctx, **cli_flags):
 
     print('Start checks passed')
 
+
 @mypieye.command()
 @click.pass_context
 def s3_archive(ctx, **cli_flags):
@@ -108,6 +114,19 @@ def s3_archive(ctx, **cli_flags):
     mainapp.s3_archive()
 
     log.info('Archive complete')
+
+
+@mypieye.command()
+@click.pass_context
+def newmp(ctx, **cli_flags):
+    log.warning('trying new mp framework')
+
+    config = ConfigureApp(settings)
+
+    sup = Supervisor(settings)
+    sup.start()
+
+    sys.exit(0)
 
 
 @mypieye.command()

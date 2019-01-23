@@ -293,6 +293,7 @@ class MotionDetect:
     def save_cv_image(cv_image, filename):
         """
         Write the image as a file.
+        This is being deprecated. Use the one in usbcamera.py.
 
         :param cv_image:
         :param filename:
