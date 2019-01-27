@@ -10,7 +10,7 @@ import MyPiEye.CLI as CLI
 from MyPiEye.main_app import MainApp
 from MyPiEye.configure_app import ConfigureApp
 
-from MyPiEye.supervisor import Supervisor
+from MyPiEye.multi.supervisor import Supervisor
 
 # log = logging.getLogger('mypieye')
 log = multiprocessing.get_logger()
