@@ -63,4 +63,3 @@ def imgsave_start(config, imgobj):
 
                 rds.set(rkey, jpg.tostring())
         sleep(.05)
-        
