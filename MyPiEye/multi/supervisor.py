@@ -5,20 +5,11 @@ from datetime import datetime
 import multiprocessing
 
 from multiprocessing import Process, Manager
-from multiprocessing.pool import Pool
 from multiprocessing.connection import wait
 
-import numpy as np
-import cv2
-
-from MyPiEye.usbcamera import UsbCamera
-from MyPiEye.motion_detect import MotionDetect, ImageCapture
+from MyPiEye.motion_detect import MotionDetect
 
 from MyPiEye.multi.camera import camera_start, imgsave_start
-
-import redis
-
-# log = logging.getLogger(__name__)
 
 log = multiprocessing.log_to_stderr()
 
@@ -93,7 +84,6 @@ class Supervisor(object):
                 sentinels = sentinels - done
             sleep(.05)
 
-
     @staticmethod
     def motion_detect_proc(config):
         motion_detect = MotionDetect(config)
@@ -103,5 +93,3 @@ class Supervisor(object):
             # motion = motion_detect.motions(imgobj['imgbuf'])
             # if motion is not None:
             #     pass
-
-
