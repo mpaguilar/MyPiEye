@@ -35,3 +35,7 @@ the `--iniconfig` switch.
 
 Detailed info can be found in doc/html.
 
+## Usage suggestions
+
+Create a mypieye.ini in a separate directory (I use ./tmp).
+Activate the virtual env, and use it from there.
