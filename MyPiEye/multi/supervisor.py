@@ -43,16 +43,9 @@ class Supervisor(object):
         process_infos = {}
 
         if self.multi.get('enable_camera', False):
-            # start the camera first
-            cam_proc = Process(
-                name='cam',
-                target=camera_start,
-                args=(self.config, img_obj))
-
-            # cam_proc.start()
-            # process_infos.append(cam_proc.sentinel)
+            # gotta have a camera
             process_infos['camera'] = {
-                'process' : cam_proc,
+                'process': None,
                 'process_args': {
                     'name': 'cam',
                     'target': camera_start,
@@ -61,24 +54,16 @@ class Supervisor(object):
                 'run_process': True
             }
 
-            # and a process for saving to redis
-            imgsave_proc = Process(
-                name='imgsave',
-                target=imgsave_start,
-                args=(self.config, img_obj)
-            )
-
-            # imgsave_proc.start()
-            # process_infos.append(imgsave_proc.sentinel)
+            # saving to redis
             process_infos['imgsave'] = {
-                'process' : imgsave_proc,
+                'process': None,
 
                 'process_args': {
                     'name': 'imgsave',
                     'target': imgsave_start,
                     'args': (self.config, img_obj)
                 },
-                'run_process' : True
+                'run_process': True
             }
 
         lsave = self.multi.get('local_save', None)
@@ -95,38 +80,48 @@ class Supervisor(object):
         #     args=(self.config, img_obj, motion_queue)
         #  )
 
-        # the first time through, nothing will be running
-        # it is reset after the first pass
         running = True
 
-
-        while running: # len(sents) > 0:
+        while running:
 
             for k in process_infos.keys():
                 proc_info = process_infos[k]
 
-                if not proc_info['process'].is_alive():
-                    log.warning('The {} process is not running'.format(k))
-
-                if (not proc_info['process'].is_alive()) and proc_info['run_process']:
+                # if it's never been started or it's not running and it should be, then start it
+                if (proc_info['process'] is None or (not proc_info['process'].is_alive())) \
+                        and proc_info['run_process']:
                     log.warning('Starting {} process'.format(k))
-                    proc_info['process'] = Process(
-                        **proc_info['process_args'])
+                    proc_info['process'] = Process(**proc_info['process_args'])
                     proc_info['process'].start()
                     sleep(.5)
 
+                # if it's running and shouldn't be, then kill it
                 if (proc_info['process'].is_alive()) and not proc_info['run_process']:
                     log.warning('Process {} is running, and should not be'.format(k))
                     log.warning('Shutting down process {}'.format(k))
                     proc_info['process'].kill()
 
-            sents = [process_infos[v]['process'].sentinel for v in process_infos.keys() if process_infos[v]['run_process']]
-            wait(sents)
+            # block for five seconds
+            sents = [process_infos[v]['process'].sentinel for v in process_infos.keys() if
+                     process_infos[v]['run_process']]
 
-            sbrunning = [process_infos[v]['run_process'] for v in process_infos.keys()]
-            if len(sbrunning) == 0:
+            wait(sents, 5)
+
+            sbrunning = len([v for v in process_infos.keys() if process_infos[v]['run_process']])
+            isrunning = len([v for v in process_infos.keys() if process_infos[v]['process'].is_alive()])
+
+            # ready to exit
+            if sbrunning == 0 and isrunning == 0:
                 running = False
+                continue
 
+            # should be trying to exit
+            if sbrunning == 0 and isrunning > 0:
+                log.warning('Should be shutting down')
+
+            # did everything crash?
+            if sbrunning > 0 and isrunning == 0:
+                log.error('Did everything crash?')
 
     @staticmethod
     def motion_detect_proc(config):
