@@ -118,41 +118,17 @@ def s3_archive(ctx, **cli_flags):
 
 @mypieye.command()
 @click.pass_context
-def newmp(ctx, **cli_flags):
-    log.warning('trying new mp framework')
-
-    config = ConfigureApp(settings)
-
-    sup = Supervisor(settings)
-    sup.start()
-
-    sys.exit(0)
-
-
-@mypieye.command()
-@click.pass_context
 def run(ctx, **cli_flags):
-    """
-    Start capturing and watching.
-    Exit codes greater than zero are a command parsing error.
-    Exit codes less than zero are from the app.
-    """
-
-    # handle Ctrl+C, so it doesn't give a stack dump.
-    signal.signal(signal.SIGINT, clean_exit)
-
-    log.info('Starting...')
+    log.warning('trying new mp framework')
 
     config = ConfigureApp(settings)
     if not config.check():
         log.critical('Start checks failed')
         sys.exit(-1)
 
-    mainapp = MainApp(settings)
-
-    if not mainapp.start():
-        log.critical('Failed to start main app')
-        sys.exit(-3)
+    sup = Supervisor(settings)
+    # blocks until return
+    sup.start()
 
     sys.exit(0)
 

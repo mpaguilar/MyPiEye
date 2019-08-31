@@ -8,6 +8,7 @@ from MyPiEye.Storage.local_filesystem import FileStorage
 from MyPiEye.Storage.s3_storage import S3Storage
 from MyPiEye.Storage.google_drive import GDriveStorage, GDriveAuth
 from MyPiEye.usbcamera import UsbCamera
+from MyPiEye.Storage.azure_blob import AzureBlobStorage
 
 log = logging.getLogger(__name__)
 
@@ -146,6 +147,9 @@ class ConfigureApp(object):
         if not self.check_s3():
             ret = False
 
+        if not self.check_azblob():
+            ret = False
+
         return ret
 
     def check_camera(self):
@@ -198,6 +202,24 @@ class ConfigureApp(object):
             log.info('Global checks passed')
 
         return ret
+
+    def check_azblob(self):
+        log.info('Checking Azure Blob')
+
+        azconfig = self.config.get('azure_blob', None)
+        if azconfig is None:
+            log.info('No [azure_blob] secriont found. Skipping.')
+            return True
+
+        azblob = AzureBlobStorage(self.config)
+
+        if not azblob.configure():
+            log.critical('Azure Blob checks failed')
+            return False
+
+        log.info('Azure Blob okay')
+
+        return True
 
     def check_filestorage(self):
 
