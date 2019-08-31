@@ -25,8 +25,9 @@ def camera_start(config, imgobj):
 
             if img is not None:
                 print('captured {}'.format(datetime.utcnow()))
-                imgobj['imgbuf'] = img
-                imgobj['img_captured'] = datetime.utcnow()
+                with imgobj['lock']:
+                    imgobj['imgbuf'] = img
+                    imgobj['img_captured'] = datetime.utcnow()
                 print('stored {}'.format(datetime.utcnow()))
             else:
                 log.error('Failed to get image')
@@ -37,7 +38,22 @@ def camera_start(config, imgobj):
         if camera is not None:
             camera.close_camera()
 
-def imgsave_start(config, imgobj):
+def azblob_start(config, imgobj):
+    """
+    Saves the current image to an Azure blob.
+    The config should have a ``azure_blob`` section.
+    set [multi] key ``azure_blob`` to ``True`` to enable.
+    :param config:
+    :param imgobj:
+    :return:
+    """
+
+    while True:
+        log.info('running azblob')
+        sleep(1)
+
+
+def redis_start(config, imgobj):
     """
     Saves the current image to a file, for a webserver
     :param config: Global config
@@ -54,7 +70,9 @@ def imgsave_start(config, imgobj):
         while True:
             curdt: datetime = imgobj['img_captured']
             if curdt != last_captime:
-                imgbuf = imgobj['imgbuf']
+                with imgobj['lock']:
+                    imgbuf = imgobj['imgbuf']
+
                 (ok, jpg) = cv2.imencode('.jpg', imgbuf)
 
                 if ok:
@@ -62,7 +80,9 @@ def imgsave_start(config, imgobj):
                     dtstamp = last_captime.strftime('%Y%m%d/%H%M%S.%f')
                     rkey = 'raw/{}/{}'.format(camid, dtstamp)
 
-                    rds.set(rkey, jpg.tostring())
+                    with imgobj['netlock']:
+                        log.info('Sending data to redis')
+                        rds.set(rkey, jpg.tostring())
             sleep(.05)
     except Exception as e:
         log.critical('Critical failure in imgsave')
