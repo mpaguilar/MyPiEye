@@ -136,7 +136,7 @@ def load_config(ctx, param, config_filename):
         log.info('Reading config from {}'.format(config_filename))
         if exists(config_filename):
             ret = {}
-            cfgparse = configparser.ConfigParser()
+            cfgparse = configparser.RawConfigParser()
 
             # load it
             cfgparse.read(config_filename)

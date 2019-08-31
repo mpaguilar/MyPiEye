@@ -1,15 +1,18 @@
 import multiprocessing
+import logging
 
 from time import sleep
 from datetime import datetime
 
 import redis
+import cv2
 
 from MyPiEye.usbcamera import UsbCamera
+from MyPiEye.Storage.azure_blob import AzureBlobStorage
 
 log = multiprocessing.log_to_stderr()
 
-def camera_start(config, imgobj):
+def camera_start(config, imgobj, time_delay=0):
     log.info('Starting camera')
 
     camera = None
@@ -20,19 +23,26 @@ def camera_start(config, imgobj):
 
         while ok:
 
-            print('capturing {}'.format(datetime.utcnow()))
+            log.info('capturing {}'.format(datetime.utcnow()))
             img = camera.get_image()
 
             if img is not None:
-                print('captured {}'.format(datetime.utcnow()))
+                log.info('captured {}'.format(datetime.utcnow()))
+
+                if log.level == logging.DEBUG:
+                    # so it stands out
+                    print('\ncaptured {}\n'.format(datetime.utcnow()))
+
                 with imgobj['lock']:
                     imgobj['imgbuf'] = img
                     imgobj['img_captured'] = datetime.utcnow()
-                print('stored {}'.format(datetime.utcnow()))
+
+                log.info('captured image at {}'.format(datetime.utcnow()))
             else:
                 log.error('Failed to get image')
 
-            sleep(100)
+            if time_delay > 0:
+                sleep(time_delay)
 
     finally:
         if camera is not None:
@@ -48,9 +58,34 @@ def azblob_start(config, imgobj):
     :return:
     """
 
+    azblob = AzureBlobStorage(config)
+    if not azblob.configure():
+        log.error('Failed to intialize Azure Blob storage')
+        return
+
+    last_captime: datetime = imgobj['img_captured']
+
     while True:
-        log.info('running azblob')
-        sleep(1)
+
+        curdt: datetime = imgobj['img_captured']
+        if curdt != last_captime:
+            with imgobj['lock']:
+                imgbuf = imgobj['imgbuf']
+
+            (ok, jpg) = cv2.imencode('.jpg', imgbuf)
+
+            if ok:
+                camid = config.get('camera_id', 'unknown/unknown')
+                fmt = azblob.config.get('filename_format', '%Y%m%d/%H%M%S.%f')
+                dtstamp = curdt.isoformat()
+
+                filename = '{}/{}.jpg'.format(camid, curdt.strftime(fmt))
+
+                azblob.save(jpg, filename, dtstamp)
+
+            last_captime = curdt
+
+        sleep(.1)
 
 
 def redis_start(config, imgobj):
@@ -61,7 +96,7 @@ def redis_start(config, imgobj):
     :return:
     """
     try:
-        log.info('saving image')
+        log.info('running redis')
         last_captime: datetime = imgobj['img_captured']
 
         rds = redis.Redis(host='bigbox.node.home.mpa')

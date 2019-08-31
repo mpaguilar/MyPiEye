@@ -9,7 +9,7 @@ from multiprocessing.connection import wait
 
 from MyPiEye.motion_detect import MotionDetect
 
-from MyPiEye.multi.camera import camera_start, redis_start, azblob_start
+from MyPiEye.multi.process_runners import camera_start, redis_start, azblob_start
 
 log = multiprocessing.log_to_stderr()
 
@@ -48,7 +48,10 @@ class Supervisor(object):
                     sleep(.5)
 
                 # if it's running and shouldn't be, then kill it
-                if (proc_info['process'].is_alive()) and not proc_info['run_process']:
+                if (proc_info['process'] is not None and
+                    proc_info['process'].is_alive()) and \
+                        not proc_info['run_process']:
+
                     log.warning('Process {} is running, and should not be'.format(k))
                     log.warning('Shutting down process {}'.format(k))
                     proc_info['process'].kill()
@@ -60,7 +63,8 @@ class Supervisor(object):
             wait(sents, 5)
 
             sbrunning = len([v for v in self.process_infos.keys() if self.process_infos[v]['run_process']])
-            isrunning = len([v for v in self.process_infos.keys() if self.process_infos[v]['process'].is_alive()])
+            isrunning = len([v for v in self.process_infos.keys() if
+                             self.process_infos[v]['run_process'] and self.process_infos[v]['process'].is_alive()])
 
             # ready to exit
             if sbrunning == 0 and isrunning == 0:
@@ -98,7 +102,7 @@ class Supervisor(object):
                     'target': redis_start,
                     'args': (self.config, img_obj)
                 },
-                'run_process': True
+                'run_process': False
             }
         if self.multi.get('enable_azure_blob', False):
             azconfig = self.config.get('azure_blob', None)
