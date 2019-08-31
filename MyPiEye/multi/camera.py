@@ -44,22 +44,27 @@ def imgsave_start(config, imgobj):
     :param imgobj: Shared current image
     :return:
     """
-    log.info('saving image')
-    last_captime: datetime = imgobj['img_captured']
+    try:
+        log.info('saving image')
+        last_captime: datetime = imgobj['img_captured']
 
-    rds = redis.Redis(host='bigbox.node.home.mpa')
-    print(rds.get('foo'))
+        rds = redis.Redis(host='bigbox.node.home.mpa')
+        print(rds.get('foo'))
 
-    while True:
-        curdt: datetime = imgobj['img_captured']
-        if curdt != last_captime:
-            imgbuf = imgobj['imgbuf']
-            (ok, jpg) = cv2.imencode('.jpg', imgbuf)
+        while True:
+            curdt: datetime = imgobj['img_captured']
+            if curdt != last_captime:
+                imgbuf = imgobj['imgbuf']
+                (ok, jpg) = cv2.imencode('.jpg', imgbuf)
 
-            if ok:
-                camid = config.get('camera_id', 'unknown/unknown')
-                dtstamp = last_captime.strftime('%Y%m%d/%H%M%S.%f')
-                rkey = 'raw/{}/{}'.format(camid, dtstamp)
+                if ok:
+                    camid = config.get('camera_id', 'unknown/unknown')
+                    dtstamp = last_captime.strftime('%Y%m%d/%H%M%S.%f')
+                    rkey = 'raw/{}/{}'.format(camid, dtstamp)
 
-                rds.set(rkey, jpg.tostring())
-        sleep(.05)
+                    rds.set(rkey, jpg.tostring())
+            sleep(.05)
+    except Exception as e:
+        log.critical('Critical failure in imgsave')
+        log.critical(e)
+
