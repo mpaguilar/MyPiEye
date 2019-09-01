@@ -13,7 +13,7 @@ from MyPiEye.Storage.azure_blob import AzureBlobStorage
 log = multiprocessing.log_to_stderr()
 
 
-def camera_start(config, shared_obj, internal_mq = None, external_mq = None):
+def camera_start(config, shared_obj, internal_mq: multiprocessing.Queue = None, external_mq=None):
     log.info('Starting camera')
 
     camera = None
@@ -34,11 +34,11 @@ def camera_start(config, shared_obj, internal_mq = None, external_mq = None):
 
         while ok:
 
-            log.info('capturing {}'.format(datetime.utcnow()))
+            log.debug('capturing {}'.format(datetime.utcnow()))
             img = camera.get_image()
 
             if img is not None:
-                log.info('captured {}'.format(datetime.utcnow()))
+                log.debug('captured {}'.format(datetime.utcnow()))
 
                 if log.level == logging.DEBUG:
                     # so it stands out
@@ -60,7 +60,7 @@ def camera_start(config, shared_obj, internal_mq = None, external_mq = None):
             camera.close_camera()
 
 
-def azblob_start(config, shared_obj, internal_mq = None, external_mq = None):
+def azblob_start(config, shared_obj, internal_mq=None, external_mq=None):
     """
     Saves the current image to an Azure blob.
     The config should have a ``azure_blob`` section.

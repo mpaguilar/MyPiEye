@@ -105,6 +105,9 @@ def configure(ctx, **cli_flags):
 @mypieye.command()
 @click.pass_context
 def s3_archive(ctx, **cli_flags):
+    print('I don\'t know if this even works')
+    return
+
     log.info('Archiving S3 objects')
 
     config = ConfigureApp(settings)

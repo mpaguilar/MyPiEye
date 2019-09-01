@@ -9,22 +9,32 @@ from MyPiEye.Storage.s3_storage import S3Storage
 from MyPiEye.Storage.google_drive import GDriveStorage, GDriveAuth
 from MyPiEye.usbcamera import UsbCamera
 from MyPiEye.Storage.azure_blob import AzureBlobStorage
+from MyPiEye.Storage.minio_storage import MinioStorage
 
 log = logging.getLogger(__name__)
 
 
 class ConfigureApp(object):
 
-    def __init__(self, config):
+    def __init__(self, config, **kwargs):
         self.config = config
+        self.args = kwargs
 
     def configure(self):
         ret = True
 
         if not self.configure_working_directories():
-            log.critical('Failed to configure working directories')
             ret = False
 
+        if not self.configure_local_filesystem():
+            ret = False
+
+        if not self.configure_azure_blob():
+            ret = False
+
+        return ret
+
+    def dedcode2b_deleted(self):
         if not self.configure_local_filesystem():
             log.critical('Failed to configure local filesystem')
             ret = False
@@ -38,42 +48,6 @@ class ConfigureApp(object):
             ret = False
 
         return ret
-
-    def configure_local_filesystem(self):
-        log.info('Configuring local filesystem')
-
-        local_config = self.config.get('local', None)
-        if local_config is None:
-            log.info('[local] section not found. Skipping.')
-            return True
-
-        fs = FileStorage(self.config)
-
-        ret = fs.configure()
-        if ret:
-            log.info('Local filesystem storage configuration complete')
-        else:
-            log.error('Local filesystem storage configuration failed')
-
-        return ret
-
-    def configure_aws(self):
-        log.info('Configuring AWS')
-
-        aws_config = self.config.get('S3', None)
-        if aws_config is None:
-            log.info('[S3] section not found. Skipping.')
-            return True
-
-        aws = S3Storage(self.config)
-        chk = aws.configure()
-
-        if chk:
-            log.info('AWS config complete')
-        else:
-            log.critical('AWS config failed')
-
-        return chk
 
     def configure_working_directories(self):
         """
@@ -95,6 +69,59 @@ class ConfigureApp(object):
             makedirs(workdir)
 
         return True
+
+    def configure_local_filesystem(self):
+        log.info('Configuring local filesystem')
+
+        if not self.config['multi'].get('enable_local', False):
+            log.info('Local saving disabled. Skipping.')
+            return True
+
+        local_config = self.config.get('local', None)
+        if local_config is None:
+            log.info('[local] section not found. Skipping.')
+            return False
+
+        fs = FileStorage(self.config)
+
+        ret = fs.configure()
+        if ret:
+            log.info('Local filesystem storage configuration complete')
+        else:
+            log.error('Local filesystem storage configuration failed')
+
+        return ret
+
+    def configure_azure_blob(self):
+
+        ret = True
+
+        log.info('Configuring Azure Blob')
+        azblob = AzureBlobStorage(self.config)
+        if not azblob.configure():
+            log.error('Azure Blob configuration failed')
+            ret = False
+
+        return ret
+
+
+    def configure_aws(self):
+        log.info('Configuring AWS')
+
+        aws_config = self.config.get('S3', None)
+        if aws_config is None:
+            log.info('[S3] section not found. Skipping.')
+            return True
+
+        aws = S3Storage(self.config)
+        chk = aws.configure()
+
+        if chk:
+            log.info('AWS config complete')
+        else:
+            log.critical('AWS config failed')
+
+        return chk
 
     def configure_gdrive(self):
         gconfig = self.config.get('gdrive', None)
@@ -155,6 +182,11 @@ class ConfigureApp(object):
     def check_camera(self):
 
         log.info('Checking camera config')
+
+        if not self.config['multi'].get('enable_camera', False):
+            log.info('Camera disabled. Skipping.')
+            return True
+
         config = self.config.get('camera', None)
         if config is None:
             log.error('[camera] section is required')
@@ -196,6 +228,13 @@ class ConfigureApp(object):
             now = datetime.now(tzstr).strftime('%Y/%m/%d %H:%M:%S')
             log.info('Local time: {}'.format(now))
 
+        # a [multi] section is required
+
+        multi = self.config.get('multi', None)
+        if multi is None:
+            log.error('No [multi] config section')
+            ret = False
+
         if not ret:
             log.critical('Global checks failed')
         else:
@@ -206,29 +245,49 @@ class ConfigureApp(object):
     def check_azblob(self):
         log.info('Checking Azure Blob')
 
+        if not self.config['multi'].get('enable_azblob', False):
+            log.info('Azure Blob disabled. Skipping.')
+            return True
+
         azconfig = self.config.get('azure_blob', None)
         if azconfig is None:
-            log.info('No [azure_blob] secriont found. Skipping.')
-            return True
+            log.error('No [azure_blob] section found.')
+            return False
 
         azblob = AzureBlobStorage(self.config)
 
-        if not azblob.configure():
-            log.critical('Azure Blob checks failed')
+        if not azblob.check():
+            log.error('Azure Blob checks failed')
             return False
 
         log.info('Azure Blob okay')
 
         return True
 
+    def check_minio(self):
+        log.info('Checking minio')
+
+        mconfig = self.config.get('minio', None)
+        if mconfig is None:
+            log.info('No [minio] section found.')
+            return False
+
+        mio = MinioStorage(self.config)
+
+
+
     def check_filestorage(self):
 
         log.info('Checking FileStorage')
 
+        if not self.config['multi'].get('enable_local', False):
+            log.info('Local filestorage disabled. Skipping.')
+            return True
+
         localconfig = self.config.get('local', None)
         if localconfig is None:
             log.info('No [local] section found. Skipping.')
-            return True
+            return False
 
         fs = FileStorage(self.config)
         if not fs.check():
@@ -242,10 +301,14 @@ class ConfigureApp(object):
 
         log.info('Checking AWS config')
 
+        if not self.config['multi'].get('enable_s3', False):
+            log.info('AWS S3 disabled. Skipping.')
+            return True
+
         s3_config = self.config.get('s3', None)
         if s3_config is None:
             log.info('No [s3] section found')
-            return True
+            return False
 
         s3 = S3Storage(self.config)
         if not s3.check():
@@ -258,12 +321,15 @@ class ConfigureApp(object):
     def check_gdrive(self):
 
         log.info('Checking GDrive')
+        if not self.config['multi'].get('enable_gdrive', False):
+            log.info('GDrive disabled. Skipping.')
+            return True
 
         gconfig = self.config.get('gdrive', None)
 
         if gconfig is None:
             log.info('No [gdrive] section found')
-            return True
+            return False
 
         ret = True
 

@@ -137,11 +137,6 @@ class Supervisor(object):
 
         self.init_process_infos(shared_obj, imq)
 
-        lsave = self.multi.get('local_save', None)
-        if lsave is not None and str(lsave).strip() != '':
-            # something for the webserver
-            pass
-
         # compares images
 
         # motion_queue = Supervisor.manager.Queue()

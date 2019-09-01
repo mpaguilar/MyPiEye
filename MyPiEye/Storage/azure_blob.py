@@ -11,61 +11,59 @@ log = multiprocessing.log_to_stderr()
 
 class AzureBlobStorage(object):
 
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, global_config):
+        self.global_config = global_config
 
-        self.azconfig = config['azure_blob']
-        self.account = None
-        self.key = None
-        self.container = None
+        self.self_config = global_config['azure_blob']
+        self.account = self._config('account', 'AZBLOB_ACCOUNT')
+        self.key = self._config('key', 'AZBLOB_KEY')
+        self.container = self._config('container', 'AZBLOB_CONTAINER')
 
-        self.blob_service: BlockBlobService = None
+        self.blob_service: BlockBlobService = BlockBlobService(self.account, self.key)
         # self.imgobj = imgobj
 
+    def _config(self, key_name, env_name):
+        """
+        If the environment variable is found, the config
+        object will be updated with it's value
+        :param key_name:
+        :param env_name:
+        :return:
+        """
+        val = os.environ.get(env_name)
+        if val is None:
+            val = self.self_config.get(key_name, None)
+        else:
+            self.self_config[key_name] = val
+
+        return val
+
     def configure(self):
+        containers = self.blob_service.list_containers()
 
-        auth = self.get_auth()
-        if auth is None:
-            log.error('Failed to initialize auth')
-            return False
+        names = [item.name for item in containers.items]
 
-        self.container = self.azconfig.get('container_name', None)
-        if self.container is None:
-            log.error('container_name setting is required in [azure_blob] section')
-            return False
-
-        self.account, self.key = auth
-        self.blob_service = BlockBlobService(self.account, self.key)
+        if self.container not in names:
+            self.blob_service.create_container(self.container)
 
         return True
 
-    def get_auth(self):
-        """
-        Accounts and keys may be handled via .ini or environment variables.
-        ```
-        AZBLOB_ACCOUNT
-        AZBLOB_KEY
-        ```
-        :return:
-        """
+    def check(self):
+        ret = True
 
-        account = os.environ.get('AZBLOB_ACCOUNT', None)
-        if account is None:
-            account = self.azconfig.get('storage_account', None)
+        if self.account is None:
+            log.error('Azure storage_account not set')
+            ret = False
 
-        if account is None:
-            log.error('No account for azure blob')
-            return None
+        if self.key is None:
+            log.error('Azure storage_key not set')
+            ret = False
 
-        key = os.environ.get('AZBLOB_KEY', None)
-        if key is None:
-            key = self.azconfig.get('storage_key', None)
+        if self.container is None:
+            log.error('Azure container is not set')
+            ret = False
 
-        if key is None:
-            log.error('No key for azure blob')
-            return None
-
-        return account, key
+        return ret
 
     @staticmethod
     def upload_progress(current, total):

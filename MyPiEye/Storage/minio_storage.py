@@ -1,5 +1,5 @@
 from dateutil import tz
-
+from os import environ
 import logging
 
 from minio import Minio
@@ -9,31 +9,60 @@ log = logging.getLogger(__name__)
 
 class MinioStorage(object):
 
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, global_config):
+        self.global_config = global_config
 
-        self.minio_config = config['s3_archive']
+        self.self_config = global_config['minio']
 
-        # get settings
-        self.access_key = self.minio_config.get('access_key', None)
-        self.secret_key = self.minio_config.get('secret_key', None)
+        self.access_key = self._get_config_value('access_key', 'MINIO_ACCESS_KEY')
+        self.secret_key = self.secret_key = self._get_config_value('secret_key', 'MINIO_SECRET_KEY')
+        self.bucket_name = self.bucket_name = self._get_config_value('bucket_name')
+        self.url = self._get_config_value('url')
 
-        self.local_tz = self.config.get('timezone', 'UTC')
-        self.local_tz = tz.gettz(self.local_tz)
-
-        # minio settings
-        self.bucket_name = self.minio_config.get('bucket_name', None)
-        self.region = self.minio_config.get('aws_region')
-
-        self.url = self.minio_config.get('url', None)
-        self.mclient = None
-
-    def connect(self):
         self.mclient = Minio(
             self.url,
             access_key=self.access_key,
             secret_key=self.secret_key
         )
+
+    def _get_config_value(self, key_name, env_name):
+        """
+        If the environment variable is found, the config
+        object will be updated with it's value
+        :param key_name:
+        :param env_name:
+        :return:
+        """
+        val = environ.get(env_name)
+        if val is None:
+            val = self.self_config.get(key_name, None)
+        else:
+            self.self_config[key_name] = val
+
+        return val
+
+    def check(self):
+        ret = True
+
+        if self.access_key is None:
+            log.error('No minio access key found')
+            ret = False
+
+        if self.secret_key is None:
+            log.error('No minio secret key found')
+            ret = False
+
+        if self.bucket_name is None:
+            log.error('No bucket name found')
+            ret = False
+
+        if self.url is None:
+            log.error('No url found')
+            ret = False
+
+        return ret
+
+    def configure(self):
 
         exists = self.mclient.bucket_exists(self.bucket_name)
         if not exists:
