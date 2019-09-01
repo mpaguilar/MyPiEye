@@ -13,7 +13,7 @@ from MyPiEye.Storage.azure_blob import AzureBlobStorage
 log = multiprocessing.log_to_stderr()
 
 
-def camera_start(config, imgobj, internal_mq = None, external_mq = None):
+def camera_start(config, shared_obj, internal_mq = None, external_mq = None):
     log.info('Starting camera')
 
     camera = None
@@ -44,9 +44,9 @@ def camera_start(config, imgobj, internal_mq = None, external_mq = None):
                     # so it stands out
                     print('\ncaptured {}\n'.format(datetime.utcnow()))
 
-                with imgobj['lock']:
-                    imgobj['imgbuf'] = img
-                    imgobj['img_captured'] = datetime.utcnow()
+                with shared_obj['lock']:
+                    shared_obj['imgbuf'] = img
+                    shared_obj['img_captured'] = datetime.utcnow()
 
                 log.info('captured image at {}'.format(datetime.utcnow()))
             else:
@@ -60,13 +60,13 @@ def camera_start(config, imgobj, internal_mq = None, external_mq = None):
             camera.close_camera()
 
 
-def azblob_start(config, imgobj, internal_mq = None, external_mq = None):
+def azblob_start(config, shared_obj, internal_mq = None, external_mq = None):
     """
     Saves the current image to an Azure blob.
     The config should have a ``azure_blob`` section.
     set [multi] key ``azure_blob`` to ``True`` to enable.
     :param config:
-    :param imgobj:
+    :param shared_obj:
     :return:
     """
 
@@ -75,7 +75,7 @@ def azblob_start(config, imgobj, internal_mq = None, external_mq = None):
         log.error('Failed to intialize Azure Blob storage')
         return
 
-    last_captime: datetime = imgobj['img_captured']
+    last_captime: datetime = shared_obj['img_captured']
 
     camconfig = config.get('camera', None)
     if camconfig is None:
@@ -86,10 +86,10 @@ def azblob_start(config, imgobj, internal_mq = None, external_mq = None):
 
     while True:
 
-        curdt: datetime = imgobj['img_captured']
+        curdt: datetime = shared_obj['img_captured']
         if curdt != last_captime:
-            with imgobj['lock']:
-                imgbuf = imgobj['imgbuf']
+            with shared_obj['lock']:
+                imgbuf = shared_obj['imgbuf']
 
             (ok, jpg) = cv2.imencode('.jpg', imgbuf)
 
