@@ -51,7 +51,6 @@ class Supervisor(object):
                 if (proc_info['process'] is not None and
                     proc_info['process'].is_alive()) and \
                         not proc_info['run_process']:
-
                     log.warning('Process {} is running, and should not be'.format(k))
                     log.warning('Shutting down process {}'.format(k))
                     proc_info['process'].kill()
@@ -79,45 +78,38 @@ class Supervisor(object):
             if sbrunning > 0 and isrunning == 0:
                 log.error('Did everything crash?')
 
-    def init_process_infos(self, img_obj: multiprocessing.Manager):
+
+
+    def init_process_infos(self,
+                           shared_obj: multiprocessing.Manager,
+                           internal_mq : multiprocessing.Queue = None,
+                           external_mq : multiprocessing.Queue = None):
+
+        def init_proc(proc_name: str, proc_func, run=True):
+            self.process_infos[proc_name] = {
+                'process': None,
+                'process_args': {
+                    'name': proc_name,
+                    'target': proc_func,
+                    'args': (self.config, shared_obj)
+                },
+                'run_process': run
+            }
 
         if self.multi.get('enable_camera', False):
-            # gotta have a camera
-            self.process_infos['camera'] = {
-                'process': None,
-                'process_args': {
-                    'name': 'cam',
-                    'target': camera_start,
-                    'args': (self.config, img_obj)
-                },
-                'run_process': True
-            }
+            init_proc('camera', camera_start, True)
 
-            # saving to redis
-            self.process_infos['imgsave'] = {
-                'process': None,
+        if self.multi.get('enable_redis', False):
+            redis_config = self.config.get('redis', None)
+            if redis_config is not None:
+                init_proc('redis', redis_start, False)
+            else:
+                log.error('redis service requires [redis] section')
 
-                'process_args': {
-                    'name': 'imgsave',
-                    'target': redis_start,
-                    'args': (self.config, img_obj)
-                },
-                'run_process': False
-            }
         if self.multi.get('enable_azure_blob', False):
             azconfig = self.config.get('azure_blob', None)
             if azconfig is not None:
-                self.process_infos['azblob'] = {
-                    'process': None,
-
-                    'process_args': {
-                        'name': 'azblob',
-                        'target': azblob_start,
-                        'args': (self.config, img_obj)
-                    },
-                    'run_process': True
-
-                }
+                init_proc('azblob', azblob_start, True)
             else:
                 log.error('azure_blob service requires [azure_blob] section')
 
@@ -125,19 +117,25 @@ class Supervisor(object):
         log.info('Starting camera supervisor')
         Supervisor.manager = Manager()
 
-        img_obj = Supervisor.manager.dict()
+        shared_obj = Supervisor.manager.dict()
         # stores the current cv image as a list
-        img_obj['imgbuf'] = Supervisor.manager.list()
+        shared_obj['imgbuf'] = Supervisor.manager.list()
 
-        # so the camera can write
-        img_obj['lock'] = Supervisor.manager.Lock()
-        # so we don't stomp the network interface
-        img_obj['netlock'] = Supervisor.manager.Lock()
+        # so the camera can write in peace.
+        shared_obj['lock'] = Supervisor.manager.Lock()
+
+        # used by services copying to local networks
+        # so that the network interface isn't swamped
+        # WAN-bound services don't need it.
+        shared_obj['netlock'] = Supervisor.manager.Lock()
 
         # a datetime object of the last capture, UTC
-        img_obj['img_captured'] = datetime.utcnow()
+        shared_obj['img_captured'] = datetime.utcnow()
 
-        self.init_process_infos(img_obj)
+        # for internal communication
+        imq = Supervisor.manager.Queue()
+
+        self.init_process_infos(shared_obj, imq)
 
         lsave = self.multi.get('local_save', None)
         if lsave is not None and str(lsave).strip() != '':
@@ -150,7 +148,7 @@ class Supervisor(object):
         # motion_detect_proc = Process(
         #     name='imgcompare',
         #     target=Supervisor.motion_detect_proc,
-        #     args=(self.config, img_obj, motion_queue)
+        #     args=(self.config, shared_obj, motion_queue)
         #  )
 
         self.main_loop()

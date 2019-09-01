@@ -71,13 +71,16 @@ class AzureBlobStorage(object):
     def upload_progress(current, total):
         print('uploading pic: ({}, {})'.format(current, total))
 
-    def save(self, jpg, filename, dtstamp: str):
+    def save(self, jpg, filename, dtstamp: str, camera_id):
 
         self.blob_service.create_blob_from_bytes(
             self.container,
             filename,
             jpg.tobytes(),
             content_settings=ContentSettings(content_type='image/jpg'),
-            metadata={'timestamp': dtstamp},
+            metadata={
+                'timestamp': dtstamp,
+                'camera_id': camera_id
+            },
             progress_callback=AzureBlobStorage.upload_progress
         )

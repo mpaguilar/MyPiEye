@@ -12,10 +12,21 @@ from MyPiEye.Storage.azure_blob import AzureBlobStorage
 
 log = multiprocessing.log_to_stderr()
 
-def camera_start(config, imgobj, time_delay=0):
+
+def camera_start(config, imgobj, internal_mq = None, external_mq = None):
     log.info('Starting camera')
 
     camera = None
+    previous_image = None
+
+    cam_config = config.get('camera', None)
+    if cam_config is None:
+        log.error('No [camera] config section found')
+        sleep(1)
+        return
+
+    time_delay = cam_config.get('time_delay', '0')
+    time_delay = int(time_delay)
 
     try:
         camera = UsbCamera(config)
@@ -48,7 +59,8 @@ def camera_start(config, imgobj, time_delay=0):
         if camera is not None:
             camera.close_camera()
 
-def azblob_start(config, imgobj):
+
+def azblob_start(config, imgobj, internal_mq = None, external_mq = None):
     """
     Saves the current image to an Azure blob.
     The config should have a ``azure_blob`` section.
@@ -65,6 +77,13 @@ def azblob_start(config, imgobj):
 
     last_captime: datetime = imgobj['img_captured']
 
+    camconfig = config.get('camera', None)
+    if camconfig is None:
+        log.error('No camera config')
+        return
+
+    camid = camconfig.get('camera_id', 'unknown/unknown')
+
     while True:
 
         curdt: datetime = imgobj['img_captured']
@@ -75,38 +94,48 @@ def azblob_start(config, imgobj):
             (ok, jpg) = cv2.imencode('.jpg', imgbuf)
 
             if ok:
-                camid = config.get('camera_id', 'unknown/unknown')
                 fmt = azblob.config.get('filename_format', '%Y%m%d/%H%M%S.%f')
                 dtstamp = curdt.isoformat()
 
                 filename = '{}/{}.jpg'.format(camid, curdt.strftime(fmt))
 
-                azblob.save(jpg, filename, dtstamp)
+                azblob.save(jpg, filename, dtstamp, camid)
 
             last_captime = curdt
 
         sleep(.1)
 
 
-def redis_start(config, imgobj):
+def redis_start(config, shared_obj):
     """
     Saves the current image to a file, for a webserver
     :param config: Global config
-    :param imgobj: Shared current image
+    :param shared_obj: Shared current image
     :return:
     """
     try:
         log.info('running redis')
-        last_captime: datetime = imgobj['img_captured']
+        rconfig = config.get('redis', None)
 
-        rds = redis.Redis(host='bigbox.node.home.mpa')
+        if not rconfig:
+            log.error('No [redis] config section found')
+            sleep(1)
+            return
+
+        if rconfig.get('server_name', None) is None:
+            log.error('Missing server_name in [redis] section')
+            sleep(1)
+            return
+
+        rds = redis.Redis(host=rconfig['server_name'])
         print(rds.get('foo'))
+        last_captime: datetime = shared_obj['img_captured']
 
         while True:
-            curdt: datetime = imgobj['img_captured']
+            curdt: datetime = shared_obj['img_captured']
             if curdt != last_captime:
-                with imgobj['lock']:
-                    imgbuf = imgobj['imgbuf']
+                with shared_obj['lock']:
+                    imgbuf = shared_obj['imgbuf']
 
                 (ok, jpg) = cv2.imencode('.jpg', imgbuf)
 
@@ -115,11 +144,10 @@ def redis_start(config, imgobj):
                     dtstamp = last_captime.strftime('%Y%m%d/%H%M%S.%f')
                     rkey = 'raw/{}/{}'.format(camid, dtstamp)
 
-                    with imgobj['netlock']:
+                    with shared_obj['netlock']:
                         log.info('Sending data to redis')
                         rds.set(rkey, jpg.tostring())
             sleep(.05)
     except Exception as e:
         log.critical('Critical failure in imgsave')
         log.critical(e)
-
