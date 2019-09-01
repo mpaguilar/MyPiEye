@@ -9,7 +9,7 @@ from multiprocessing.connection import wait
 
 from MyPiEye.motion_detect import MotionDetect
 
-from MyPiEye.multi.process_runners import camera_start, redis_start, azblob_start
+from MyPiEye.multi.process_runners import camera_start, redis_start, azblob_start, minio_start
 
 log = multiprocessing.log_to_stderr()
 
@@ -112,6 +112,9 @@ class Supervisor(object):
                 init_proc('azblob', azblob_start, True)
             else:
                 log.error('azure_blob service requires [azure_blob] section')
+
+        if self.multi.get('enable_minio', False):
+            init_proc('minio', minio_start, True)
 
     def start(self):
         log.info('Starting camera supervisor')

@@ -9,6 +9,7 @@ import cv2
 
 from MyPiEye.usbcamera import UsbCamera
 from MyPiEye.Storage.azure_blob import AzureBlobStorage
+from MyPiEye.Storage.minio_storage import MinioStorage
 
 log = multiprocessing.log_to_stderr()
 
@@ -71,7 +72,7 @@ def azblob_start(config, shared_obj, internal_mq=None, external_mq=None):
     """
 
     azblob = AzureBlobStorage(config)
-    if not azblob.configure():
+    if not azblob.check():
         log.error('Failed to intialize Azure Blob storage')
         return
 
@@ -94,16 +95,44 @@ def azblob_start(config, shared_obj, internal_mq=None, external_mq=None):
             (ok, jpg) = cv2.imencode('.jpg', imgbuf)
 
             if ok:
-                fmt = azblob.config.get('filename_format', '%Y%m%d/%H%M%S.%f')
-                dtstamp = curdt.isoformat()
-
-                filename = '{}/{}.jpg'.format(camid, curdt.strftime(fmt))
-
-                azblob.save(jpg, filename, dtstamp, camid)
+                azblob.upload(jpg, curdt, camid)
 
             last_captime = curdt
 
         sleep(.1)
+
+def minio_start(config, shared_obj):
+    mio = MinioStorage(config)
+
+    if not mio.check():
+        log.error('Failed to initialize minio storage')
+        return
+
+    last_captime: datetime = shared_obj['img_captured']
+
+    camconfig = config.get('camera', None)
+    if camconfig is None:
+        log.error('No camera config')
+        return
+
+    camid = camconfig.get('camera_id', 'unknown/unknown')
+
+    while True:
+
+        curdt: datetime = shared_obj['img_captured']
+        if curdt != last_captime:
+            with shared_obj['lock']:
+                imgbuf = shared_obj['imgbuf']
+
+            (ok, jpg) = cv2.imencode('.jpg', imgbuf)
+
+            if ok:
+                mio.upload(jpg, curdt, camid)
+
+            last_captime = curdt
+
+        sleep(.1)
+
 
 
 def redis_start(config, shared_obj):

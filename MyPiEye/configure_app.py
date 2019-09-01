@@ -177,6 +177,9 @@ class ConfigureApp(object):
         if not self.check_azblob():
             ret = False
 
+        if not self.check_minio():
+            ret = False
+
         return ret
 
     def check_camera(self):
@@ -265,6 +268,7 @@ class ConfigureApp(object):
         return True
 
     def check_minio(self):
+
         log.info('Checking minio')
 
         mconfig = self.config.get('minio', None)
@@ -274,6 +278,12 @@ class ConfigureApp(object):
 
         mio = MinioStorage(self.config)
 
+        if not mio.check():
+            log.error('minio check failed')
+            return False
+
+        log.info('minio configuration okay')
+        return True
 
 
     def check_filestorage(self):

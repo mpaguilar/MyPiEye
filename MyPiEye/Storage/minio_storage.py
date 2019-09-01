@@ -1,6 +1,7 @@
 from dateutil import tz
 from os import environ
 import logging
+from io import BytesIO
 
 from minio import Minio
 
@@ -16,8 +17,12 @@ class MinioStorage(object):
 
         self.access_key = self._get_config_value('access_key', 'MINIO_ACCESS_KEY')
         self.secret_key = self.secret_key = self._get_config_value('secret_key', 'MINIO_SECRET_KEY')
-        self.bucket_name = self.bucket_name = self._get_config_value('bucket_name')
-        self.url = self._get_config_value('url')
+        self.bucket_name = self.bucket_name = self._get_config_value('bucket_name', 'MINIO_BUCKET')
+        self.url = self._get_config_value('url', 'MINIO_URL')
+        self.filename_format = self._get_config_value('filename_format', 'MINIO_FMT')
+
+        if self.filename_format is None:
+            self.filename_format = '%Y%m%d/%H%M%S.%f'
 
         self.mclient = Minio(
             self.url,
@@ -70,12 +75,27 @@ class MinioStorage(object):
 
         return True
 
-    def upload(self, object_name, filename):
+    def upload(self, jpg, dt_stamp, camera_id):
 
-        if self.mclient is None and not self.connect():
-            raise Exception('Not connected')
+        bio = BytesIO(jpg)
+        filename = '{}/{}.jpg'.format(camera_id, dt_stamp.strftime(self.filename_format))
+        dtstr = dt_stamp.isoformat()
 
-        log.info('Uploading {} to S3 prefix {}'.format(filename, object_name))
-        self.mclient.fput_object(self.bucket_name, object_name, filename)
+        log.info('Uploading to minio {}'.format(filename))
+        print('uploading to minio')
+
+        self.mclient.put_object(
+            self.bucket_name,
+            filename,
+            bio,
+            len(jpg),
+            content_type='image/jpg',
+            metadata={
+                'timestamp': dtstr,
+                'camera_id': camera_id
+            }
+        )
+
         log.info('Upload complete {}'.format(filename))
+        print('minio complete')
         return True

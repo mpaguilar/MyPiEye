@@ -18,6 +18,7 @@ class AzureBlobStorage(object):
         self.account = self._config('account', 'AZBLOB_ACCOUNT')
         self.key = self._config('key', 'AZBLOB_KEY')
         self.container = self._config('container', 'AZBLOB_CONTAINER')
+        self.filename_format = self._config('filename_format', 'AZBLOB_FMT')
 
         self.blob_service: BlockBlobService = BlockBlobService(self.account, self.key)
         # self.imgobj = imgobj
@@ -67,9 +68,16 @@ class AzureBlobStorage(object):
 
     @staticmethod
     def upload_progress(current, total):
-        print('uploading pic: ({}, {})'.format(current, total))
+        if current == total:
+            log.info('upload complete')
+        else:
+            log.info('uploading pic: ({}, {})'.format(current, total))
 
-    def save(self, jpg, filename, dtstamp: str, camera_id):
+    # def save(self, jpg, filename, dtstamp: str, camera_id):
+    def upload(self, jpg, dt_stamp : datetime.datetime, camera_id : str):
+
+        filename = '{}/{}.jpg'.format(camera_id, dt_stamp.strftime(self.filename_format))
+        dtstr = dt_stamp.isoformat()
 
         self.blob_service.create_blob_from_bytes(
             self.container,
@@ -77,7 +85,7 @@ class AzureBlobStorage(object):
             jpg.tobytes(),
             content_settings=ContentSettings(content_type='image/jpg'),
             metadata={
-                'timestamp': dtstamp,
+                'timestamp': dtstr,
                 'camera_id': camera_id
             },
             progress_callback=AzureBlobStorage.upload_progress
