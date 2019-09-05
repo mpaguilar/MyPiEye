@@ -32,6 +32,9 @@ class ConfigureApp(object):
         if not self.configure_azure_blob():
             ret = False
 
+        if not self.configure_minio():
+            ret = False
+
         return ret
 
     def dedcode2b_deleted(self):
@@ -94,6 +97,10 @@ class ConfigureApp(object):
 
     def configure_azure_blob(self):
 
+        if not self.config['multi'].get('enable_azblob', False):
+            log.info('Azure Blob disabled. Skipping.')
+            return True
+
         ret = True
 
         log.info('Configuring Azure Blob')
@@ -104,6 +111,21 @@ class ConfigureApp(object):
 
         return ret
 
+    def configure_minio(self):
+        ret = True
+
+        if not self.config['multi'].get('enable_minio', False):
+            log.info('minio disabled. Skipping.')
+            return True
+
+        log.info('Configuring minio')
+
+        mio = MinioStorage(self.config)
+        if not mio.configure():
+            log.error('minio configuration failed')
+            ret = False
+
+        return ret
 
     def configure_aws(self):
         log.info('Configuring AWS')
@@ -271,6 +293,10 @@ class ConfigureApp(object):
 
         log.info('Checking minio')
 
+        if not self.config['multi'].get('enable_minio', False):
+            log.info('minio disabled. Skipping.')
+            return True
+
         mconfig = self.config.get('minio', None)
         if mconfig is None:
             log.info('No [minio] section found.')
@@ -284,7 +310,6 @@ class ConfigureApp(object):
 
         log.info('minio configuration okay')
         return True
-
 
     def check_filestorage(self):
 

@@ -1,4 +1,4 @@
-from dateutil import tz
+from datetime import datetime, timedelta
 from os import environ
 import logging
 from io import BytesIO
@@ -11,6 +11,12 @@ log = logging.getLogger(__name__)
 class MinioStorage(object):
 
     def __init__(self, global_config):
+
+        self.stats = {
+            'images_sent': 0,
+            'start_time': datetime.now()
+        }
+
         self.global_config = global_config
 
         self.self_config = global_config['minio']
@@ -97,5 +103,7 @@ class MinioStorage(object):
         )
 
         log.info('Upload complete {}'.format(filename))
-        print('minio complete')
+        self.stats['images_sent'] = self.stats['images_sent'] + 1
+        ts = datetime.now() - self.stats['start_time']
+        print('\nminio {} upload complete in {}\n'.format(self.stats['images_sent'], str(ts)))
         return True
