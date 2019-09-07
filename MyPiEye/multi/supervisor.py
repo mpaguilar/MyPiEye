@@ -9,7 +9,14 @@ from multiprocessing.connection import wait
 
 from MyPiEye.motion_detect import MotionDetect
 
-from MyPiEye.multi.process_runners import camera_start, redis_start, azblob_start, minio_start
+from MyPiEye.multi.process_runners import \
+    local_start, \
+    camera_start, \
+    redis_start, \
+    azblob_start, \
+    minio_start
+
+from MyPiEye.CLI import get_self_config_value
 
 log = multiprocessing.log_to_stderr()
 
@@ -20,9 +27,9 @@ class Supervisor(object):
     def __init__(self, config):
 
         self.config = config
-        self.multi = config.get('multi', None)
+        self.self_config = config.get('multi', None)
 
-        if self.multi is None:
+        if self.self_config is None:
             raise Exception('[multi] not found in configuration')
 
         self.compare_proc = None
@@ -95,7 +102,7 @@ class Supervisor(object):
                 'run_process': run
             }
 
-        if self.multi.get('enable_camera', False):
+        if get_self_config_value(self, 'enable_camera', 'MULTI_ENABLE_CAMERA', False):
             init_proc('camera', camera_start, True)
 
         storage_proc_count = self.config['multi'].get('backend_processes', '1')
@@ -103,15 +110,23 @@ class Supervisor(object):
 
         for x in range(1, storage_proc_count + 1):
 
-            if self.multi.get('enable_redis', False) in [True, 'True']:
+            if get_self_config_value(
+                    self, 'enable_redis', 'MULTI_REDIS', False) in [True, 'True']:
                 storage_queues['redis'] = multiprocessing.Queue(maxsize=1)
                 init_proc('redis_{}'.format(x), redis_start, True)
 
-            if self.multi.get('enable_azure_blob', 'False') in [True, 'True']:
+            if get_self_config_value(
+                    self, 'enable_azure_blob', 'MULTI_AZBLOB', False) in [True, 'True']:
                 storage_queues['azure'] = multiprocessing.Queue(maxsize=1)
                 init_proc('azblob_{}'.format(x), azblob_start, True)
 
-            if self.multi.get('enable_minio', False) in [True, 'True']:
+            if get_self_config_value(
+                    self, 'enable_minio', 'MULTI_MINIO', False) in [True, 'True']:
+                storage_queues['minio'] = multiprocessing.Queue(maxsize=1)
+                init_proc('minio_{}'.format(x), minio_start, True)
+
+            if get_self_config_value(
+                    self, 'enable_local', 'MULTI_LOCAL', False) in [True, 'True']:
                 storage_queues['minio'] = multiprocessing.Queue(maxsize=1)
                 init_proc('minio_{}'.format(x), minio_start, True)
 

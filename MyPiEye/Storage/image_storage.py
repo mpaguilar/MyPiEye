@@ -8,7 +8,7 @@ from os import remove
 
 from .google_drive import GDriveAuth, GDriveStorage
 from .s3_storage import S3Storage
-from .local_filesystem import FileStorage
+from .local_storage import LocalStorage
 
 from MyPiEye.motion_detect import ImageCapture
 
@@ -54,7 +54,7 @@ class ImageStorage(object):
         if localstorage is not None:
             log.info('Saving to local filesystem {}'.format(img_capture.base_filename))
             # local_save(fs_path, img_capture)
-            fs = FileStorage(config)
+            fs = LocalStorage(config)
             fs.upload(img_capture)
 
         s3_config = config.get('s3', None)

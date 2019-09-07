@@ -5,6 +5,8 @@ from io import BytesIO
 
 from minio import Minio
 
+from MyPiEye.CLI import get_self_config_value
+
 log = logging.getLogger(__name__)
 
 class MinioStorage(object):
@@ -18,13 +20,23 @@ class MinioStorage(object):
 
         self.global_config = global_config
 
+        # required for ``get_config_value`` to work
         self.self_config = global_config['minio']
 
-        self.access_key = self._get_config_value('access_key', 'MINIO_ACCESS_KEY')
-        self.secret_key = self.secret_key = self._get_config_value('secret_key', 'MINIO_SECRET_KEY')
-        self.bucket_name = self.bucket_name = self._get_config_value('bucket_name', 'MINIO_BUCKET')
-        self.url = self._get_config_value('url', 'MINIO_URL')
-        self.filename_format = self._get_config_value('filename_format', 'MINIO_FMT')
+        self.access_key = \
+            get_self_config_value(self, 'access_key', 'MINIO_ACCESS_KEY')
+
+        self.secret_key = \
+            self.secret_key = get_self_config_value(self, 'secret_key', 'MINIO_SECRET_KEY')
+
+        self.bucket_name = \
+            self.bucket_name = get_self_config_value(self, 'bucket_name', 'MINIO_BUCKET')
+
+        self.url = \
+            get_self_config_value(self, 'url', 'MINIO_URL')
+
+        self.filename_format = \
+            get_self_config_value(self, 'filename_format', 'MINIO_FMT')
 
         if self.filename_format is None:
             self.filename_format = '%Y%m%d/%H%M%S.%f'
@@ -34,22 +46,6 @@ class MinioStorage(object):
             access_key=self.access_key,
             secret_key=self.secret_key
         )
-
-    def _get_config_value(self, key_name, env_name):
-        """
-        If the environment variable is found, the config
-        object will be updated with it's value
-        :param key_name:
-        :param env_name:
-        :return:
-        """
-        val = environ.get(env_name)
-        if val is None:
-            val = self.self_config.get(key_name, None)
-        else:
-            self.self_config[key_name] = val
-
-        return val
 
     def check(self):
         ret = True

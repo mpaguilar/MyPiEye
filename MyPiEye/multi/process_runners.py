@@ -11,6 +11,8 @@ from MyPiEye.usbcamera import UsbCamera
 from MyPiEye.Storage.azure_blob import AzureBlobStorage
 from MyPiEye.Storage.minio_storage import MinioStorage
 
+from MyPiEye.CLI import get_config_value
+
 log = logging.getLogger(__name__)
 # log.setLevel(logging.DEBUG)
 
@@ -62,8 +64,9 @@ def camera_start(config, shared_obj, msg_queues: dict):
 
                 for val in msg_queues.values():
                     try:
-                        val.put({'dt': dtsrt})
+                        val.put({'dt': dtsrt}, False)
                     except Exception as e:
+                        log.warning('Skipping frame for queue')
                         continue
 
                 log.info('captured image at {}'.format(dtsrt))
@@ -91,12 +94,7 @@ def minio_start(config, shared_obj, storage_queues: dict):
         log.error('Failed to initialize minio storage')
         return
 
-    camconfig = config.get('camera', None)
-    if camconfig is None:
-        log.error('No camera config')
-        return
-
-    camid = camconfig.get('camera_id', 'unknown/unknown')
+    camid = get_config_value(config, 'camera', 'camera_id', 'CAMERA_ID', 'unknown/unknown')
 
     while True:
 
@@ -119,6 +117,19 @@ def minio_start(config, shared_obj, storage_queues: dict):
             mio.upload(jpg, curdt, camid)
 
         sleep(.01)
+
+def local_start(config, shared_obj, storage_queues: dict):
+    storage_q = storage_queues.get('local')
+    if storage_q is None:
+        log.error('No queue found for local storage')
+        sleep(1)
+        return
+
+    camid = get_config_value(config, 'camera', 'camera_id', 'CAMERA_ID', 'unknown/unknown')
+
+
+
+
 
 
 def azblob_start(config, shared_obj, **kwargs):

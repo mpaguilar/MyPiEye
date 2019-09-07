@@ -4,7 +4,7 @@ from os import makedirs
 from dateutil import tz
 from datetime import datetime
 
-from MyPiEye.Storage.local_filesystem import FileStorage
+from MyPiEye.Storage.local_storage import LocalStorage
 from MyPiEye.Storage.s3_storage import S3Storage
 from MyPiEye.Storage.google_drive import GDriveStorage, GDriveAuth
 from MyPiEye.usbcamera import UsbCamera
@@ -85,7 +85,7 @@ class ConfigureApp(object):
             log.info('[local] section not found. Skipping.')
             return False
 
-        fs = FileStorage(self.config)
+        fs = LocalStorage(self.config)
 
         ret = fs.configure()
         if ret:
@@ -324,7 +324,7 @@ class ConfigureApp(object):
             log.info('No [local] section found. Skipping.')
             return False
 
-        fs = FileStorage(self.config)
+        fs = LocalStorage(self.config)
         if not fs.check():
             log.critical('Local filesystem check failed')
             return False

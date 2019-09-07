@@ -1,6 +1,7 @@
 import logging
 from colorama import init, Fore, Back, Style
 from os.path import exists, abspath
+from os import environ
 import configparser
 import multiprocessing
 
@@ -160,3 +161,42 @@ def load_config(ctx, param, config_filename):
     # ctx.params = ret
 
     return ret
+
+
+def get_self_config_value(obj, key_name, env_name, default=None):
+    """
+    If the environment variable is found, the config
+    object will be updated with it's value
+    :param obj: should have a member named ``self_config``.
+    :param key_name:
+    :param env_name:
+    :param default:
+    :return:
+    """
+    val = environ.get(env_name)
+    if val is None:
+        val = obj.self_config.get(key_name, default)
+    else:
+        obj.self_config[key_name] = val
+
+    return val
+
+
+def get_config_value(
+        config: dict,
+        section_name: str,
+        key_name: str,
+        env_name: str,
+        default=None):
+
+    section = config.get(section_name)
+    if section is None:
+        log.error('section {} not found'.format(section_name))
+        return config
+
+    env_val = environ.get(env_name)
+    if env_val is None:
+        return section.get(key_name, default)
+
+    section[key_name] = env_val
+    return env_val

@@ -1,6 +1,6 @@
 from .image_storage import ImageStorage
 from .google_drive import GDriveStorage, GDriveAuth
-from .local_filesystem import FileStorage
+from .local_storage import LocalStorage
 from .s3_storage import S3Storage
 from .minio_storage import MinioStorage
 from .s3_archive import S3Archive
