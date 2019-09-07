@@ -10,6 +10,7 @@ import cv2
 from MyPiEye.usbcamera import UsbCamera
 from MyPiEye.Storage.azure_blob import AzureBlobStorage
 from MyPiEye.Storage.minio_storage import MinioStorage
+from MyPiEye.Storage.local_storage import LocalStorage
 
 from MyPiEye.CLI import get_config_value
 
@@ -109,12 +110,9 @@ def minio_start(config, shared_obj, storage_queues: dict):
         if curdt != dt_pic['dt']:
             continue
 
-        log.debug('Storing image {}'.format(curdt.isoformat()))
+        log.debug('Storing image on minio: {}'.format(curdt.isoformat()))
 
-        (ok, jpg) = cv2.imencode('.jpg', imgbuf)
-
-        if ok:
-            mio.upload(jpg, curdt, camid)
+        mio.upload(jpg, imgbuf, camid)
 
         sleep(.01)
 
@@ -127,6 +125,24 @@ def local_start(config, shared_obj, storage_queues: dict):
 
     camid = get_config_value(config, 'camera', 'camera_id', 'CAMERA_ID', 'unknown/unknown')
 
+    local_storage = LocalStorage(config)
+
+    while True:
+
+        # blocks until a message is ready
+        dt_pic = storage_q.get()
+        with shared_obj['lock']:
+            curdt: datetime = shared_obj['img_captured']
+            imgbuf = shared_obj['imgbuf']
+
+        # if the current image datetime doesn't match the message
+        # then this message is stale. We can skip it and pull the next.
+        if curdt != dt_pic['dt']:
+            continue
+
+        log.debug('Storing image {}'.format(curdt.isoformat()))
+
+        local_storage.upload(imgbuf, curdt, camid)
 
 
 

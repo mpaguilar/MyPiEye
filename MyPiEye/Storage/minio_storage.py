@@ -4,6 +4,7 @@ import logging
 from io import BytesIO
 
 from minio import Minio
+import cv2
 
 from MyPiEye.CLI import get_self_config_value
 
@@ -76,7 +77,13 @@ class MinioStorage(object):
 
         return True
 
-    def upload(self, jpg, dt_stamp, camera_id):
+    def upload(self, cv2_imgbuf, dt_stamp, camera_id):
+
+        (ok, jpg) = cv2.imencode('.jpg', imgbuf)
+
+        if not ok:
+            log.error('Error encoding file to jpeg')
+            return False
 
         bio = BytesIO(jpg)
         filename = '{}/{}.jpg'.format(camera_id, dt_stamp.strftime(self.filename_format))
