@@ -11,13 +11,15 @@ from MyPiEye.usbcamera import UsbCamera
 from MyPiEye.Storage.azure_blob import AzureBlobStorage
 from MyPiEye.Storage.minio_storage import MinioStorage
 
+from MyPiEye.CLI import get_config_value, get_self_config_value
+
 log = logging.getLogger(__name__)
 
 
 class ConfigureApp(object):
 
     def __init__(self, config, **kwargs):
-        self.config = config
+        self.self_config = config
         self.args = kwargs
 
     def configure(self):
@@ -29,10 +31,10 @@ class ConfigureApp(object):
         if not self.configure_local_filesystem():
             ret = False
 
-        if not self.configure_azure_blob():
+        if not self.configure_minio():
             ret = False
 
-        if not self.configure_minio():
+        if not self.configure_azure_blob():
             ret = False
 
         return ret
@@ -52,6 +54,11 @@ class ConfigureApp(object):
 
         return ret
 
+    def is_enabled(self, key_name, env_name):
+        return get_config_value(
+            self.self_config, 'multi', key_name, env_name, False) \
+               in [True, 'True']
+
     def configure_working_directories(self):
         """
         Creates ``workdir``, for staging file uploads. Must be set.
@@ -60,7 +67,7 @@ class ConfigureApp(object):
 
         log.info('Preparing working directories')
 
-        workdir = self.config.get('workdir', None)
+        workdir = get_self_config_value(self, 'workdir', 'WORKDIR')
         if workdir is None:
             log.error('workdir must be set.')
             return False
@@ -76,16 +83,17 @@ class ConfigureApp(object):
     def configure_local_filesystem(self):
         log.info('Configuring local filesystem')
 
-        if not self.config['multi'].get('enable_local', False):
+        if not self.is_enabled('enable_local', 'MULTI_LOCAL'):
             log.info('Local saving disabled. Skipping.')
             return True
 
-        local_config = self.config.get('local', None)
+        # is there a [local] section?
+        local_config = self.self_config.get('local', None)
         if local_config is None:
             log.info('[local] section not found. Skipping.')
             return False
 
-        fs = LocalStorage(self.config)
+        fs = LocalStorage(self.self_config)
 
         ret = fs.configure()
         if ret:
@@ -97,7 +105,7 @@ class ConfigureApp(object):
 
     def configure_azure_blob(self):
 
-        if not self.config['multi'].get('enable_azblob', False):
+        if not self.is_enabled('enable_azblob', 'MULTI_AZBLOB'):
             log.info('Azure Blob disabled. Skipping.')
             return True
 
@@ -114,13 +122,13 @@ class ConfigureApp(object):
     def configure_minio(self):
         ret = True
 
-        if not self.config['multi'].get('enable_minio', False):
+        if not self.is_enabled('enable_minio', 'MULTI_MINIO'):
             log.info('minio disabled. Skipping.')
             return True
 
         log.info('Configuring minio')
 
-        mio = MinioStorage(self.config)
+        mio = MinioStorage(self.self_config)
         if not mio.configure():
             log.error('minio configuration failed')
             ret = False
@@ -130,12 +138,11 @@ class ConfigureApp(object):
     def configure_aws(self):
         log.info('Configuring AWS')
 
-        aws_config = self.config.get('S3', None)
-        if aws_config is None:
-            log.info('[S3] section not found. Skipping.')
+        if not self.is_enabled('enable_s3', 'MULTI_S3'):
+            log.info('S3 disabled. Skipping')
             return True
 
-        aws = S3Storage(self.config)
+        aws = S3Storage(self.self_config)
         chk = aws.configure()
 
         if chk:
@@ -146,21 +153,27 @@ class ConfigureApp(object):
         return chk
 
     def configure_gdrive(self):
-        gconfig = self.config.get('gdrive', None)
 
+        log.warning('This component is a mess')
+
+        if not self.is_enabled('enable_gdrive', 'MULTI_GDRIVE'):
+            log.info('GDrive disabled. Skipping')
+            return True
+
+        gconfig = self.self_config.get('gdrive', None)
         if gconfig is None:
             log.info('No [gdrive] section found')
-            return True
+            return False
 
         ret = True
 
-        gauth = GDriveAuth(self.config)
+        gauth = GDriveAuth(self.self_config)
         if not gauth.configure():
             log.error('GDriveAuth check failed')
             ret = False
 
         if ret:
-            gdrive = GDriveStorage(gauth, self.config)
+            gdrive = GDriveStorage(gauth, self.self_config)
             if not gdrive.configure():
                 log.error('Failed to configure GDrive')
                 ret = False
@@ -187,7 +200,7 @@ class ConfigureApp(object):
         if not self.check_camera():
             ret = False
 
-        if not self.check_filestorage():
+        if not self.check_localstorage():
             ret = False
 
         if not self.check_gdrive():
@@ -208,16 +221,16 @@ class ConfigureApp(object):
 
         log.info('Checking camera config')
 
-        if not self.config['multi'].get('enable_camera', False) in [True, 'True']:
+        if not self.is_enabled('enable_camera', 'MULTI_CAMERA'):
             log.info('Camera disabled. Skipping.')
             return True
 
-        config = self.config.get('camera', None)
+        config = self.self_config.get('camera', None)
         if config is None:
             log.error('[camera] section is required')
             return False
 
-        cam = UsbCamera(self.config)
+        cam = UsbCamera(self.self_config)
 
         chk = cam.check()
 
@@ -234,7 +247,7 @@ class ConfigureApp(object):
         log.info('Checking global config')
 
         # check workdir
-        workdir = self.config.get('workdir', None)
+        workdir = get_self_config_value(self, 'workdir', 'WORKDIR')
 
         if workdir is None:
             log.error('workdir must be set')
@@ -244,7 +257,7 @@ class ConfigureApp(object):
                 log.error('Working directory does not exist: {}'.format(workdir))
                 ret = False
 
-        timezone = self.config.get('timezone', None)
+        timezone = get_self_config_value(self, 'timezone', 'TIMEZONE', None)
         if tz is None:
             log.warning('timezone is not set')
         else:
@@ -255,7 +268,7 @@ class ConfigureApp(object):
 
         # a [multi] section is required
 
-        multi = self.config.get('multi', None)
+        multi = self.self_config.get('multi', None)
         if multi is None:
             log.error('No [multi] config section')
             ret = False
@@ -270,16 +283,16 @@ class ConfigureApp(object):
     def check_azblob(self):
         log.info('Checking Azure Blob')
 
-        if not self.config['multi'].get('enable_azblob', False) in [True, 'True']:
+        if not self.is_enabled('enable_azblob', 'MULTI_AZBLOB'):
             log.info('Azure Blob disabled. Skipping.')
             return True
 
-        azconfig = self.config.get('azure_blob', None)
+        azconfig = self.self_config.get('azure_blob', None)
         if azconfig is None:
             log.error('No [azure_blob] section found.')
             return False
 
-        azblob = AzureBlobStorage(self.config)
+        azblob = AzureBlobStorage(self.self_config)
 
         if not azblob.check():
             log.error('Azure Blob checks failed')
@@ -292,17 +305,16 @@ class ConfigureApp(object):
     def check_minio(self):
 
         log.info('Checking minio')
-
-        if not self.config['multi'].get('enable_minio', False) in [True, 'True']:
+        if not self.is_enabled('enable_minio', 'MULTI_MINIO'):
             log.info('minio disabled. Skipping.')
             return True
 
-        mconfig = self.config.get('minio', None)
+        mconfig = self.self_config.get('minio', None)
         if mconfig is None:
             log.info('No [minio] section found.')
             return False
 
-        mio = MinioStorage(self.config)
+        mio = MinioStorage(self.self_config)
 
         if not mio.check():
             log.error('minio check failed')
@@ -311,41 +323,42 @@ class ConfigureApp(object):
         log.info('minio configuration okay')
         return True
 
-    def check_filestorage(self):
+    def check_localstorage(self):
 
-        log.info('Checking FileStorage')
+        log.info('Checking LocalStorage')
 
-        if not self.config['multi'].get('enable_local', False) in [True, 'True']:
-            log.info('Local filestorage disabled. Skipping.')
+        if not self.is_enabled('enable_local', 'MULTI_LOCAL'):
+            log.info('Local storage disabled. Skipping.')
             return True
 
-        localconfig = self.config.get('local', None)
+        localconfig = self.self_config.get('local', None)
         if localconfig is None:
             log.info('No [local] section found. Skipping.')
             return False
 
-        fs = LocalStorage(self.config)
+        fs = LocalStorage(self.self_config)
         if not fs.check():
-            log.critical('Local filesystem check failed')
+            log.critical('Local storage check failed')
             return False
 
-        log.info('Local filesystem checks passed')
+        log.info('Local storage checks passed')
         return True
 
     def check_s3(self):
 
         log.info('Checking AWS config')
 
-        if not self.config['multi'].get('enable_s3', False) in [True, 'True']:
+        if not self.is_enabled('enable_s3', 'MULTI_S3'):
             log.info('AWS S3 disabled. Skipping.')
             return True
 
-        s3_config = self.config.get('s3', None)
+        s3_config = self.self_config.get('s3', None)
         if s3_config is None:
             log.info('No [s3] section found')
             return False
 
-        s3 = S3Storage(self.config)
+        s3 = S3Storage(self.self_config)
+
         if not s3.check():
             log.critical('AWS check failed')
             return False
@@ -356,7 +369,7 @@ class ConfigureApp(object):
     def check_gdrive(self):
 
         log.info('Checking GDrive')
-        if not self.config['multi'].get('enable_gdrive', False) in [True, 'True']:
+        if not self.is_enabled('enable_gdrive', 'MULTI_GDRIVE'):
             log.info('GDrive disabled. Skipping.')
             return True
 
