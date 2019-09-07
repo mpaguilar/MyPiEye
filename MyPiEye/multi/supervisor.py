@@ -79,11 +79,10 @@ class Supervisor(object):
                 log.error('Did everything crash?')
 
 
-
     def init_process_infos(self,
-                           shared_obj: multiprocessing.Manager,
-                           internal_mq : multiprocessing.Queue = None,
-                           external_mq : multiprocessing.Queue = None):
+                           shared_obj: multiprocessing.Manager):
+
+        storage_queues = {}
 
         def init_proc(proc_name: str, proc_func, run=True):
             self.process_infos[proc_name] = {
@@ -91,7 +90,7 @@ class Supervisor(object):
                 'process_args': {
                     'name': proc_name,
                     'target': proc_func,
-                    'args': (self.config, shared_obj)
+                    'args': (self.config, shared_obj, storage_queues)
                 },
                 'run_process': run
             }
@@ -99,26 +98,27 @@ class Supervisor(object):
         if self.multi.get('enable_camera', False):
             init_proc('camera', camera_start, True)
 
-        if self.multi.get('enable_redis', False):
-            redis_config = self.config.get('redis', None)
-            if redis_config is not None:
-                init_proc('redis', redis_start, False)
-            else:
-                log.error('redis service requires [redis] section')
+        storage_proc_count = self.config['multi'].get('backend_processes', '1')
+        storage_proc_count = int(storage_proc_count)
 
-        if self.multi.get('enable_azure_blob', False):
-            azconfig = self.config.get('azure_blob', None)
-            if azconfig is not None:
-                init_proc('azblob', azblob_start, True)
-            else:
-                log.error('azure_blob service requires [azure_blob] section')
+        for x in range(1, storage_proc_count + 1):
 
-        if self.multi.get('enable_minio', False):
-            init_proc('minio', minio_start, True)
+            if self.multi.get('enable_redis', False) in [True, 'True']:
+                storage_queues['redis'] = multiprocessing.Queue(maxsize=1)
+                init_proc('redis_{}'.format(x), redis_start, True)
+
+            if self.multi.get('enable_azure_blob', 'False') in [True, 'True']:
+                storage_queues['azure'] = multiprocessing.Queue(maxsize=1)
+                init_proc('azblob_{}'.format(x), azblob_start, True)
+
+            if self.multi.get('enable_minio', False) in [True, 'True']:
+                storage_queues['minio'] = multiprocessing.Queue(maxsize=1)
+                init_proc('minio_{}'.format(x), minio_start, True)
 
     def start(self):
         log.info('Starting camera supervisor')
         Supervisor.manager = Manager()
+        msgqueues = {}
 
         shared_obj = Supervisor.manager.dict()
         # stores the current cv image as a list
@@ -135,10 +135,7 @@ class Supervisor(object):
         # a datetime object of the last capture, UTC
         shared_obj['img_captured'] = datetime.utcnow()
 
-        # for internal communication
-        imq = Supervisor.manager.Queue()
-
-        self.init_process_infos(shared_obj, imq)
+        self.init_process_infos(shared_obj);
 
         # compares images
 

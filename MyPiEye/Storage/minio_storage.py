@@ -7,7 +7,6 @@ from minio import Minio
 
 log = logging.getLogger(__name__)
 
-
 class MinioStorage(object):
 
     def __init__(self, global_config):

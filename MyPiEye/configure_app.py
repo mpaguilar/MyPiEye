@@ -208,7 +208,7 @@ class ConfigureApp(object):
 
         log.info('Checking camera config')
 
-        if not self.config['multi'].get('enable_camera', False):
+        if not self.config['multi'].get('enable_camera', False) in [True, 'True']:
             log.info('Camera disabled. Skipping.')
             return True
 
@@ -270,7 +270,7 @@ class ConfigureApp(object):
     def check_azblob(self):
         log.info('Checking Azure Blob')
 
-        if not self.config['multi'].get('enable_azblob', False):
+        if not self.config['multi'].get('enable_azblob', False) in [True, 'True']:
             log.info('Azure Blob disabled. Skipping.')
             return True
 
@@ -293,7 +293,7 @@ class ConfigureApp(object):
 
         log.info('Checking minio')
 
-        if not self.config['multi'].get('enable_minio', False):
+        if not self.config['multi'].get('enable_minio', False) in [True, 'True']:
             log.info('minio disabled. Skipping.')
             return True
 
@@ -315,7 +315,7 @@ class ConfigureApp(object):
 
         log.info('Checking FileStorage')
 
-        if not self.config['multi'].get('enable_local', False):
+        if not self.config['multi'].get('enable_local', False) in [True, 'True']:
             log.info('Local filestorage disabled. Skipping.')
             return True
 
@@ -336,7 +336,7 @@ class ConfigureApp(object):
 
         log.info('Checking AWS config')
 
-        if not self.config['multi'].get('enable_s3', False):
+        if not self.config['multi'].get('enable_s3', False) in [True, 'True']:
             log.info('AWS S3 disabled. Skipping.')
             return True
 
@@ -356,7 +356,7 @@ class ConfigureApp(object):
     def check_gdrive(self):
 
         log.info('Checking GDrive')
-        if not self.config['multi'].get('enable_gdrive', False):
+        if not self.config['multi'].get('enable_gdrive', False) in [True, 'True']:
             log.info('GDrive disabled. Skipping.')
             return True
 
