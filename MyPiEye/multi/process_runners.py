@@ -112,7 +112,7 @@ def minio_start(config, shared_obj, storage_queues: dict):
 
         log.debug('Storing image on minio: {}'.format(curdt.isoformat()))
 
-        mio.upload(jpg, imgbuf, camid)
+        mio.upload(imgbuf, curdt, camid)
 
         sleep(.01)
 

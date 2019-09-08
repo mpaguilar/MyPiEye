@@ -79,7 +79,7 @@ class MinioStorage(object):
 
     def upload(self, cv2_imgbuf, dt_stamp, camera_id):
 
-        (ok, jpg) = cv2.imencode('.jpg', imgbuf)
+        (ok, jpg) = cv2.imencode('.jpg', cv2_imgbuf)
 
         if not ok:
             log.error('Error encoding file to jpeg')
