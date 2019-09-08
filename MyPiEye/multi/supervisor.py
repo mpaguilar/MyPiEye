@@ -90,7 +90,7 @@ class Supervisor(object):
 
     def is_enabled(self, key_name, env_name):
         return get_config_value(
-            self.self_config, 'multi', key_name, env_name, False) \
+            self.config, 'multi', key_name, env_name, False) \
                in [True, 'True']
 
 
@@ -118,30 +118,34 @@ class Supervisor(object):
 
         for x in range(1, storage_proc_count + 1):
 
-            if get_self_config_value(
-                    self, 'enable_redis', 'MULTI_REDIS', False) in [True, 'True']:
+            if self.is_enabled('enable_redis', 'MULTI_REDIS'):
                 storage_queues['redis'] = multiprocessing.Queue(maxsize=1)
                 init_proc('redis_{}'.format(x), redis_start, True)
 
-            if get_self_config_value(
-                    self, 'enable_azure_blob', 'MULTI_AZBLOB', False) in [True, 'True']:
+            if self.is_enabled('enable_azure_blob', 'MULTI_AZBLOB'):
                 storage_queues['azure'] = multiprocessing.Queue(maxsize=1)
                 init_proc('azblob_{}'.format(x), azblob_start, True)
 
-            if get_self_config_value(
-                    self, 'enable_minio', 'MULTI_MINIO', False) in [True, 'True']:
+            if self.is_enabled('enable_minio', 'MULTI_MINIO'):
                 storage_queues['minio'] = multiprocessing.Queue(maxsize=1)
                 init_proc('minio_{}'.format(x), minio_start, True)
 
-            if get_self_config_value(
-                    self, 'enable_local', 'MULTI_LOCAL', False) in [True, 'True']:
+            if self.is_enabled('enable_local', 'MULTI_LOCAL'):
                 storage_queues['minio'] = multiprocessing.Queue(maxsize=1)
                 init_proc('local_{}'.format(x), local_start, True)
 
         if self.is_enabled('enable_celery', 'MULTI_CELERY'):
-            log.info('Celery disabled. Skipping.')
+            log.info('Starting Celery backend')
             storage_queues['celery'] = multiprocessing.Queue(maxsize=1)
-            pc = get_config_value(self.config, 'celery', 'num_processes', 'CELERY_PROCS', 1)
+            pc = get_config_value(
+                self.config,
+                'celery',
+                'num_processes',
+                'CELERY_PROCS',
+                storage_proc_count)
+
+            pc = int(pc)
+
             for x in range(1, pc + 1):
                 init_proc('celery_{}'.format(x), celery_start, True)
 

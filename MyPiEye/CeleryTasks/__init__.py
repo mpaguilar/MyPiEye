@@ -27,5 +27,5 @@ def accept_capture(dt_stamp: datetime, cam_id: str):
 
 
 @app.task()
-def ping():
-    return 'pong!'
+def ping(txt):
+    return '{}: pong!'.format(txt)
