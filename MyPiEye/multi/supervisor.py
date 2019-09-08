@@ -30,7 +30,7 @@ class Supervisor(object):
 
         self.config = config
         self.self_config = config.get('multi', None)
-        self.cfg = partial(get_config_value, config, 'global')
+        self.cfg = partial(get_config_value, config, 'multi')
 
         if self.self_config is None:
             raise Exception('[multi] not found in configuration')
@@ -110,28 +110,60 @@ class Supervisor(object):
                 'run_process': run
             }
 
-        if get_self_config_value(self, 'enable_camera', 'MULTI_ENABLE_CAMERA', False):
+        if self.cfg('enable_camera', 'MULTI_ENABLE_CAMERA', False):
             init_proc('camera', camera_start, True)
 
         storage_proc_count = self.config['multi'].get('backend_processes', '1')
         storage_proc_count = int(storage_proc_count)
 
-        for x in range(1, storage_proc_count + 1):
+        if self.is_enabled('enable_redis', 'MULTI_REDIS'):
+            storage_queues['redis'] = multiprocessing.Queue(maxsize=1)
+            pc = get_config_value(
+                self.config,
+                'redis',
+                'num_processes',
+                'REDIS_PROCS',
+                storage_proc_count)
 
-            if self.is_enabled('enable_redis', 'MULTI_REDIS'):
-                storage_queues['redis'] = multiprocessing.Queue(maxsize=1)
+            for x in range(1, pc + 1):
                 init_proc('redis_{}'.format(x), redis_start, True)
 
-            if self.is_enabled('enable_azure_blob', 'MULTI_AZBLOB'):
-                storage_queues['azure'] = multiprocessing.Queue(maxsize=1)
+        if self.is_enabled('enable_azure_blob', 'MULTI_AZBLOB'):
+            storage_queues['azure'] = multiprocessing.Queue(maxsize=1)
+            pc = get_config_value(
+                self.config,
+                'azure_blob',
+                'num_processes',
+                'AZBLOB_PROCS',
+                storage_proc_count)
+
+            for x in range(1, pc + 1):
                 init_proc('azblob_{}'.format(x), azblob_start, True)
 
-            if self.is_enabled('enable_minio', 'MULTI_MINIO'):
-                storage_queues['minio'] = multiprocessing.Queue(maxsize=1)
+        if self.is_enabled('enable_minio', 'MULTI_MINIO'):
+            log.info('Starting minio backend')
+            storage_queues['minio'] = multiprocessing.Queue(maxsize=1)
+            pc = get_config_value(
+                self.config,
+                'minio',
+                'num_processes',
+                'MINIO_PROCS',
+                storage_proc_count)
+
+            for x in range(1, pc + 1):
                 init_proc('minio_{}'.format(x), minio_start, True)
 
-            if self.is_enabled('enable_local', 'MULTI_LOCAL'):
-                storage_queues['minio'] = multiprocessing.Queue(maxsize=1)
+        if self.is_enabled('enable_local', 'MULTI_LOCAL'):
+            log.info('Starting local backend')
+            storage_queues['local'] = multiprocessing.Queue(maxsize=1)
+            pc = get_config_value(
+                self.config,
+                'local',
+                'num_processes',
+                'LOCAL_PROCS',
+                storage_proc_count)
+
+            for x in range(1, pc + 1):
                 init_proc('local_{}'.format(x), local_start, True)
 
         if self.is_enabled('enable_celery', 'MULTI_CELERY'):

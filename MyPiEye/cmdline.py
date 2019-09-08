@@ -50,22 +50,18 @@ def clean_exit(sig, _):
 @click.option('--loglevel', default='INFO',
               type=click.Choice(CLI.LOG_LEVELS),
               help='python log levels')
-@click.option('--logfile', default=settings['logfile'], help="output log file")
-@click.option('--color/--no-color', default=settings['color'], help='Pretty color output')
+@click.option('--logfile', default=None, help="output log file")
+@click.option('--color/--no-color', default=None, help='Pretty color output')
 @click.option('--iniconfig',
-              default=settings['config'], help='key/val (.ini) config file', callback=CLI.load_config)
+              default='mypieye.ini', help='key/val (.ini) config file', callback=CLI.load_config)
 @click.pass_context
 def mypieye(ctx, **cli_flags):
-    settings.update(ctx.params['iniconfig'])
-    settings.update(cli_flags)
-    del settings['iniconfig']
-
-    ctx.params = dict(settings)
-
-    CLI.set_loglevel(settings['loglevel'])
-    if not CLI.enable_log(enable_color=settings['color']):
-        log.critical('Error opening logger')
-        sys.exit(-2)
+    log.info('Starting...')
+    # the callback to the ``--iniconfig`` parameter updates
+    # settings with the command line parameters
+    ctx.obj = ctx.params['iniconfig']
+    lvl = CLI.get_config_value(ctx.obj, 'global', 'loglevel', 'LOG_LEVEL')
+    CLI.set_loglevel(lvl)
 
 
 @mypieye.command()
@@ -73,9 +69,11 @@ def mypieye(ctx, **cli_flags):
 def check(ctx, **cli_flags):
     print('Checking configuration.')
 
-    config = ConfigureApp(settings)
+    config = ctx.obj
 
-    if not config.check():
+    config_app = ConfigureApp(config)
+
+    if not config_app.check():
         log.critical('App configuration failed')
         sys.exit(-1)
 
@@ -89,14 +87,17 @@ def check(ctx, **cli_flags):
 def configure(ctx, **cli_flags):
     print('Configuring...you may be prompted')
 
-    config = ConfigureApp(settings)
-    if not config.configure():
+    config = ctx.obj
+
+    config_app = ConfigureApp(config)
+
+    if not config_app.configure():
         log.critical('Failed to configure app')
         sys.exit(-1)
 
     print('Application configured')
 
-    if not config.check():
+    if not config_app.check():
         log.critical('Start checks failed')
         sys.exit(-1)
 
@@ -120,12 +121,13 @@ def worker(ctx, appargs):
     :param appargs:
     :return:
     """
-    config = ConfigureApp(settings)
-    if not config.check():
+    config = ctx.obj
+    config_app = ConfigureApp(config)
+    if not config_app.check():
         log.critical('Start checks failed')
         sys.exit(-1)
 
-    redis_cfg = partial(CLI.get_config_value, settings, 'celery')
+    redis_cfg = partial(CLI.get_config_value, config, 'celery')
     redis_host = redis_cfg('host', 'CELERY_REDIS_HOST')
     redis_port = redis_cfg('port', 'CELERY_REDIS_PORT')
     redis_db = redis_cfg('db', 'CELERY_REDIS_DB')
@@ -133,10 +135,10 @@ def worker(ctx, appargs):
     redis_url = f'redis://{redis_host}:{redis_port}/{redis_db}'
     MyPiEye.CeleryTasks.app_config = config
 
-    MyPiEye.CeleryTasks.app.conf.result_backend = redis_url
-    MyPiEye.CeleryTasks.app.conf.broker_url = redis_url
+    MyPiEye.CeleryTasks.celery_app.conf.result_backend = redis_url
+    MyPiEye.CeleryTasks.celery_app.conf.broker_url = redis_url
     args = ['worker'] + list(appargs)
-    MyPiEye.CeleryTasks.app.worker_main(args)
+    MyPiEye.CeleryTasks.celery_app.worker_main(args)
 
 
 @mypieye.command()
@@ -144,12 +146,13 @@ def worker(ctx, appargs):
 def run(ctx, **cli_flags):
     log.warning('trying new mp framework')
 
-    config = ConfigureApp(settings)
-    if not config.check():
+    config = ctx.obj
+    config_app = ConfigureApp(config)
+    if not config_app.check():
         log.critical('Start checks failed')
         sys.exit(-1)
 
-    sup = Supervisor(settings)
+    sup = Supervisor(config)
     # blocks until return
     sup.start()
 

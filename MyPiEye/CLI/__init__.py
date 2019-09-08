@@ -1,9 +1,11 @@
 import logging
 from colorama import init, Fore, Back, Style
-from os.path import exists, abspath
-from os import environ
-import configparser
-import multiprocessing
+from os.path import abspath
+
+from .app_config import \
+    load_config, \
+    get_config_value, \
+    get_self_config_value
 
 init()
 
@@ -70,8 +72,7 @@ def enable_log(fmt='[%(asctime)s] [%(process)5s] %(levelname)s %(module)s %(name
     :return: Logger object
     """
 
-    # lgr = logging.getLogger()
-    lgr = multiprocessing.get_logger()
+    lgr = logging.getLogger()
     lgr.handlers.clear()
 
     # if there's no special requirements for logging
@@ -112,97 +113,3 @@ def set_loglevel(level_str):
     lgr.setLevel(LOG_LEVELS[level_str])
     return True
 
-
-def load_config(ctx, param, config_filename):
-    """
-    Called by Click arg parser when an ini is passed in.
-
-    Merges the [global] ini configuration with the cli flags,
-    and adds sections from the ini file.
-
-    Returns the config as a dict.
-
-    :param ctx: Click context, the params attribute is used
-    :param param: Click passes the parameter name, may be None
-    :param config_filename: The ini file to process
-    :return: The config as dict
-    """
-
-    log.info('loading config')
-    ret = None
-
-    # did we get a filename?
-    if config_filename is not None:
-        # does the config file exist?
-        log.info('Reading config from {}'.format(config_filename))
-        if exists(config_filename):
-            ret = {}
-            cfgparse = configparser.RawConfigParser()
-
-            # load it
-            cfgparse.read(config_filename)
-
-            # load it all
-            for sec in cfgparse.sections():
-                ret[sec] = {}
-
-                for key in cfgparse[sec]:
-                    ret[sec][key] = cfgparse[sec][key]
-        else:
-            raise FileNotFoundError('{} was not found'.format(config_filename))
-
-    global_settings = ret.get('global', None)
-    if global_settings is None:
-        log.warning('No [global] section found in .ini')
-        ret['global'] = {}
-
-    ret.update(ret['global'])
-    del ret['global']
-    # ctx.params = ret
-
-    return ret
-
-
-def get_self_config_value(obj, key_name, env_name, default=None):
-    """
-    If the environment variable is found, the config
-    object will be updated with it's value
-    :param obj: should have a member named ``self_config``.
-    :param key_name:
-    :param env_name:
-    :param default:
-    :return:
-    """
-    val = environ.get(env_name)
-    if val is None:
-        val = obj.self_config.get(key_name, default)
-    else:
-        obj.self_config[key_name] = val
-
-    return val
-
-
-def get_config_value(
-        config: dict,
-        section_name: str,
-        key_name: str,
-        env_name: str = None,
-        default=None):
-    env_val = default
-
-    if config is None:
-        log.error('No config passed')
-        return default
-
-    section = config.get(section_name)
-    if section is None:
-        log.error('section {} not found'.format(section_name))
-        return default
-
-    if env_name is not None:
-        env_val = environ.get(env_name)
-        if env_val is None:
-            return section.get(key_name, default)
-
-    section[key_name] = env_val
-    return env_val

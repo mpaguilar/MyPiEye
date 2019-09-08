@@ -3,6 +3,7 @@ from os.path import exists, join, abspath
 from os import makedirs
 from dateutil import tz
 from datetime import datetime
+from functools import partial
 
 from MyPiEye.Storage.local_storage import LocalStorage
 from MyPiEye.Storage.s3_storage import S3Storage
@@ -21,7 +22,8 @@ log = logging.getLogger(__name__)
 class ConfigureApp(object):
 
     def __init__(self, config, **kwargs):
-        self.self_config = config
+        self.config = config
+        self.cfg = partial(get_config_value, config, 'global')
         self.args = kwargs
 
     def configure(self):
@@ -49,7 +51,7 @@ class ConfigureApp(object):
 
     def is_enabled(self, key_name, env_name):
         return get_config_value(
-            self.self_config, 'multi', key_name, env_name, False) \
+            self.config, 'multi', key_name, env_name, False) \
                in [True, 'True']
 
     def configure_working_directories(self):
@@ -60,7 +62,7 @@ class ConfigureApp(object):
 
         log.info('Preparing working directories')
 
-        workdir = get_self_config_value(self, 'workdir', 'WORKDIR')
+        workdir = self.cfg('workdir', 'WORKDIR')
         if workdir is None:
             log.error('workdir must be set.')
             return False
@@ -81,12 +83,12 @@ class ConfigureApp(object):
             return True
 
         # is there a [local] section?
-        local_config = self.self_config.get('local', None)
+        local_config = self.config.get('local', None)
         if local_config is None:
             log.info('[local] section not found. Skipping.')
             return False
 
-        fs = LocalStorage(self.self_config)
+        fs = LocalStorage(self.config)
 
         ret = fs.configure()
         if ret:
@@ -121,7 +123,7 @@ class ConfigureApp(object):
 
         log.info('Configuring minio')
 
-        mio = MinioStorage(self.self_config)
+        mio = MinioStorage(self.config)
         if not mio.configure():
             log.error('minio configuration failed')
             ret = False
@@ -137,7 +139,7 @@ class ConfigureApp(object):
 
         log.info('Configuring Celery')
 
-        cel = CeleryStorage(self.self_config)
+        cel = CeleryStorage(self.config)
         if not cel.configure():
             log.error('Celery configuration failed')
             ret = False
@@ -153,7 +155,7 @@ class ConfigureApp(object):
 
         log.info('Configuring redis')
 
-        rds = RedisStorage(self.self_config)
+        rds = RedisStorage(self.config)
         if not rds.configure():
             log.error('redis configuration failed')
             ret = False
@@ -167,7 +169,7 @@ class ConfigureApp(object):
             log.info('S3 disabled. Skipping')
             return True
 
-        aws = S3Storage(self.self_config)
+        aws = S3Storage(self.config)
         chk = aws.configure()
 
         if chk:
@@ -185,20 +187,20 @@ class ConfigureApp(object):
             log.info('GDrive disabled. Skipping')
             return True
 
-        gconfig = self.self_config.get('gdrive', None)
+        gconfig = self.config.get('gdrive', None)
         if gconfig is None:
             log.info('No [gdrive] section found')
             return False
 
         ret = True
 
-        gauth = GDriveAuth(self.self_config)
+        gauth = GDriveAuth(self.config)
         if not gauth.configure():
             log.error('GDriveAuth check failed')
             ret = False
 
         if ret:
-            gdrive = GDriveStorage(gauth, self.self_config)
+            gdrive = GDriveStorage(gauth, self.config)
             if not gdrive.configure():
                 log.error('Failed to configure GDrive')
                 ret = False
@@ -253,12 +255,12 @@ class ConfigureApp(object):
             log.info('Camera disabled. Skipping.')
             return True
 
-        config = self.self_config.get('camera', None)
+        config = self.config.get('camera', None)
         if config is None:
             log.error('[camera] section is required')
             return False
 
-        cam = UsbCamera(self.self_config)
+        cam = UsbCamera(self.config)
 
         chk = cam.check()
 
@@ -275,7 +277,7 @@ class ConfigureApp(object):
         log.info('Checking global config')
 
         # check workdir
-        workdir = get_self_config_value(self, 'workdir', 'WORKDIR')
+        workdir = self.cfg('workdir', 'WORKDIR')
 
         if workdir is None:
             log.error('workdir must be set')
@@ -285,7 +287,7 @@ class ConfigureApp(object):
                 log.error('Working directory does not exist: {}'.format(workdir))
                 ret = False
 
-        timezone = get_self_config_value(self, 'timezone', 'TIMEZONE', None)
+        timezone = self.cfg('timezone', 'TIMEZONE', None)
         if tz is None:
             log.warning('timezone is not set')
         else:
@@ -296,7 +298,7 @@ class ConfigureApp(object):
 
         # a [multi] section is required
 
-        multi = self.self_config.get('multi', None)
+        multi = self.config.get('multi', None)
         if multi is None:
             log.error('No [multi] config section')
             ret = False
@@ -357,12 +359,13 @@ class ConfigureApp(object):
             log.info('Celery disabled. Skipping.')
             return True
 
-        rconfig = self.self_config.get('celery')
+        rconfig = self.config.get('celery')
+
         if rconfig is None:
             log.error('No [celery] section found.')
             return False
 
-        cel = CeleryStorage(self.self_config)
+        cel = CeleryStorage(self.config)
 
         if not cel.check():
             log.error('Celery check failed')

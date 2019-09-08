@@ -4,7 +4,7 @@ from functools import partial
 from time import sleep
 from datetime import datetime
 
-from MyPiEye.CeleryTasks import app
+from MyPiEye.CeleryTasks import celery_app
 import MyPiEye.CeleryTasks as mycel
 
 from MyPiEye.CLI import get_config_value
@@ -16,18 +16,35 @@ class CeleryStorage(object):
     def __init__(self, global_config):
         self.cfg = partial(get_config_value, global_config, 'celery')
         self.host = self.cfg('host', 'CELERY_REDIS_HOST')
-        self.port = int(self.cfg('post', 'CELERY_REDIS_PORT', '6379'))
+        self.port = int(self.cfg('port', 'CELERY_REDIS_PORT', '6379'))
         self.db = int(self.cfg('db', 'CELERY_REDIS_DB', '0'))
 
         self.camid = get_config_value(global_config, 'camera', 'camera_id', 'CAMERA_ID', 'unknown/unknown')
 
         self.redis_url = f'redis://{self.host}:{self.port}/{self.db}'
 
-        app.conf.broker_url = self.redis_url
-        app.conf.result_backend = self.redis_url
+        celery_app.conf.broker_url = self.redis_url
+        celery_app.conf.result_backend = self.redis_url
 
     def check(self):
-        return True
+        ret = True
+        if self.host is None:
+            log.error('host is not set')
+            ret = False
+
+        if self.port is None:
+            log.error('port is not set')
+            ret = False
+
+        if self.db is None:
+            log.error('db is not set')
+            ret = False
+
+        if self.camid is None:
+            log.error('camid is not set')
+            ret = False
+
+        return ret
 
     def configure(self):
         return True

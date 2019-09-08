@@ -7,13 +7,13 @@ from celery.utils.log import get_task_logger
 from MyPiEye.Storage.minio_storage import MinioStorage
 from MyPiEye.CLI import get_config_value
 
-app = Celery('imghandler')
+celery_app = Celery('imghandler')
 log = get_task_logger(__name__)
 
 app_config = {}
 
 
-@app.task()
+@celery_app.task()
 def accept_capture(dt_stamp: datetime, cam_id: str):
     # bout-time/cam0/20190907/23/15/2019.09.07.23.15.49.220779.jpg
 
@@ -26,6 +26,6 @@ def accept_capture(dt_stamp: datetime, cam_id: str):
     return
 
 
-@app.task()
+@celery_app.task()
 def ping(txt):
     return '{}: pong!'.format(txt)
