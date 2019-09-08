@@ -47,21 +47,6 @@ class ConfigureApp(object):
 
         return ret
 
-    def dedcode2b_deleted(self):
-        if not self.configure_local_filesystem():
-            log.critical('Failed to configure local filesystem')
-            ret = False
-
-        if not self.configure_gdrive():
-            log.critical('Failed to configure GDriveStorage')
-            ret = False
-
-        if not self.configure_aws():
-            log.critical('Failed to configure AWS')
-            ret = False
-
-        return ret
-
     def is_enabled(self, key_name, env_name):
         return get_config_value(
             self.self_config, 'multi', key_name, env_name, False) \
