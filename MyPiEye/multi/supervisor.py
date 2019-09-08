@@ -14,7 +14,8 @@ from MyPiEye.multi.process_runners import \
     camera_start, \
     redis_start, \
     azblob_start, \
-    minio_start
+    minio_start, \
+    celery_start
 
 from MyPiEye.CLI import get_self_config_value
 
@@ -128,7 +129,12 @@ class Supervisor(object):
             if get_self_config_value(
                     self, 'enable_local', 'MULTI_LOCAL', False) in [True, 'True']:
                 storage_queues['minio'] = multiprocessing.Queue(maxsize=1)
-                init_proc('minio_{}'.format(x), minio_start, True)
+                init_proc('local_{}'.format(x), local_start, True)
+
+            if get_self_config_value(
+                    self, 'enable_celery', 'MULTI_CELERY', False) in [True, 'True']:
+                storage_queues['celery'] = multiprocessing.Queue(maxsize=1)
+                init_proc('celery_{}'.format(x), celery_start, True)
 
     def start(self):
         log.info('Starting camera supervisor')

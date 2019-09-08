@@ -1,10 +1,9 @@
 import logging
 import click
 import sys
-import signal
 import platform
 
-import multiprocessing
+from functools import partial
 
 import MyPiEye.CLI as CLI
 from MyPiEye.main_app import MainApp
@@ -12,8 +11,10 @@ from MyPiEye.configure_app import ConfigureApp
 
 from MyPiEye.multi.supervisor import Supervisor
 
+import MyPiEye.CeleryTasks
+
 # log = logging.getLogger('mypieye')
-log = multiprocessing.get_logger()
+log = logging.getLogger(__name__)
 
 windows_settings = {
     'savedir': 'c:/temp'
@@ -117,6 +118,42 @@ def s3_archive(ctx, **cli_flags):
     mainapp.s3_archive()
 
     log.info('Archive complete')
+
+
+@mypieye.command(context_settings={"ignore_unknown_options": True})
+@click.argument('appargs', nargs=-1)
+@click.pass_context
+def worker(ctx, appargs):
+    """
+    Accepts ``celery`` command line arguments, for example:
+
+    ```
+    python -m MyPiEye worker --pool=solo
+    ```
+
+    Use ``--pool=solo`` for debugging. Use ``--pool=eventlet`` to run on windows.
+
+    :param ctx:
+    :param appargs:
+    :return:
+    """
+    config = ConfigureApp(settings)
+    if not config.check():
+        log.critical('Start checks failed')
+        sys.exit(-1)
+
+    redis_cfg = partial(CLI.get_config_value, settings, 'celery')
+    redis_host = redis_cfg('host', 'CELERY_REDIS_HOST')
+    redis_port = redis_cfg('port', 'CELERY_REDIS_PORT')
+    redis_db = redis_cfg('db', 'CELERY_REDIS_DB')
+
+    redis_url = f'redis://{redis_host}:{redis_port}/{redis_db}'
+    MyPiEye.CeleryTasks.app_config = config
+
+    MyPiEye.CeleryTasks.app.conf.result_backend = redis_url
+    MyPiEye.CeleryTasks.app.conf.broker_url = redis_url
+
+    MyPiEye.CeleryTasks.app.worker_main(appargs)
 
 
 @mypieye.command()

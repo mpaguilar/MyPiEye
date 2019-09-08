@@ -11,6 +11,7 @@ from MyPiEye.usbcamera import UsbCamera
 from MyPiEye.Storage.azure_blob import AzureBlobStorage
 from MyPiEye.Storage.minio_storage import MinioStorage
 from MyPiEye.Storage.local_storage import LocalStorage
+from MyPiEye.Storage.celery_storage import CeleryStorage
 
 from MyPiEye.CLI import get_config_value
 
@@ -80,6 +81,11 @@ def camera_start(config, shared_obj, msg_queues: dict):
     finally:
         if camera is not None:
             camera.close_camera()
+
+def celery_start(config, shared_obj, storage_queues: dict):
+
+    celery_storage = CeleryStorage(config)
+    celery_storage.start(shared_obj, storage_queues)
 
 
 def minio_start(config, shared_obj, storage_queues: dict):

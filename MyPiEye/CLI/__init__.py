@@ -186,17 +186,23 @@ def get_config_value(
         config: dict,
         section_name: str,
         key_name: str,
-        env_name: str,
+        env_name: str = None,
         default=None):
+    env_val = default
+
+    if config is None:
+        log.error('No config passed')
+        return default
 
     section = config.get(section_name)
     if section is None:
         log.error('section {} not found'.format(section_name))
-        return config
+        return default
 
-    env_val = environ.get(env_name)
-    if env_val is None:
-        return section.get(key_name, default)
+    if env_name is not None:
+        env_val = environ.get(env_name)
+        if env_val is None:
+            return section.get(key_name, default)
 
     section[key_name] = env_val
     return env_val

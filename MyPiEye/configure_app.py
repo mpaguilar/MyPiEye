@@ -10,6 +10,8 @@ from MyPiEye.Storage.google_drive import GDriveStorage, GDriveAuth
 from MyPiEye.usbcamera import UsbCamera
 from MyPiEye.Storage.azure_blob import AzureBlobStorage
 from MyPiEye.Storage.minio_storage import MinioStorage
+from MyPiEye.Storage.redis_storage import RedisStorage
+from MyPiEye.Storage.celery_storage import CeleryStorage
 
 from MyPiEye.CLI import get_config_value, get_self_config_value
 
@@ -35,6 +37,12 @@ class ConfigureApp(object):
             ret = False
 
         if not self.configure_azure_blob():
+            ret = False
+
+        if not self.configure_redis():
+            ret = False
+
+        if not self.configure_celery():
             ret = False
 
         return ret
@@ -135,6 +143,38 @@ class ConfigureApp(object):
 
         return ret
 
+    def configure_celery(self):
+        ret = True
+
+        if not self.is_enabled('enable_celery', 'MULTI_CELERY'):
+            log.info('Celery disabled. Skipping.')
+            return True
+
+        log.info('Configuring Celery')
+
+        cel = CeleryStorage(self.self_config)
+        if not cel.configure():
+            log.error('Celery configuration failed')
+            ret = False
+
+        return ret
+
+    def configure_redis(self):
+        ret = True
+
+        if not self.is_enabled('enable_redis', 'MULTI_REDIS'):
+            log.info('redis disabled. Skipping.')
+            return True
+
+        log.info('Configuring redis')
+
+        rds = RedisStorage(self.self_config)
+        if not rds.configure():
+            log.error('redis configuration failed')
+            ret = False
+
+        return ret
+
     def configure_aws(self):
         log.info('Configuring AWS')
 
@@ -213,6 +253,9 @@ class ConfigureApp(object):
             ret = False
 
         if not self.check_minio():
+            ret = False
+
+        if not self.check_celery():
             ret = False
 
         return ret
@@ -321,6 +364,46 @@ class ConfigureApp(object):
             return False
 
         log.info('minio configuration okay')
+        return True
+
+    def check_celery(self):
+        log.info('Checking celer')
+        if not self.is_enabled('enable_celery', 'MULTI_MINIO'):
+            log.info('Celery disabled. Skipping.')
+            return True
+
+        rconfig = self.self_config.get('celery')
+        if rconfig is None:
+            log.error('No [celery] section found.')
+            return False
+
+        cel = CeleryStorage(self.self_config)
+
+        if not cel.check():
+            log.error('Celery check failed')
+            return False
+
+        log.info('Celery configuration okay')
+        return True
+
+    def check_redis(self):
+        log.info('Checking redis')
+        if not self.is_enabled('enable_redis', 'MULTI_MINIO'):
+            log.info('redis disabled. Skipping.')
+            return True
+
+        rconfig = self.self_config.get('redis')
+        if rconfig is None:
+            log.error('No [redis] section found.')
+            return False
+
+        rds = RedisStorage(self.self_config)
+
+        if not rds.check():
+            log.error('redis check failed')
+            return False
+
+        log.info('redis configuration okay')
         return True
 
     def check_localstorage(self):

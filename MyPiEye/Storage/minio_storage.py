@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from os import environ
+from os.path import basename
 import logging
 from io import BytesIO
 
@@ -9,6 +9,7 @@ import cv2
 from MyPiEye.CLI import get_self_config_value
 
 log = logging.getLogger(__name__)
+
 
 class MinioStorage(object):
 
@@ -109,3 +110,15 @@ class MinioStorage(object):
         ts = datetime.now() - self.stats['start_time']
         print('\nminio {} upload complete in {}\n'.format(self.stats['images_sent'], str(ts)))
         return True
+
+    def download_img(self, dt_stamp: datetime, camera_id):
+
+        path = '{}/{}.jpg'.format(camera_id, dt_stamp.strftime(self.filename_format))
+        ret = self.mclient.fget_object(self.bucket_name, path, basename(path))
+        return ret
+
+    def download_file(self, path):
+        ret = self.mclient.fget_object(self.bucket_name, path, basename(path))
+        meta = dict(ret.metadata)
+        meta.update({'size': ret.size})
+        return meta
