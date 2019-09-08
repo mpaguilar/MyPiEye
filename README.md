@@ -66,5 +66,23 @@ For debugging, use ``--pool=solo``.
 
 To run on Windows, use ``--pool=eventlet``
 
+### Notes
+
+In general use, the app launches:
+ 
+ - one process for the camera. Each instance of the app is expected to handle one camera, at most.
+ - one process for the shared object manager. Only processes needing immediate access to the camera results
+   (storage, mostly) are included.
+ - at least one process per-backend. Each backend can have multiple processes.
+ 
+Celery worker processes are just that - Celery worker processes. Most of the configuration is Celery-specific,
+including number of processes launched.
+ 
+Post-processing of the images are run in separate processes, typically on other machines. Post-processing
+requires using a Redis server, and (at least) the Celery backend for messaging.
+
+It's possible to use a storage-only backend, e.g., minio, and use some other means of identifying when new 
+images are added. 
+
 
 
