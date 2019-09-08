@@ -37,5 +37,34 @@ Detailed info can be found in doc/html.
 
 ## Usage suggestions
 
-Create a mypieye.ini in a separate directory (I use ./tmp).
+Create a mypieye.ini in a separate directory (I use `../mpe_workdir`).
 Activate the virtual env, and use it from there.
+
+## Usage, extended
+
+The main app spawns several processes, configured via .ini or environment variables. See the example .ini for details.
+
+Backends are enabled and disabled in the ``[multi]`` section. Each one will have its own config section in the .ini.
+
+Adding a new backend is kind of pain.
+
+ - write the backend, using an existing one as an example (``celery_storage`` and ``minio_storage`` are pretty good).
+ - update ``supervisor.py`` to launch it
+ - update ``configure_app.py`` to handle checks and configs 
+
+### Celery
+The `celery` backend requires a running Redis server. 
+
+Launch workers using celery worker arguments, such as ``--pool``
+```shell
+
+    python -m MyPiEye --loglevel DEBUG worker --pool=solo
+
+``` 
+
+For debugging, use ``--pool=solo``. 
+
+To run on Windows, use ``--pool=eventlet``
+
+
+
