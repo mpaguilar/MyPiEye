@@ -1,6 +1,7 @@
 import logging
 from time import sleep
 from datetime import datetime
+from functools import partial
 
 import multiprocessing
 
@@ -17,7 +18,7 @@ from MyPiEye.multi.process_runners import \
     minio_start, \
     celery_start
 
-from MyPiEye.CLI import get_self_config_value
+from MyPiEye.CLI import get_self_config_value, get_config_value
 
 log = multiprocessing.log_to_stderr()
 
@@ -29,6 +30,7 @@ class Supervisor(object):
 
         self.config = config
         self.self_config = config.get('multi', None)
+        self.cfg = partial(get_config_value, config, 'global')
 
         if self.self_config is None:
             raise Exception('[multi] not found in configuration')
@@ -86,6 +88,11 @@ class Supervisor(object):
             if sbrunning > 0 and isrunning == 0:
                 log.error('Did everything crash?')
 
+    def is_enabled(self, key_name, env_name):
+        return get_config_value(
+            self.self_config, 'multi', key_name, env_name, False) \
+               in [True, 'True']
+
 
     def init_process_infos(self,
                            shared_obj: multiprocessing.Manager):
@@ -131,9 +138,11 @@ class Supervisor(object):
                 storage_queues['minio'] = multiprocessing.Queue(maxsize=1)
                 init_proc('local_{}'.format(x), local_start, True)
 
-            if get_self_config_value(
-                    self, 'enable_celery', 'MULTI_CELERY', False) in [True, 'True']:
-                storage_queues['celery'] = multiprocessing.Queue(maxsize=1)
+        if self.is_enabled('enable_celery', 'MULTI_CELERY'):
+            log.info('Celery disabled. Skipping.')
+            storage_queues['celery'] = multiprocessing.Queue(maxsize=1)
+            pc = get_config_value(self.config, 'celery', 'num_processes', 'CELERY_PROCS', 1)
+            for x in range(1, pc + 1):
                 init_proc('celery_{}'.format(x), celery_start, True)
 
     def start(self):

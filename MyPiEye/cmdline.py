@@ -103,23 +103,6 @@ def configure(ctx, **cli_flags):
     print('Start checks passed')
 
 
-@mypieye.command()
-@click.pass_context
-def s3_archive(ctx, **cli_flags):
-    print('I don\'t know if this even works')
-    return
-
-    log.info('Archiving S3 objects')
-
-    config = ConfigureApp(settings)
-
-    # don't check the config, this may be run on a completely different machine
-    mainapp = MainApp(settings)
-    mainapp.s3_archive()
-
-    log.info('Archive complete')
-
-
 @mypieye.command(context_settings={"ignore_unknown_options": True})
 @click.argument('appargs', nargs=-1)
 @click.pass_context
@@ -152,8 +135,8 @@ def worker(ctx, appargs):
 
     MyPiEye.CeleryTasks.app.conf.result_backend = redis_url
     MyPiEye.CeleryTasks.app.conf.broker_url = redis_url
-
-    MyPiEye.CeleryTasks.app.worker_main(appargs)
+    args = ['worker'] + list(appargs)
+    MyPiEye.CeleryTasks.app.worker_main(args)
 
 
 @mypieye.command()
