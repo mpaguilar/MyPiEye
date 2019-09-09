@@ -57,9 +57,11 @@ def clean_exit(sig, _):
 @click.pass_context
 def mypieye(ctx, **cli_flags):
     log.info('Starting...')
+
     # the callback to the ``--iniconfig`` parameter updates
     # settings with the command line parameters
     ctx.obj = ctx.params['iniconfig']
+
     lvl = CLI.get_config_value(ctx.obj, 'global', 'loglevel', 'LOG_LEVEL')
     CLI.set_loglevel(lvl)
 

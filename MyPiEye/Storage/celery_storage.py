@@ -4,6 +4,10 @@ from functools import partial
 from time import sleep
 from datetime import datetime
 
+from io import BytesIO
+
+import numpy as np
+
 from MyPiEye.CeleryTasks import celery_app
 import MyPiEye.CeleryTasks as mycel
 
@@ -49,7 +53,7 @@ class CeleryStorage(object):
     def configure(self):
         return True
 
-    def start(self, shared_obj, storage_queues: dict):
+    def start(self, shared_obj, shared_lock, storage_queues: dict):
         pri_storage_queue = storage_queues.get('celery')
         if pri_storage_queue is None:
             log.error('No message queue for celery')
@@ -60,24 +64,25 @@ class CeleryStorage(object):
 
             # blocks until a message is ready
             dt_pic = pri_storage_queue.get()
-            with shared_obj['lock']:
+
+            log.info('processing incoming capture')
+
+            # block until it's not in use
+            with shared_lock:
                 curdt: datetime = shared_obj['img_captured']
                 imgbuf = shared_obj['imgbuf']
 
-            # if the current image datetime doesn't match the message
-            # then this message is stale. We can skip it and pull the next.
-            if curdt != dt_pic['dt']:
-                continue
+                # if the current image datetime doesn't match the message
+                # then this message is stale. We can skip it and pull the next.
+                if curdt != dt_pic['dt']:
+                    log.info('Skipping stale message')
+                    continue
 
-            log.debug('Storing image on minio: {}'.format(curdt.isoformat()))
+                log.info('Sending message to celery worker: {}'.format(curdt.isoformat()))
+                self.upload(imgbuf, curdt)
 
-            self.upload(imgbuf, curdt)
+    def upload(self, cv2_imgbytes, dt_stamp):
 
-            sleep(.01)
+        imgstr = cv2_imgbytes.dumps()
 
-    def upload(self, cv2_imgbuf, dt_stamp):
-        ret = mycel.ping.delay('ping').get()
-
-        print(ret)
-
-
+        mycel.accept_capture.delay(imgstr, dt_stamp, self.camid)

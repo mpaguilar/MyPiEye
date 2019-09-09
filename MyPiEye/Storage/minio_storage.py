@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta
 from os.path import basename
 import logging
+from functools import partial
 from io import BytesIO
 
 from minio import Minio
 import cv2
 
-from MyPiEye.CLI import get_self_config_value
+from MyPiEye.CLI import get_self_config_value, get_config_value
 
 log = logging.getLogger(__name__)
 
@@ -24,21 +25,22 @@ class MinioStorage(object):
 
         # required for ``get_config_value`` to work
         self.self_config = global_config['minio']
+        self.cfg = partial(get_config_value, global_config, 'minio')
 
         self.access_key = \
-            get_self_config_value(self, 'access_key', 'MINIO_ACCESS_KEY')
+            self.cfg('access_key', 'MINIO_ACCESS_KEY')
 
         self.secret_key = \
-            self.secret_key = get_self_config_value(self, 'secret_key', 'MINIO_SECRET_KEY')
+            self.cfg('secret_key', 'MINIO_SECRET_KEY')
 
         self.bucket_name = \
-            self.bucket_name = get_self_config_value(self, 'bucket_name', 'MINIO_BUCKET')
+            self.cfg('bucket_name', 'MINIO_BUCKET')
 
         self.url = \
-            get_self_config_value(self, 'url', 'MINIO_URL')
+            self.cfg('url', 'MINIO_URL')
 
         self.filename_format = \
-            get_self_config_value(self, 'filename_format', 'MINIO_FMT')
+            self.cfg('filename_format', 'MINIO_FMT')
 
         if self.filename_format is None:
             self.filename_format = '%Y%m%d/%H%M%S.%f'
@@ -87,6 +89,7 @@ class MinioStorage(object):
             return False
 
         bio = BytesIO(jpg)
+
         filename = '{}/{}.jpg'.format(camera_id, dt_stamp.strftime(self.filename_format))
         dtstr = dt_stamp.isoformat()
 
@@ -110,6 +113,7 @@ class MinioStorage(object):
         ts = datetime.now() - self.stats['start_time']
         print('\nminio {} upload complete in {}\n'.format(self.stats['images_sent'], str(ts)))
         return True
+
 
     def download_img(self, dt_stamp: datetime, camera_id):
 

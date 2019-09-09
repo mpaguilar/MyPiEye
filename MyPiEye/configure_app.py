@@ -14,7 +14,7 @@ from MyPiEye.Storage.minio_storage import MinioStorage
 from MyPiEye.Storage.redis_storage import RedisStorage
 from MyPiEye.Storage.celery_storage import CeleryStorage
 
-from MyPiEye.CLI import get_config_value, get_self_config_value
+from MyPiEye.CLI import get_config_value
 
 log = logging.getLogger(__name__)
 
@@ -317,12 +317,12 @@ class ConfigureApp(object):
             log.info('Azure Blob disabled. Skipping.')
             return True
 
-        azconfig = self.self_config.get('azure_blob', None)
+        azconfig = self.config.get('azure_blob', None)
         if azconfig is None:
             log.error('No [azure_blob] section found.')
             return False
 
-        azblob = AzureBlobStorage(self.self_config)
+        azblob = AzureBlobStorage(self.config)
 
         if not azblob.check():
             log.error('Azure Blob checks failed')
@@ -339,12 +339,12 @@ class ConfigureApp(object):
             log.info('minio disabled. Skipping.')
             return True
 
-        mconfig = self.self_config.get('minio', None)
+        mconfig = self.config.get('minio', None)
         if mconfig is None:
             log.info('No [minio] section found.')
             return False
 
-        mio = MinioStorage(self.self_config)
+        mio = MinioStorage(self.config)
 
         if not mio.check():
             log.error('minio check failed')
@@ -380,12 +380,12 @@ class ConfigureApp(object):
             log.info('redis disabled. Skipping.')
             return True
 
-        rconfig = self.self_config.get('redis')
+        rconfig = self.config.get('redis')
         if rconfig is None:
             log.error('No [redis] section found.')
             return False
 
-        rds = RedisStorage(self.self_config)
+        rds = RedisStorage(self.config)
 
         if not rds.check():
             log.error('redis check failed')
@@ -402,12 +402,12 @@ class ConfigureApp(object):
             log.info('Local storage disabled. Skipping.')
             return True
 
-        localconfig = self.self_config.get('local', None)
+        localconfig = self.config.get('local', None)
         if localconfig is None:
             log.info('No [local] section found. Skipping.')
             return False
 
-        fs = LocalStorage(self.self_config)
+        fs = LocalStorage(self.config)
         if not fs.check():
             log.critical('Local storage check failed')
             return False
@@ -423,12 +423,12 @@ class ConfigureApp(object):
             log.info('AWS S3 disabled. Skipping.')
             return True
 
-        s3_config = self.self_config.get('s3', None)
+        s3_config = self.config.get('s3', None)
         if s3_config is None:
             log.info('No [s3] section found')
             return False
 
-        s3 = S3Storage(self.self_config)
+        s3 = S3Storage(self.config)
 
         if not s3.check():
             log.critical('AWS check failed')

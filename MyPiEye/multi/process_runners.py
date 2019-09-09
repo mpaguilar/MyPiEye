@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 # log.setLevel(logging.DEBUG)
 
 
-def camera_start(config, shared_obj, msg_queues: dict):
+def camera_start(config, shared_obj, shared_lock, msg_queues: dict):
     """
 
     :param config: The global config
@@ -60,8 +60,8 @@ def camera_start(config, shared_obj, msg_queues: dict):
                     # so it stands out
                     print('\ncaptured {}\n'.format(dtsrt))
 
-                with shared_obj['lock']:
-                    shared_obj['imgbuf'] = img
+                with shared_lock:
+                    shared_obj['imgbuf'] = img.copy()
                     shared_obj['img_captured'] = dtsrt
 
                 for val in msg_queues.values():
@@ -82,10 +82,10 @@ def camera_start(config, shared_obj, msg_queues: dict):
         if camera is not None:
             camera.close_camera()
 
-def celery_start(config, shared_obj, storage_queues: dict):
+def celery_start(config, shared_obj, shared_lock, storage_queues: dict):
 
     celery_storage = CeleryStorage(config)
-    celery_storage.start(shared_obj, storage_queues)
+    celery_storage.start(shared_obj, shared_lock, storage_queues)
 
 
 def minio_start(config, shared_obj, storage_queues: dict):

@@ -95,7 +95,8 @@ class Supervisor(object):
 
 
     def init_process_infos(self,
-                           shared_obj: multiprocessing.Manager):
+                           shared_obj: multiprocessing.Manager,
+                           shared_lock: multiprocessing.Lock):
 
         storage_queues = {}
 
@@ -105,7 +106,7 @@ class Supervisor(object):
                 'process_args': {
                     'name': proc_name,
                     'target': proc_func,
-                    'args': (self.config, shared_obj, storage_queues)
+                    'args': (self.config, shared_obj, shared_lock, storage_queues)
                 },
                 'run_process': run
             }
@@ -191,7 +192,8 @@ class Supervisor(object):
         shared_obj['imgbuf'] = Supervisor.manager.list()
 
         # so the camera can write in peace.
-        shared_obj['lock'] = Supervisor.manager.Lock()
+        # shared_obj['lock'] = Supervisor.manager.Lock()
+        shared_lock = Supervisor.manager.Lock()
 
         # used by services copying to local networks
         # so that the network interface isn't swamped
@@ -201,7 +203,7 @@ class Supervisor(object):
         # a datetime object of the last capture, UTC
         shared_obj['img_captured'] = datetime.utcnow()
 
-        self.init_process_infos(shared_obj);
+        self.init_process_infos(shared_obj, shared_lock);
 
         # compares images
 
