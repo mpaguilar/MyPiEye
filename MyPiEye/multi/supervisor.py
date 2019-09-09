@@ -18,10 +18,9 @@ from MyPiEye.multi.process_runners import \
     minio_start, \
     celery_start
 
-from MyPiEye.CLI import get_self_config_value, get_config_value
+from MyPiEye.CLI import get_self_config_value, get_config_value, enable_log, set_loglevel
 
-log = multiprocessing.log_to_stderr()
-
+log = logging.getLogger(__name__)
 
 class Supervisor(object):
     manager = None
@@ -92,7 +91,6 @@ class Supervisor(object):
         return get_config_value(
             self.config, 'multi', key_name, env_name, False) \
                in [True, 'True']
-
 
     def init_process_infos(self,
                            shared_obj: multiprocessing.Manager,

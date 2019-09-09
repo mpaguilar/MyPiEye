@@ -11,24 +11,29 @@ import numpy as np
 from MyPiEye.CeleryTasks import celery_app
 import MyPiEye.CeleryTasks as mycel
 
-from MyPiEye.CLI import get_config_value
+from MyPiEye.CLI import get_config_value, enable_log, set_loglevel
 
 log = logging.getLogger()
 
 
 class CeleryStorage(object):
-    def __init__(self, global_config):
-        self.cfg = partial(get_config_value, global_config, 'celery')
+    def __init__(self, config):
+        self.cfg = partial(get_config_value, config, 'celery')
         self.host = self.cfg('host', 'CELERY_REDIS_HOST')
         self.port = int(self.cfg('port', 'CELERY_REDIS_PORT', '6379'))
         self.db = int(self.cfg('db', 'CELERY_REDIS_DB', '0'))
 
-        self.camid = get_config_value(global_config, 'camera', 'camera_id', 'CAMERA_ID', 'unknown/unknown')
+        self.camid = get_config_value(config, 'camera', 'camera_id', 'CAMERA_ID', 'unknown/unknown')
 
         self.redis_url = f'redis://{self.host}:{self.port}/{self.db}'
 
         celery_app.conf.broker_url = self.redis_url
         celery_app.conf.result_backend = self.redis_url
+
+        lvl = get_config_value(config, 'global', 'loglevel', 'LOG_LEVEL')
+        fmt = get_config_value(config, 'global', 'log_format', 'LOG_FORMAT')
+        enable_log(fmt=fmt)
+        set_loglevel(lvl)
 
     def check(self):
         ret = True
@@ -75,7 +80,7 @@ class CeleryStorage(object):
                 # if the current image datetime doesn't match the message
                 # then this message is stale. We can skip it and pull the next.
                 if curdt != dt_pic['dt']:
-                    log.info('Skipping stale message')
+                    log.warning('Skipping stale message')
                     continue
 
                 log.info('Sending message to celery worker: {}'.format(curdt.isoformat()))

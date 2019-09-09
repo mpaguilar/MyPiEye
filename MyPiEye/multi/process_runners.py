@@ -13,7 +13,7 @@ from MyPiEye.Storage.minio_storage import MinioStorage
 from MyPiEye.Storage.local_storage import LocalStorage
 from MyPiEye.Storage.celery_storage import CeleryStorage
 
-from MyPiEye.CLI import get_config_value
+from MyPiEye.CLI import get_config_value, enable_log, set_loglevel
 
 log = logging.getLogger(__name__)
 # log.setLevel(logging.DEBUG)
@@ -27,6 +27,12 @@ def camera_start(config, shared_obj, shared_lock, msg_queues: dict):
     :param msg_queues: Queues to notify when a picture is ready
     :return:
     """
+
+    lvl = get_config_value(config, 'global', 'loglevel', 'LOG_LEVEL')
+    fmt = get_config_value(config, 'global', 'log_format', 'LOG_FORMAT')
+    enable_log(fmt=fmt)
+    set_loglevel(lvl)
+
     log.info('Starting camera')
 
     camera = None

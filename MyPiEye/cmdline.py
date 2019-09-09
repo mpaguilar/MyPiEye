@@ -63,6 +63,8 @@ def mypieye(ctx, **cli_flags):
     ctx.obj = ctx.params['iniconfig']
 
     lvl = CLI.get_config_value(ctx.obj, 'global', 'loglevel', 'LOG_LEVEL')
+    fmt = CLI.get_config_value(ctx.obj, 'global', 'log_format', 'LOG_FORMAT')
+    CLI.enable_log(fmt=fmt)
     CLI.set_loglevel(lvl)
 
 
