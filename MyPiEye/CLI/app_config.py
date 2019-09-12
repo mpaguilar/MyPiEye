@@ -74,6 +74,10 @@ def get_config_value(
             return section.get(key_name, default)
 
     section[key_name] = env_val
+
+    if env_val == '':
+        env_val = None
+
     return env_val
 
 def get_self_config_value(*args, **kwargs):
