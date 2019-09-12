@@ -4,6 +4,8 @@ import logging
 from time import sleep
 from datetime import datetime
 
+import MyPiEye.CeleryTasks
+
 import redis
 import cv2
 
@@ -89,6 +91,8 @@ def camera_start(config, shared_obj, shared_lock, msg_queues: dict):
             camera.close_camera()
 
 def celery_start(config, shared_obj, shared_lock, storage_queues: dict):
+
+    MyPiEye.CeleryTasks.app_config = config
 
     celery_storage = CeleryStorage(config)
     celery_storage.start(shared_obj, shared_lock, storage_queues)

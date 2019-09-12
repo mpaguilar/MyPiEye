@@ -3,6 +3,7 @@ import logging
 from functools import partial
 from time import sleep
 from datetime import datetime
+import pytz
 
 from io import BytesIO
 
@@ -89,5 +90,5 @@ class CeleryStorage(object):
     def upload(self, cv2_imgbytes, dt_stamp):
 
         imgstr = cv2_imgbytes.dumps()
-
-        mycel.accept_capture.delay(imgstr, dt_stamp, self.camid)
+        mycel.store_capture.delay(imgstr, dt_stamp, self.camid)
+        mycel.register_capture.delay(dt_stamp, self.camid)
