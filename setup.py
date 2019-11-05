@@ -83,7 +83,7 @@ setup(
         'uritemplate==3.0.0',
         'urllib3==1.23',
         'vine==1.3.0',
-        'Werkzeug==0.14.1',
+        'Werkzeug==0.15.3',
         'yarl==1.2.6',
         'zipp==0.6.0'
     ]
