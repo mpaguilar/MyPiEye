@@ -9,8 +9,9 @@ What works:
  - Image capturing
  - Image comparison
  - Image save to local drive
- - Image save to Google Drive
  - Image save to AWS, with metadata support
+ - Image save to Azure
+ - Using Celery with Redis backend for messaging
  
  
 If you don't mind a little bit of tweaking and prodding here and there, it works. The core functionality is
@@ -32,8 +33,6 @@ The running user should be added to the ``video`` group.
 Configuration is mostly handled within an .ini file. 
 By default it will look for `mypieye.ini` in the current directory. It can also be specified at the command line with
 the `--iniconfig` switch.
-
-Detailed info can be found in doc/html.
 
 ## Usage suggestions
 
