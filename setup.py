@@ -4,7 +4,7 @@ import MyPiEye
 
 setup(
     name="MyPiEye",
-    version="0.2.4",
+    version="0.2.5",
     author="Michael P. Aguilar",
     packages=find_packages(),
     entry_points={
@@ -65,6 +65,7 @@ setup(
         'packaging==18.0',
         'pyasn1==0.4.4',
         'pyasn1-modules==0.2.2',
+<<<<<<< HEAD
         'pycparser==2.19',
         'Pygments==2.2.0',
         'pyparsing==2.3.0',
@@ -72,6 +73,9 @@ setup(
         'pytz==2018.7',
         'redis==3.3.8',
         'requests==2.19.1',
+=======
+        'requests==2.20.0',
+>>>>>>> b835354cfec471613f4b88dd62d7b92218b38bc0
         'requests-toolbelt==0.8.0',
         'rsa==4.0',
         's3transfer==0.1.13',
