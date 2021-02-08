@@ -46,7 +46,7 @@ setup(
         'gevent==1.4.0',
         'greenlet==0.4.15',
         'gunicorn==19.9.0',
-        'httplib2==0.11.3',
+        'httplib2==0.19.0',
         'idna==2.7',
         'imagesize==1.1.0',
         'importlib-metadata==0.20',
