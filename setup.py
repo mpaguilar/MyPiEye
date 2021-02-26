@@ -17,7 +17,7 @@ setup(
     },
 
     install_requires=[
-        'aiohttp==3.4.4',
+        'aiohttp==3.7.4',
         'alabaster==0.7.12',
         'amqp==2.5.1',
         'apiclient==1.0.3',
