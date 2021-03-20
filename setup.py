@@ -51,7 +51,7 @@ setup(
         'imagesize==1.1.0',
         'importlib-metadata==0.20',
         'itsdangerous==1.1.0',
-        'Jinja2==2.10',
+        'Jinja2==2.11.3',
         'jmespath==0.9.3',
         'kombu==4.6.4',
         'MarkupSafe==1.1.0',
