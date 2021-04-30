@@ -73,7 +73,7 @@ setup(
         'redis==3.3.8',
         'requests==2.20.0',
         'requests-toolbelt==0.8.0',
-        'rsa==4.0',
+        'rsa==4.7',
         's3transfer==0.1.13',
         'six==1.11.0',
         'snowballstemmer==1.2.1',
