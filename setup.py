@@ -41,7 +41,7 @@ setup(
         'cryptography==2.7',
         'dnspython==1.16.0',
         'docutils==0.14',
-        'eventlet==0.25.1',
+        'eventlet==0.31.0',
         'Flask==1.0.2',
         'gevent==1.4.0',
         'greenlet==0.4.15',
