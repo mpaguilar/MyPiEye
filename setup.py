@@ -60,7 +60,7 @@ setup(
         'more-itertools==7.2.0',
         'multidict==4.5.1',
         'numpy==1.22.0',
-        'opencv-python==3.4.3.18',
+        'opencv-python==4.2.0.32',
         'opencv-python-headless==4.2.0.32',
         'packaging==18.0',
         'pyasn1==0.4.4',
