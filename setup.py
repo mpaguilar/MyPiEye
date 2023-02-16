@@ -81,7 +81,7 @@ setup(
         'sphinx-rtd-theme==0.4.2',
         'sphinxcontrib-websupport==1.1.0',
         'uritemplate==3.0.0',
-        'urllib3==1.23',
+        'urllib3==1.26.5',
         'vine==1.3.0',
         'Werkzeug==0.15.3',
         'yarl==1.2.6',
