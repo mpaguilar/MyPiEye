@@ -32,7 +32,7 @@ setup(
         'boto3==1.9.30',
         'botocore==1.12.50',
         'cachetools==2.1.0',
-        'celery==4.3.0',
+        'celery==5.2.2',
         'certifi==2018.8.24',
         'cffi==1.12.3',
         'chardet==3.0.4',
