@@ -42,7 +42,7 @@ setup(
         'dnspython==1.16.0',
         'docutils==0.14',
         'eventlet==0.31.0',
-        'Flask==1.0.2',
+        'Flask==2.3.2',
         'gevent==1.4.0',
         'greenlet==0.4.15',
         'gunicorn==19.9.0',
